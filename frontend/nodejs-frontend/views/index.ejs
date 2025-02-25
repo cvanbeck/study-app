@@ -1,0 +1,12 @@
+<!-- This is the index box. It contains all the links for the pages accessible in the site. 
+     The navigation bar already has this, but for the purpose of the assignment this is included. -->
+     <div class="indexBox">
+        <h2>This is the homepage of <%= appName %></h2>
+    </div>
+    
+    <!-- Passes the below content to the scripts variable in layout.ejs -->
+    <%- contentFor('scripts') %>
+    <script>
+        appendToHeading('Homepage'); // Running the function I defined in layout.ejs
+        // This function is able to be called here because the script for it was created before the scripts variable was placed on the layout
+    </script>

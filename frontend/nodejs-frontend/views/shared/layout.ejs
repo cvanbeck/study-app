@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= appName %></title>
+        <link rel="stylesheet"  type="text/css" href="/main.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    </head>
+    <body>
+        <!-- 
+        -  Navbar with clickable <a> hyperlink buttons, makes getting around the pages much easier
+        -->
+        <nav class="stickyNavbar">
+            <div class="left-section">
+                <h1 class="appLogoTitle"><%= appName %></h1>
+                <a href="/" id="homePage">Home</a> |
+                <a href="/about" id="aboutPage">About</a> |
+            </div>
+        </nav>        
+
+        <!-- 
+        -  Position where each .html page is rendered
+        -->
+        <%- body %>
+
+        <!-- 
+        -  Scripts that run on every page
+        -  > appendToHeading(): Allows adding any text to the document <title>
+        -  > updateNavbar(): Updates the CSS of the <nav> tag children to make the <a> tag of the current page colour itself red 
+        -->
+        <script>
+
+            /*
+             * Can be ran from any .html page that is including this layout.
+             * Allows updating the <title> of the current webpage to add any custom text on the end.
+             */
+            function appendToHeading(heading) {
+                document.title = `${document.title} | ${heading}`;
+            }
+
+            /*
+             * Can be ran from any .html page that is including this layout (though unnecessary)
+             * Automatically updates the CSS of any <a> tag on the page with a relative href attribute that matches the current page relative location href.
+             */
+            function updateNavbar() {
+                var currentPagePath = window.location.pathname; // getting current page RELATIVE path (cutting out the base url/domain, e.g. http://localhost/)
+
+                var nodeListNavButton = document.querySelectorAll('a[href]'); // gets a nodelist of every element in the DOM that has a href attribute
+
+                // iterating through the array that was converted above and setting the style attribute.
+                // this was the safest way as if there were no elements found in the querySelectorAll it would have thrown an exception if I tried to set it directly (e.g. with element[0].setAttribute).
+                nodeListNavButton.forEach(element => {
+                    var linkPath = element.getAttribute('href');
+                    
+                    /*
+                     * Checks if the linkpath is an exact match, or starts with the url content.
+                     * highlights <a> tag in red if exact match
+                     * highlights <a> tag in yellow if it only starts with
+                     */
+                    if (linkPath === currentPagePath) {
+                        element.style.color = '#0056b3'; // Exact match
+                    } else if (currentPagePath.startsWith(linkPath) && linkPath !== "/") {
+                        element.style.color = 'yellow'; // Starts with and not "/"
+                    } else {
+                        element.style.color = '';
+                    }
+                });
+            }
+            
+            // actually calling the above function
+            updateNavbar();
+
+        </script>
+
+        <!-- 
+        -  Position where all of the scripts for the .html page are rendered.
+        -  Using an IF statement to prevent exceptions if scripts don't exist
+        -->
+        <% if (typeof scripts !== 'undefined') { %>
+            <%- scripts %>
+        <% } %>
+    </body>
+</html>
