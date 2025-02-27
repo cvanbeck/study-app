@@ -8,7 +8,6 @@ export default class HomeController {
     async index(req, res) {
         // Now you can simply use the view name without the folder
         res.render("index.ejs", { ...this.appData, user: req.session.user });
-        return null; // Explicitly return null since we're handling the response
     }
     
     async example(req, res) {
@@ -19,7 +18,6 @@ export default class HomeController {
         
         // Pass data to the view
         res.render("example", { ...this.appData, item });
-        return null;
     }
 
     // Example AJAX function for dynamic content on other pages
@@ -30,6 +28,5 @@ export default class HomeController {
         });
         // Prepare the content to send as a partial
         res.renderPartial("partials/ajaxTest", { ...this.appData, message: "This is the AJAX loaded content!", item });
-        return null;
     }
 }
