@@ -22,9 +22,9 @@ export default async function setupRoutes(app, appData) {
       // Set up route handler for each method in the controller
       for (const methodName in controller) {
         const method = controller[methodName];
-        
+
         if (typeof method !== 'function') continue;
-        
+
         // Determine the route based on the method name
         let route;
         if (methodName === 'index') {
@@ -34,25 +34,41 @@ export default async function setupRoutes(app, appData) {
           // For other methods, append the method name to the controller path
           route = `/${controllerName}/${methodName}`;
         }
-        
+
         console.log(`Mapping route: ${route} -> ${controllerName}/${methodName}`);
-        
+
         // Register the route with Express
         router.all(route, async (req, res) => {
           try {
             // Create a wrapper for res.render that automatically adds the controller folder
             const originalRender = res.render;
             res.render = function(view, options) {
-              // If view doesn't include a folder path, prepend the controller name
-              if (!view.includes('/')) {
-                view = `${controllerName}/${view}`;
+              // Only prepend the controller name if the view doesn't already specify a complete path
+              if (!view.startsWith('/') && !view.includes(':')) {
+                // If view doesn't include a slash, assume it's directly in the controller folder
+                if (!view.includes('/')) {
+                  view = `${controllerName}/${view}`;
+                } 
+                // If the view already has slashes but doesn't start with the controller name,
+                // prepend the controller name to ensure we're looking in the right subfolder
+                else if (!view.startsWith(`${controllerName}/`)) {
+                  view = `${controllerName}/${view}`;
+                }
+                // Otherwise, the view already specifies a path within the controller directory
               }
+              
+              // Call the original render with the potentially modified view path
               return originalRender.call(res, view, options);
             };
-            
+
+            res.renderPartial = function(view, options) {
+              options = { ...options, layout: false };
+              return res.render(view, options);
+            };
+
             // Call the controller method
             const data = await method(req, res, appData);
-            
+
             // If the method returns data and hasn't ended the response, render the default view
             if (data && !res.headersSent && req.method === 'GET') {
               res.render(`${methodName}.ejs`, { ...appData, ...data });
