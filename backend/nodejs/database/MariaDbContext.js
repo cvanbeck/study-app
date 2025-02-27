@@ -1,4 +1,3 @@
-// MariaDbContext.js
 import mariadb from 'mariadb';
 import BaseDbContext from './BaseDbContext.js';
 
