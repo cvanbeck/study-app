@@ -19,30 +19,52 @@ export default async function setupRoutes(app, appData) {
       // Import the controller module
       const { default: controller } = await import(`../controllers/${file}`);
 
-      // Map the index route for each controller; 'home' controller maps to '/'
-      const route = controllerName === 'home' ? '/' : `/${controllerName}`;
-      console.log(`Mapping route: ${route} -> ${controllerName}/index.ejs`);
-
-      router.get(route, async (req, res) => {
-        try {
-          if (controller.index && typeof controller.index === 'function') {
-            const data = await controller.index(req, res, appData);
-            // Only render once
-            if (!res.headersSent) {
-              res.render(`${controllerName}/index.ejs`, { ...appData, ...data });
-            }
-          } else {
-            if (!res.headersSent) {
-              res.render(`${controllerName}/index.ejs`, { ...appData });
-            }
-          }
-        } catch (err) {
-          console.error(`Error handling route ${route}:`, err);
-          if (!res.headersSent) { // Ensure the response is sent only once
-            res.status(500).send('Internal Server Error');
-          }
+      // Set up route handler for each method in the controller
+      for (const methodName in controller) {
+        const method = controller[methodName];
+        
+        if (typeof method !== 'function') continue;
+        
+        // Determine the route based on the method name
+        let route;
+        if (methodName === 'index') {
+          // For index methods, use the controller name as the base path
+          route = controllerName === 'home' ? '/' : `/${controllerName}`;
+        } else {
+          // For other methods, append the method name to the controller path
+          route = `/${controllerName}/${methodName}`;
         }
-      });
+        
+        console.log(`Mapping route: ${route} -> ${controllerName}/${methodName}`);
+        
+        // Register the route with Express
+        router.all(route, async (req, res) => {
+          try {
+            // Create a wrapper for res.render that automatically adds the controller folder
+            const originalRender = res.render;
+            res.render = function(view, options) {
+              // If view doesn't include a folder path, prepend the controller name
+              if (!view.includes('/')) {
+                view = `${controllerName}/${view}`;
+              }
+              return originalRender.call(res, view, options);
+            };
+            
+            // Call the controller method
+            const data = await method(req, res, appData);
+            
+            // If the method returns data and hasn't ended the response, render the default view
+            if (data && !res.headersSent && req.method === 'GET') {
+              res.render(`${methodName}.ejs`, { ...appData, ...data });
+            }
+          } catch (err) {
+            console.error(`Error handling route ${route}:`, err);
+            if (!res.headersSent) { // Ensure the response is sent only once
+              res.status(500).send('Internal Server Error');
+            }
+          }
+        });
+      }
     }
 
     app.use('/', router);
