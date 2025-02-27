@@ -20,17 +20,18 @@
     appendToHeading('Homepage'); // Running the function I defined in layout.ejs
     // This function is able to be called here because the script for it was created before the scripts variable was placed on the layout
 
-    // AJAX request function
-    document.getElementById('ajaxButton').addEventListener('click', function() {
-        // Trigger AJAX request
-        fetch('/home/ajaxTest', {
-            method: 'GET'
-        })
-        .then(response => response.text())  // expecting HTML content from the server
-        .then(data => {
-            // Update the #ajaxContent div with the returned content
-            document.getElementById('ajaxContent').innerHTML = data;
-        })
-        .catch(error => console.error('Error fetching AJAX content:', error));
+    // AJAX request function using jQuery
+    $('#ajaxButton').on('click', function() {
+        $.ajax({
+            url: '/home/ajaxTest',
+            method: 'GET',
+            dataType: 'html', // Expecting HTML content from the server
+            success: function(data) {
+                $('#ajaxContent').html(data); // Update the #ajaxContent div with the returned content
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching AJAX content:', status, error);
+            }
+        });
     });
 </script>
