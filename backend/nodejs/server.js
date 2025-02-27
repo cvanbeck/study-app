@@ -23,6 +23,6 @@ app.set('layout', 'shared/layout.ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({ secret: 'transrights', resave: false, saveUninitialized: true }));
 
-import("./routes/index.js").then(module => module.default(app, appData));
+import("./routes/mapRoutes.js").then(module => module.default(app, appData));
 
 app.listen(port, () => console.log(`${appData.appName} listening on port ${port}!`));
