@@ -18,7 +18,7 @@ export default {
         res.render("example", { ...appData, item });
     },
 
-    // New AJAX function
+    // Example AJAX function for dynamic content on other pages
     ajaxTest: (req, res, appData) => {
         // Prepare the content to send as a partial
         res.renderPartial("partials/ajaxTest", { ...appData, message: "This is the AJAX loaded content!" });
