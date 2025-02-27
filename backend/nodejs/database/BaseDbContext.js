@@ -1,4 +1,3 @@
-// BaseDbContext.js
 export default class BaseDbContext {
     constructor(connectionString) {
         if (!connectionString) {
