@@ -17,4 +17,10 @@ export default {
         // Pass data to the view
         res.render("example", { ...appData, item });
     },
+
+    // New AJAX function
+    ajaxTest: (req, res, appData) => {
+        // Prepare the content to send as a partial
+        res.renderPartial("partials/ajaxTest", { ...appData, message: "This is the AJAX loaded content!" });
+    }
 };
