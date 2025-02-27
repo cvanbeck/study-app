@@ -4,10 +4,13 @@ import axios from "axios";
 //Define a ChatController class to handle chat-related API requests
 export default class ChatController {
     
-    //Not using this but might want to in the future
-    //constructor(appData) {
-    //    this.appData = appData; 
-    //}
+    constructor(appData) {
+        this.appData = appData; 
+    }
+
+    async index(req, res) {
+        res.render("chat/index", {...this.appData });
+    }
 
     //Handles POST requests
     //This receives a user prompt, sends it to an external AI API, and streams the response back.
