@@ -1,172 +1,185 @@
-h1 {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 20px;
-    color: darkcyan;
-  }
-  
-  h2 {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 20px;
-    color: cadetblue;
-  }
-  
-  p,
-  li {
-    font-family: Arial, Helvetica, sans-serif;
-  }
-  
-  .formBox {
-    display: flex;
-    flex-direction: column;
-    width: 256px;
-    padding: 20px;
-    background: #dbdbdb;
-    border-radius: 5px;
-  
-    &.searchBox {
-      width: 600px !important;
-  
-      .keywordSect {
-        display: flex;
-      }
-  
-      .searchBoxText {
-        padding-right: 12px;
-      }
-    }
-  
-    textarea {
-      max-width: 97%;
-      min-width: 97%;
-    }
-  }
-  
-  .underlinedHeading {
-    text-decoration: underline;
-    margin: 0;
-  }
-  
-  .indexBox {
-    border: 1px solid lightgray;
-    width: 280px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-  
-    p {
-      margin: 1px;
-    }
-  
-    span {
-      padding-left: 10px;
-    }
-  
-    a {
-      text-decoration: none;
-      padding-top: 5px;
-      padding-bottom: 5px;
-      width: 100%;
+html {
+  height: 100%;
+
+  body {
+    height: calc(100% - 69px);
+
+    .body-content {
+      height: 100%;
       display: flex;
-  
-      &:link,
-      &:visited {
-        color: #333333;
-        background: #e3e3e3;
-      }
-  
-      /* Mouse over link */
-      &:hover {
-        color: #ffffff;
-        background-color: #007bff;
-      }
-  
-      /* Selected link */
-      &:active {
-        color: #0056b3;
-      }
+      flex-direction: column;
     }
   }
-  
-  .text-danger {
-    color: rgb(255, 115, 0);
-  }
-  
-  .stickyForumTitle {
-    background: white;
-    position: sticky;
-    top: 48px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+}
+
+h1 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  color: darkcyan;
+}
+
+h2 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  color: cadetblue;
+}
+
+p,
+li {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.formBox {
+  display: flex;
+  flex-direction: column;
+  width: 256px;
+  padding: 20px;
+  background: #dbdbdb;
+  border-radius: 5px;
+
+  &.searchBox {
+    width: 600px !important;
+
+    .keywordSect {
+      display: flex;
+    }
+
+    .searchBoxText {
+      padding-right: 12px;
+    }
   }
 
-  .appLogoTitle {
-    margin: 0;
-    padding-right: 10px;
+  textarea {
+    max-width: 97%;
+    min-width: 97%;
   }
-  
-  .stickyNavbar {
+}
+
+.underlinedHeading {
+  text-decoration: underline;
+  margin: 0;
+}
+
+.indexBox {
+  border: 1px solid lightgray;
+  width: 280px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+
+  p {
+    margin: 1px;
+  }
+
+  span {
+    padding-left: 10px;
+  }
+
+  a {
+    text-decoration: none;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    width: 100%;
     display: flex;
-    justify-content: space-between;
-    align-items: center; /* Centers items vertically within the navbar */
-    position: sticky;
-    top: 0px;
-    background: #f5f5f5;
-    padding: 10px;
-    z-index: 999;
-    margin-bottom: 10px;
-  
-    .loggedInText {
-      line-height: 20px;
-      padding-right: 5px;
+
+    &:link,
+    &:visited {
+      color: #333333;
+      background: #e3e3e3;
     }
-  
-    .left-section {
-      display: flex; /* Ensures items within left-section are in a row */
+
+    /* Mouse over link */
+    &:hover {
+      color: #ffffff;
+      background-color: #007bff;
     }
-    
+
+    /* Selected link */
+    &:active {
+      color: #0056b3;
+    }
+  }
+}
+
+.text-danger {
+  color: rgb(255, 115, 0);
+}
+
+.stickyForumTitle {
+  background: white;
+  position: sticky;
+  top: 48px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.appLogoTitle {
+  margin: 0;
+  padding-right: 10px;
+}
+
+.stickyNavbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Centers items vertically within the navbar */
+  position: sticky;
+  top: 0px;
+  background: #f5f5f5;
+  padding: 10px;
+  z-index: 999;
+  margin-bottom: 10px;
+
+  .loggedInText {
+    line-height: 20px;
+    padding-right: 5px;
+  }
+
+  .left-section {
+    display: flex; /* Ensures items within left-section are in a row */
+  }
+
+  .right-section {
+    display: flex; /* Ensures items within right-section are in a row */
+  }
+
+  a {
+    text-decoration: none;
+    padding: 5px;
+    white-space: nowrap;
+
+    &:link,
+    &:visited {
+      color: #333333;
+      background: #e3e3e3;
+    }
+
+    /* Mouse over link */
+    &:hover {
+      color: #ffffff;
+      background-color: #007bff;
+    }
+
+    /* Selected link */
+    &:active {
+      color: #0056b3;
+    }
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .stickyForumTitle {
+    top: 12vh;
+  }
+
+  .stickyNavbar {
+    flex-direction: column;
+
     .right-section {
-      display: flex; /* Ensures items within right-section are in a row */
+      margin-top: 2px;
     }
-  
+
     a {
-      text-decoration: none;
-      padding: 5px;
-      white-space: nowrap;
-  
-      &:link,
-      &:visited {
-        color: #333333;
-        background: #e3e3e3;
-      }
-  
-      /* Mouse over link */
-      &:hover {
-        color: #ffffff;
-        background-color: #007bff;
-      }
-  
-      /* Selected link */
-      &:active {
-        color: #0056b3;
-      }
+      white-space: unset;
     }
   }
-  
-  @media screen and (max-width: 767px) {
-  
-    .stickyForumTitle {
-      top: 12vh;
-    }
-    
-    .stickyNavbar {
-      flex-direction: column;
-  
-      .right-section {
-        margin-top: 2px;
-      }
-  
-      a {
-        white-space: unset;
-      }
-    }
-  }
+}
