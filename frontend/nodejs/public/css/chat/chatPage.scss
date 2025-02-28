@@ -10,8 +10,31 @@
 }
 
 .ai-response {
-    background-color: #d1f7d6;
+    background-color: #E3F6F5; // Soft pastel teal
+    color: #0F3443; // Deep teal for contrast
     text-align: left;
+
+    pre {
+        background-color: #B5EAEA; // Light teal for subtle distinction
+        color: #0F3443;
+    }
+}
+
+details.ai-think {
+    background: #d0e4f0; // Darker light blue
+    border: 1px solid #aac4d0; // Slightly darker border
+    border-radius: 4px;
+    margin-top: 10px;
+    padding: 5px;
+
+    pre {
+        background: #c0d8e8; // Slightly darker than before
+    }
+
+    summary {
+        cursor: pointer;
+        font-weight: bold;
+    }
 }
 
 .user-message {
@@ -94,3 +117,4 @@ pre {
     background-color: #f9f9f9;
     border-radius: 8px;
 }
+

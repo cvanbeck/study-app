@@ -10,8 +10,28 @@
 }
 
 .ai-response {
-  background-color: #d1f7d6;
+  background-color: #E3F6F5;
+  color: #0F3443;
   text-align: left;
+}
+.ai-response pre {
+  background-color: #B5EAEA;
+  color: #0F3443;
+}
+
+details.ai-think {
+  background: #d0e4f0;
+  border: 1px solid #aac4d0;
+  border-radius: 4px;
+  margin-top: 10px;
+  padding: 5px;
+}
+details.ai-think pre {
+  background: #c0d8e8;
+}
+details.ai-think summary {
+  cursor: pointer;
+  font-weight: bold;
 }
 
 .user-message {
