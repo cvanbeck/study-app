@@ -23,7 +23,7 @@ export default class ChatController {
                 {
                     model: "deepseek-r1:1.5b",
                     messages: [{ role: "user", content: prompt }],
-                    stream: false,  // Important: make sure stream is enabled
+                    stream: false,  // Important: make sure stream is disabled
                 },
                 {
                     headers: { "Content-Type": "application/json" },
