@@ -1,48 +1,59 @@
-//Import axios for making HTTP requests
 import axios from "axios";
+import { Writable } from "stream";
 
-//Define a ChatController class to handle chat-related API requests
 export default class ChatController {
-    
-    //Not using this but might want to in the future
-    //constructor(appData) {
-    //    this.appData = appData; 
-    //}
+    constructor(appData) {
+        this.appData = appData; 
+    }
 
-    //Handles POST requests
-    //This receives a user prompt, sends it to an external AI API, and streams the response back.
-    
-    async chat(req, res) {
+    async index(req, res) {
+        res.render("index", { ...this.appData });
+    }
+
+    async getChatResponse(req, res) {
         try {
-            //Extract prompt from the incoming request body
-            const { prompt } = req.body;
+            let prompt = req.body.prompt;
 
-            //Check if prompt is missing
             if (!prompt) {
-                return res.status(400).json({ error: "Prompt is required" }); 
+                return res.status(400).json({ error: "Prompt is required" });
             }
 
-            //Make an API request to the AI
             const response = await axios.post(
-                "https://ai.api.parsonlabs.com/v1/chat/completions", 
+                "https://ai.api.parsonlabs.com/v1/chat/completions",
                 {
                     model: "deepseek-r1:1.5b",
                     messages: [{ role: "user", content: prompt }],
-                    stream: true,
+                    stream: false,  // Important: make sure stream is enabled
                 },
                 {
                     headers: { "Content-Type": "application/json" },
-                    responseType: "stream",
+                    responseType: "stream",  // This is critical for streaming
                 }
             );
 
-            //Stream the AI response directly to the client
-            response.data.pipe(res);
+            // Create a writable stream to collect data
+            let responseData = "";
+            const writableStream = new Writable({
+                write(chunk, encoding, callback) {
+                    responseData += chunk.toString();  // Collect data in a variable
+                    callback();
+                }
+            });
+
+            // Pipe the AI response stream into the writable stream
+            response.data.pipe(writableStream);
+
+            // Wait for the stream to finish
+            writableStream.on('finish', () => {
+                // At this point, responseData contains the entire response as a string
+
+                // Now you can use responseData, for example, rendering it:
+                res.renderPartial("aiResponse", { ...this.appData, response: JSON.parse(responseData) });
+            });
 
         } catch (error) {
             console.error("Chat API Error:", error);
-
-            res.status(500).json({ error: "Internal Server Error" });
+            res.renderPartial("aiResponse", { ...this.appData, response: error.message });
         }
     }
 }
