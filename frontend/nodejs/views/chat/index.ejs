@@ -19,46 +19,56 @@
     * and wraps content inside <think> tags in collapsible <details> boxes.
     */
     function processAIContent(content) {
-        if (content.indexOf("<think>") === -1) return "<pre>" + content + "</pre>";
+    if (content.indexOf("<think>") === -1) return "<pre>" + content + "</pre>";
 
-        let result = "";
-        let remaining = content;
+    let result = "";
+    let remaining = content;
 
-        while (true) {
-            let openIndex = remaining.indexOf("<think>");
-            if (openIndex === -1) {
-                if (remaining) {
-                    result += "<pre>" + remaining + "</pre>";
-                }
-                break;
+    while (true) {
+        let openIndex = remaining.indexOf("<think>");
+        if (openIndex === -1) {
+            if (remaining) {
+                result += "<pre>" + remaining + "</pre>";
             }
-            // Wrap text before the <think> tag in <pre> tags.
-            let outsideText = remaining.substring(0, openIndex);
-            if (outsideText) {
-                result += "<pre>" + outsideText + "</pre>";
-            }
-            // Remove the opening <think> tag.
-            remaining = remaining.substring(openIndex + 7); // 7 chars for "<think>"
+            break;
+        }
+        // Wrap text before the <think> tag in <pre> tags.
+        let outsideText = remaining.substring(0, openIndex);
+        if (outsideText) {
+            result += "<pre>" + outsideText + "</pre>";
+        }
+        // Remove the opening <think> tag.
+        remaining = remaining.substring(openIndex + 7); // 7 chars for "<think>"
 
-            // Look for the closing tag.
-            let closeIndex = remaining.indexOf("</think>");
-            if (closeIndex === -1) {
-                // Unclosed think tag: wrap everything in an open details box.
-                result += `<details class="ai-think" open><summary>Thoughts</summary><div><pre>` +
-                    remaining + `</pre></div></details>`;
-                remaining = "";
-                break;
+        // Look for the closing tag.
+        let closeIndex = remaining.indexOf("</think>");
+        if (closeIndex === -1) {
+            // Unclosed think tag: wrap everything in an open details box.
+            result += `<details class="ai-think" open><summary>Thoughts</summary><div><pre>` +
+                remaining + `</pre></div></details>`;
+            remaining = "";
+            break;
+        } else {
+            // Closed think block: wrap inner content in details.
+            let innerContent = remaining.substring(0, closeIndex);
+            
+            // Check if the inner content is only whitespace or empty
+            const isEmpty = !innerContent.trim();
+            
+            if (isEmpty) {
+                result += `<details class="ai-think" style="display: none"><summary>Thoughts</summary><div><pre>` +
+                    innerContent + `</pre></div></details>`;
             } else {
-                // Closed think block: wrap inner content in details.
-                let innerContent = remaining.substring(0, closeIndex);
                 result += `<details class="ai-think"><summary>Thoughts</summary><div><pre>` +
                     innerContent + `</pre></div></details>`;
-                // Move past the closing tag (8 chars for "</think>")
-                remaining = remaining.substring(closeIndex + 8);
             }
+            
+            // Move past the closing tag (8 chars for "</think>")
+            remaining = remaining.substring(closeIndex + 8);
         }
-        return result;
     }
+    return result;
+}
 
     $(document).ready(function () {
         $('#chat-form').on('submit', function (e) {
