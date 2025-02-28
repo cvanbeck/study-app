@@ -27,6 +27,7 @@ app.engine('html', ejs.renderFile);
 // Set the layout to the file in the shared subfolder:
 app.set('layout', 'shared/layout.ejs');
 
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({ secret: 'transrights', resave: false, saveUninitialized: true }));
 

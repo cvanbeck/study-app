@@ -1,0 +1,100 @@
+<h1>Chat with AI</h1>
+
+<form id="chat-form">
+    <label for="message">Enter your message:</label>
+    <input type="text" id="prompt" name="prompt" required>  
+    <button type="submit">Send</button>  
+</form>
+
+<div id="chat-output"></div>
+
+<style>
+    /* Chat container styling */
+    #chat-output {
+        border: 1px solid #ddd;
+        padding: 10px;
+        width: 100%;
+        max-width: 600px;
+        margin-top: 20px;
+        height: 300px;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+    }
+
+    /* Chat message styling */
+    .chat-message {
+        margin: 10px 0;
+        padding: 8px;
+        border-radius: 8px;
+        background-color: #e3e3e3;
+        max-width: 80%;
+    }
+
+    /* AI response styling */
+    .ai-response {
+        background-color: #d1f7d6;
+        text-align: left;
+    }
+
+    /* User message styling */
+    .user-message {
+        background-color: #e2e2e2;
+        text-align: right;
+    }
+
+    /* Scroll styling */
+    #chat-output {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Pre-box styling for code block format */
+    pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+        padding: 5px;
+        background-color: #f1f1f1;
+        border-radius: 8px;
+        max-width: 100%;
+        overflow-x: auto;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('#chat-form').on('submit', function(e) {
+            e.preventDefault();
+
+            let prompt = $('#prompt').val();
+
+            $.ajax({
+                url: '/chat/getChatResponse',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ prompt: $('#prompt').val() }),
+                success: function(response) {
+                    // Append the user's message and AI's response in the chat output
+                    $('#chat-output').append(`
+                        <div class="chat-message user-message">
+                            <strong>You:</strong> ${prompt}
+                        </div>
+                        <div class="chat-message ai-response">
+                            <strong>AI:</strong> <pre>${response}</pre>
+                        </div>
+                    `);
+
+                    // Scroll to the bottom of the chat output
+                    $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while sending the message.');
+                }
+            });
+        });
+    });
+</script>
