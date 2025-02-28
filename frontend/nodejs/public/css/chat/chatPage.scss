@@ -1,52 +1,96 @@
-#chat-output {
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin-top: 20px;
-  height: 100%;
-  overflow-y: auto;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-}
-
 .chat-message {
-  margin: 10px 0;
-  padding: 8px;
-  border-radius: 8px;
-  background-color: #e3e3e3;
-  max-width: 80%;
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 8px;
+    background-color: #e3e3e3;
+    max-width: 80%;
+    width: 80%;
+    align-self: center;
+    margin: 10px;
 }
 
 .ai-response {
-  background-color: #d1f7d6;
-  text-align: left;
+    background-color: #d1f7d6;
+    text-align: left;
 }
 
 .user-message {
-  background-color: #e2e2e2;
-  text-align: right;
+    background-color: #e2e2e2;
+    text-align: right;
 }
 
 #chat-output {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  margin: 0;
-  padding: 5px;
-  background-color: #f1f1f1;
-  border-radius: 8px;
-  max-width: 100%;
-  overflow-x: auto;
-  font-family: "Courier New", monospace;
-  font-size: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 0;
+    padding: 10px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+    max-width: 100%;
+    overflow-x: auto;
+    font-family: "Courier New", monospace;
+    font-size: 14px;
 }
 
 .aiContainer {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 10px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-form {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 80%;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+
+    input {
+        flex-grow: 1;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        font-size: 16px;
+        margin-right: 10px;
+    }
+
+    label {
+        padding-right: 10px;
+    }
+
+    button {
+        padding: 10px 15px;
+        border-radius: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+
+        &:hover {
+            background-color: #0056b3;
+        }
+    }
+}
+
+#chat-output {
+    border: 1px solid #ddd;
+    height: calc(100% - 70px);
+    margin-bottom: 100px;
+    /* Adjust height to leave space for the input box */
+    overflow-y: auto;
+    background-color: #f9f9f9;
+    border-radius: 8px;
 }
