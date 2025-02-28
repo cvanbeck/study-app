@@ -2,12 +2,21 @@ html {
   height: 100%;
 }
 html body {
-  height: calc(100% - 69px);
+  height: 100%;
+  overflow: auto;
 }
 html body .body-content {
-  height: 100%;
+  height: calc(100% - 58px);
   display: flex;
   flex-direction: column;
+  overflow: auto;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
 }
 
 h1 {
@@ -101,6 +110,7 @@ li {
 }
 
 .appLogoTitle {
+  align-content: center;
   margin: 0;
   padding-right: 10px;
 }
@@ -108,23 +118,25 @@ li {
 .stickyNavbar {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Centers items vertically within the navbar */
+  align-items: center;
+  /* Centers items vertically within the navbar */
   position: sticky;
   top: 0px;
   background: #f5f5f5;
-  padding: 10px;
+  padding: 15px;
   z-index: 999;
-  margin-bottom: 10px;
 }
 .stickyNavbar .loggedInText {
   line-height: 20px;
   padding-right: 5px;
 }
 .stickyNavbar .left-section {
-  display: flex; /* Ensures items within left-section are in a row */
+  display: flex;
+  /* Ensures items within left-section are in a row */
 }
 .stickyNavbar .right-section {
-  display: flex; /* Ensures items within right-section are in a row */
+  display: flex;
+  /* Ensures items within right-section are in a row */
 }
 .stickyNavbar a {
   text-decoration: none;

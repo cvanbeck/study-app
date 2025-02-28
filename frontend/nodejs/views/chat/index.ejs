@@ -3,8 +3,7 @@
     <h1>Chat with AI</h1>
 
     <form id="chat-form">
-        <label for="message">Enter your message:</label>
-        <input type="text" id="prompt" name="prompt" required> 
+        <input type="text" id="prompt" name="prompt" placeholder="Message the AI" required> 
         <button type="submit">Send</button>  
     </form>
     
@@ -18,13 +17,16 @@
 
             let prompt = $('#prompt').val();
 
+            $('#prompt').val("");
+
             // Generate a unique ID for the AI response
             const messageId = 'ai-response-' + Date.now(); // Unique ID based on timestamp
 
             // Append the user's message to the chat
             $('#chat-output').append(`
                 <div class="chat-message user-message">
-                    <strong>You:</strong> ${prompt}
+                    <strong>You:</strong>
+                    <pre>${prompt}</pre>
                 </div>
                 <div id="${messageId}" class="chat-message ai-response">
                     <strong>AI:</strong> <pre>...</pre>
