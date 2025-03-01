@@ -51,7 +51,7 @@ details.ai-think summary {
   display: flex;
   flex-direction: column;
   border: 1px solid #ddd;
-  height: calc(100% - 144px);
+  height: calc(100% - 165px);
   overflow-y: auto;
   background-color: #f9f9f9;
   border-radius: 8px;
