@@ -5,7 +5,7 @@
 <h1>Chat with AI</h1>
 
 <form id="chat-form">
-  <input type="text" id="prompt" name="prompt" placeholder="Message the AI" required />
+  <textarea type="text" id="prompt" name="prompt" placeholder="Message the AI" rows="2" required></textarea>
   <button type="submit">Send</button>
 </form>
 
@@ -17,7 +17,7 @@
     breaks: true,      // Convert \n to <br>
     gfm: true,         // GitHub flavored markdown
     headerIds: false,  // Don't add ids to headers
-    sanitize: false    // Allow HTML
+    sanitize: true    // Prevent script injection
   });
 
   // Process AI content, separating <think> tags from visible content
@@ -84,13 +84,27 @@
     return { objects, remainder: buffer.slice(index) };
   }
 
+  // Function to escape HTML entities to prevent HTML rendering
+  function escapeHTML(str) {
+    return str.replace(/[&<>"']/g, function (match) {
+      const escapeMap = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return escapeMap[match];
+    });
+  }
+
   // Append the user's prompt and an empty AI response container to the chat output
   function appendChatMessages(prompt) {
     const messageId = 'ai-response-' + Date.now();
     $('#chat-output').append(`
           <div class="chat-message user-message">
             <strong>You:</strong>
-            <pre>${prompt}</pre>
+            <pre>${escapeHTML(prompt)}</pre>
           </div>
           <div id="${messageId}" class="chat-message ai-response">
             <strong>AI:</strong>
@@ -201,13 +215,14 @@
       e.preventDefault();
       const prompt = $('#prompt').val();
       $('#prompt').val("");
+      adjustTextareaHeight($('#prompt')[0]);
 
       // Append the messages and set up the container.
       const container = appendChatMessages(prompt);
 
       // Create an EventSource for SSE.
       const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
-      
+
       // State to hold response data and related variables, including the chunks array for ordering.
       const state = {
         fullRawContent: '',
@@ -225,5 +240,33 @@
         handleSSEError(state);
       };
     });
+
+    // Adjust the height of the textarea to fit its content
+    function adjustTextareaHeight(textarea) {
+      // Reset the height to auto so we can measure the new content height
+      textarea.style.height = 'auto';
+
+      // Set the height to the scrollHeight, which will adjust according to content
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    // Handle keydown event to adjust height
+    $('#prompt').on('keydown', function (e) {
+      // Adjust height on each keydown event
+      adjustTextareaHeight(this);
+
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); // Prevent the default enter behavior (new line)
+        $('#chat-form').submit(); // Trigger form submission
+      }
+    });
+
+    // Handle keydown event to adjust height
+    $('#prompt').on('input', function (e) {
+      // Adjust height on each input event
+      adjustTextareaHeight(this);
+    });
+
+    adjustTextareaHeight($('#prompt')[0]);
   });
 </script>
