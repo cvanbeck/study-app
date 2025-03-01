@@ -42,9 +42,14 @@ details.ai-think summary {
 #chat-output {
   display: flex;
   flex-direction: column;
+  border: 1px solid #ddd;
+  height: calc(100% - 70px);
+  margin-bottom: 100px;
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }
-
-pre {
+#chat-output pre {
   white-space: pre-wrap;
   word-wrap: break-word;
   margin: 0;
@@ -93,14 +98,4 @@ pre {
 }
 #chat-form button:hover {
   background-color: #0056b3;
-}
-
-#chat-output {
-  border: 1px solid #ddd;
-  height: calc(100% - 70px);
-  margin-bottom: 100px;
-  /* Adjust height to leave space for the input box */
-  overflow-y: auto;
-  background-color: #f9f9f9;
-  border-radius: 8px;
 }/*# sourceMappingURL=chatPage.css.map */
