@@ -45,19 +45,25 @@ details.ai-think {
 #chat-output {
     display: flex;
     flex-direction: column;
-}
-
-pre {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    margin: 0;
-    padding: 10px;
-    background-color: #f1f1f1;
+    border: 1px solid #ddd;
+    height: calc(100% - 70px);
+    margin-bottom: 100px; // Adjust height to leave space for the input box
+    overflow-y: auto;
+    background-color: #f9f9f9;
     border-radius: 8px;
-    max-width: 100%;
-    overflow-x: auto;
-    font-family: "Courier New", monospace;
-    font-size: 14px;
+
+    pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+        padding: 10px;
+        background-color: #f1f1f1;
+        border-radius: 8px;
+        max-width: 100%;
+        overflow-x: auto;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+    }
 }
 
 #chat-form {
@@ -101,14 +107,3 @@ pre {
         }
     }
 }
-
-#chat-output {
-    border: 1px solid #ddd;
-    height: calc(100% - 70px);
-    margin-bottom: 100px;
-    /* Adjust height to leave space for the input box */
-    overflow-y: auto;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-}
-
