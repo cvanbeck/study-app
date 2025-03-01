@@ -1,224 +1,229 @@
 <head>
-    <link rel="stylesheet" type="text/css" href="/css/chat/chatPage.css" />
-  </head>
-  <h1>Chat with AI</h1>
-  
-  <form id="chat-form">
-    <input type="text" id="prompt" name="prompt" placeholder="Message the AI" required>
-    <button type="submit">Send</button>
-  </form>
-  
-  <div id="chat-output"></div>
-  
-  <script>
-    // Wrap text outside <think> tags in <pre> and text inside in collapsible <details>.
-    function processAIContent(content) {
-      if (content.indexOf("<think>") === -1) return "<pre>" + content + "</pre>";
-      let result = "";
-      let remaining = content;
-      while (true) {
-        let openIndex = remaining.indexOf("<think>");
-        if (openIndex === -1) {
-          if (remaining) result += "<pre>" + remaining + "</pre>";
-          break;
-        }
-        
-        // Wrap text before the <think> tag in <pre> tags.
-        let outsideText = remaining.substring(0, openIndex);
-        if (outsideText) result += "<pre>" + outsideText + "</pre>";
-        
-        // Move past the opening tag (7 chars for "<think>")
-        remaining = remaining.substring(openIndex + 7); // Skip "<think>"
-        
-        // Look for the closing tag.
-        let closeIndex = remaining.indexOf("</think>");
-        if (closeIndex === -1) {
-          
-            // Unclosed think tag: wrap everything in an open details box.
-          result += `<details class="ai-think" open><summary>Thoughts</summary><div><pre>` +
-            remaining + `</pre></div></details>`;
-          remaining = "";
-          break;
+  <link rel="stylesheet" type="text/css" href="/css/chat/chatPage.css" />
+</head>
+
+<h1>Chat with AI</h1>
+
+<form id="chat-form">
+  <input type="text" id="prompt" name="prompt" placeholder="Message the AI" required />
+  <button type="submit">Send</button>
+</form>
+
+<div id="chat-output"></div>
+
+<script>
+  // Configure marked options
+  marked.setOptions({
+    breaks: true,      // Convert \n to <br>
+    gfm: true,         // GitHub flavored markdown
+    headerIds: false,  // Don't add ids to headers
+    sanitize: false    // Allow HTML
+  });
+
+  // Process AI content, separating <think> tags from visible content
+  function processAIContent(content) {
+
+    /**
+     * Think match section
+     * Uses regex to match all content within think tags
+     * Regex also matches content to the end if the think tag does not have a closing tag.
+     */
+    const thinkMatch = content.match(/<think>([\s\S]*?)(?:<\/think>|$)/);
+    if (!thinkMatch) {
+      return {
+        thoughts: "",
+        visible: content
+      };
+    }
+    const thoughtContent = thinkMatch[1];
+    let visibleContent = content.replace(/<think>[\s\S]*?(?:<\/think>|$)/, "");
+    return {
+      thoughts: thoughtContent,
+      visible: visibleContent
+    };
+  }
+
+  // Extract complete JSON objects from a buffer string by balancing braces
+  function extractJSONObjects(buffer) {
+    const objects = [];
+    let index = 0;
+    while (true) {
+      const start = buffer.indexOf('{', index);
+      if (start === -1) break;
+      let braceCount = 0, inString = false, escape = false;
+      let end = start;
+      for (; end < buffer.length; end++) {
+        const char = buffer[end];
+        if (inString) {
+          if (escape) {
+            escape = false;
+          } else if (char === '\\') {
+            escape = true;
+          } else if (char === '"') {
+            inString = false;
+          }
         } else {
-          // Closed think block: wrap inner content in details.
-          let innerContent = remaining.substring(0, closeIndex);
-
-          // Check if the inner content is only whitespace or empty
-          const isEmpty = !innerContent.trim();
-
-          if (isEmpty) {
-            result += `<details class="ai-think" style="display: none"><summary>Thoughts</summary><div><pre>` +
-              innerContent + `</pre></div></details>`;
-          } else {
-            result += `<details class="ai-think"><summary>Thoughts</summary><div><pre>` +
-              innerContent + `</pre></div></details>`;
-          }
-
-          // Move past the closing tag (8 chars for "</think>")
-          remaining = remaining.substring(closeIndex + 8); // Skip "</think>"
-        }
-      }
-      return result;
-    }
-  
-    // Extract complete JSON objects from a buffer string by balancing braces.
-    function extractJSONObjects(buffer) {
-      const objects = [];
-      let index = 0;
-      while (true) {
-        const start = buffer.indexOf('{', index);
-        if (start === -1) break;
-        let braceCount = 0, inString = false, escape = false;
-        let end = start;
-        for (; end < buffer.length; end++) {
-          const char = buffer[end];
-          if (inString) {
-            if (escape) {
-              escape = false;
-            } else if (char === '\\') {
-              escape = true;
-            } else if (char === '"') {
-              inString = false;
-            }
-          } else {
-            if (char === '"') {
-              inString = true;
-            } else if (char === '{') {
-              braceCount++;
-            } else if (char === '}') {
-              braceCount--;
-              if (braceCount === 0) {
-                end++; // include the closing brace
-                const objStr = buffer.slice(start, end);
-                objects.push(objStr);
-                index = end;
-                break;
-              }
+          if (char === '"') {
+            inString = true;
+          } else if (char === '{') {
+            braceCount++;
+          } else if (char === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+              end++; // include the closing brace
+              const objStr = buffer.slice(start, end);
+              objects.push(objStr);
+              index = end;
+              break;
             }
           }
         }
-        if (braceCount !== 0) break;
       }
-      return { objects, remainder: buffer.slice(index) };
+      if (braceCount !== 0) break;
     }
-  
-    // Append the user's prompt and an empty AI response container to the chat output.
-    function appendChatMessages(prompt) {
-      const messageId = 'ai-response-' + Date.now();
-      $('#chat-output').append(`
-        <div class="chat-message user-message">
-          <strong>You:</strong>
-          <pre>${prompt}</pre>
-        </div>
-        <div id="${messageId}" class="chat-message ai-response">
-          <strong>AI:</strong>
-          <div class="ai-content"></div>
-        </div>
-      `);
-      return document.querySelector(`#${messageId} .ai-content`);
+    return { objects, remainder: buffer.slice(index) };
+  }
+
+  // Append the user's prompt and an empty AI response container to the chat output
+  function appendChatMessages(prompt) {
+    const messageId = 'ai-response-' + Date.now();
+    $('#chat-output').append(`
+          <div class="chat-message user-message">
+            <strong>You:</strong>
+            <pre>${prompt}</pre>
+          </div>
+          <div id="${messageId}" class="chat-message ai-response">
+            <strong>AI:</strong>
+            <div class="ai-content"></div>
+          </div>
+        `);
+    return document.querySelector(`#${messageId} .ai-content`);
+  }
+
+  // Scroll the chat output to the bottom
+  function updateScroll() {
+    $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
+  }
+
+  // Render the entire AI response with processed content
+  function renderFullResponse(state) {
+    // Process the raw content to separate thoughts and visible content
+    const processedContent = processAIContent(state.fullRawContent);
+
+    // Clear the existing content in the container before re-rendering
+    state.container.innerHTML = '';
+
+    // Check if there are any thoughts to display
+    if (processedContent.thoughts.trim()) {
+      // Create a <details> element to show thoughts (collapsible)
+      const detailsElement = document.createElement('details');
+      detailsElement.className = 'ai-think';
+      detailsElement.setAttribute('open', ''); // Keep thoughts expanded by default
+
+      // Add a <summary> to label the thoughts section
+      const summaryElement = document.createElement('summary');
+      summaryElement.textContent = 'Thoughts';
+      detailsElement.appendChild(summaryElement);
+
+      // Create a div to hold the markdown-rendered thoughts content
+      const innerDiv = document.createElement('div');
+      innerDiv.className = 'markdown-content';
+      innerDiv.innerHTML = marked.parse(processedContent.thoughts); // Parse thoughts as markdown
+
+      // Append the markdown content inside the <details> element
+      detailsElement.appendChild(innerDiv);
+
+      // Add the thoughts section to the container
+      state.container.appendChild(detailsElement);
     }
-  
-    // Create and append a new <pre> element to the given container.
-    function createNewPre(container) {
-      const newPre = document.createElement('pre');
-      container.appendChild(newPre);
-      return newPre;
+
+    // Check if there is visible content to display
+    if (processedContent.visible) {
+      // Create a div for the visible content, rendered as markdown
+      const visibleContentDiv = document.createElement('div');
+      visibleContentDiv.className = 'markdown-content';
+      visibleContentDiv.innerHTML = marked.parse(processedContent.visible); // Parse visible content as markdown
+
+      // Append the visible content to the container
+      state.container.appendChild(visibleContentDiv);
     }
-  
-    // Scroll the chat output to the bottom.
-    function updateScroll() {
-      $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
-    }
-  
-    // Process a complete JSON chunk from the SSE.
-    function processChunk(responseData, state) {
-      const content = responseData.choices[0].delta.content;
-      state.aiResponse += content;
-      if (content.indexOf("<think>") !== -1 || content.indexOf("</think>") !== -1) {
-        reprocessAndUpdate(state);
-      } else {
-        updateAppendTarget(content, state);
-      }
-    }
-  
-    // Re-render the accumulated AI response and update the current append target.
-    function reprocessAndUpdate(state) {
-      state.container.innerHTML = processAIContent(state.aiResponse);
-      let candidate = state.container.querySelector('pre:last-of-type');
-      if (candidate) {
-        let detailsParent = candidate.closest('details.ai-think');
-        state.currentAppendTarget = (detailsParent && !detailsParent.hasAttribute('open'))
-          ? createNewPre(state.container)
-          : candidate;
-      } else {
-        state.currentAppendTarget = createNewPre(state.container);
-      }
-    }
-  
-    // Append new text to the current target <pre> element.
-    function updateAppendTarget(newText, state) {
-      if (!state.currentAppendTarget) {
-        state.currentAppendTarget = createNewPre(state.container);
-      }
-      state.currentAppendTarget.textContent += newText;
-      state.currentAppendTarget.textContent = state.currentAppendTarget.textContent.trimStart();
-    }
-  
-    // Handle incoming SSE messages by extracting JSON chunks and processing them.
-    function handleSSEMessage(event, state) {
-      if (event.data === "[DONE]") {
-        state.eventSource.close();
-        return;
-      }
-      state.buffer += event.data;
-      const { objects, remainder } = extractJSONObjects(state.buffer);
-      state.buffer = remainder;
-      objects.forEach(objStr => {
-        try {
-          const responseData = JSON.parse(objStr);
-          processChunk(responseData, state);
-        } catch (e) {
-          console.error("Error parsing chunk:", e, "Chunk:", objStr);
-        }
-      });
-      updateScroll();
-    }
-  
-    // Handle SSE error events.
-    function handleSSEError(state) {
-      alert('An error occurred while streaming the response.');
+  }
+
+
+  // Process a complete JSON chunk from the SSE
+  function processChunk(responseData, state) {
+    // Extract content from the chunk
+    const content = responseData.choices[0].delta.content;
+    // Create a chunk object with an order indicator (using responseData.created)
+    const chunk = {
+      created: responseData.created,  // assumes a timestamp or sequence number is provided
+      content: content
+    };
+    // Add the chunk to the state.chunks array
+    state.chunks.push(chunk);
+    // Sort chunks by the created field (oldest first)
+    state.chunks.sort((a, b) => a.created - b.created);
+    // Rebuild the full raw content by joining the sorted chunk contents
+    state.fullRawContent = state.chunks.map(chunk => chunk.content).join('');
+    // Render the response with the correctly ordered content
+    renderFullResponse(state);
+    updateScroll();
+  }
+
+  // Handle incoming SSE messages by extracting JSON chunks and processing them
+  function handleSSEMessage(event, state) {
+    if (event.data === "[DONE]") {
       state.eventSource.close();
+      return;
     }
-  
-    $(document).ready(function () {
-      $('#chat-form').on('submit', function (e) {
-        e.preventDefault();
-        const prompt = $('#prompt').val();
-        $('#prompt').val("");
-        
-        // Append the messages and set up the container.
-        const container = appendChatMessages(prompt);
-        
-        // Create an EventSource for SSE.
-        const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
-        
-        // State to hold response data and related variables.
-        const state = {
-          aiResponse: '',
-          currentAppendTarget: null,
-          buffer: "",
-          container: container,
-          eventSource: eventSource
-        };
-  
-        // Set up SSE event handlers.
-        eventSource.onmessage = function (event) {
-          handleSSEMessage(event, state);
-        };
-  
-        eventSource.onerror = function () {
-          handleSSEError(state);
-        };
-      });
+    state.buffer += event.data;
+    const { objects, remainder } = extractJSONObjects(state.buffer);
+    state.buffer = remainder;
+    objects.forEach(objStr => {
+      try {
+        const responseData = JSON.parse(objStr);
+        processChunk(responseData, state);
+      } catch (e) {
+        console.error("Error parsing chunk:", e, "Chunk:", objStr);
+      }
     });
-  </script>  
+  }
+
+  // Handle SSE error events
+  function handleSSEError(state) {
+    alert('An error occurred while streaming the response.');
+    state.eventSource.close();
+  }
+
+  // Set up form submission to start streaming response via SSE
+  $(document).ready(function () {
+    $('#chat-form').on('submit', function (e) {
+      e.preventDefault();
+      const prompt = $('#prompt').val();
+      $('#prompt').val("");
+
+      // Append the messages and set up the container.
+      const container = appendChatMessages(prompt);
+
+      // Create an EventSource for SSE.
+      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
+      
+      // State to hold response data and related variables, including the chunks array for ordering.
+      const state = {
+        fullRawContent: '',
+        buffer: "",
+        chunks: [],
+        container: container,
+        eventSource: eventSource
+      };
+
+      eventSource.onmessage = function (event) {
+        handleSSEMessage(event, state);
+      };
+
+      eventSource.onerror = function () {
+        handleSSEError(state);
+      };
+    });
+  });
+</script>
