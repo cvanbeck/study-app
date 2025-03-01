@@ -1,13 +1,16 @@
-import ExampleItem from '../models/exampleItem.js';
+import BaseController from "./base/BaseController.js";
+import ExampleItem from "../models/exampleItem.js";
 
-export default class HomeController {
+export default class HomeController extends BaseController {
+    // REQUIRED FOR ALL CONTROLLERS
     constructor(appData) {
-        this.appData = appData;
-
+        super(appData); // REQUIRED
+        
         // Access the database context from the shared appData object
-        this.db = appData.db;
+        this.db = appData.db; // OPTIONAL
     }
 
+    // REQUIRED FOR ALL CONTROLLERS
     async index(req, res) {
         let firstRow = null;
         try {
@@ -21,14 +24,14 @@ export default class HomeController {
         } catch (error) {
             console.error('Error querying Employee table:', error);
             // Send an error response if the query fails
-            res.status(500).json({ error: 'Database query error' });
-            return;
+            return res.status(500).json({ error: 'Database query error' });
         }
 
         // Now you can simply use the view name without the folder
-        res.render("index.ejs", { ...this.appData, user: req.session.user, dbItem: firstRow });
+        return res.render("index.ejs", { ...this.appData, user: req.session.user, dbItem: firstRow });
     }
 
+    // OPTIONAL, EXAMPLE FUNCTION (routes to (url)/example)
     async example(req, res) {
         const item = new ExampleItem({
             name: "Sample Item",
@@ -36,16 +39,17 @@ export default class HomeController {
         });
 
         // Pass data to the view
-        res.render("example", { ...this.appData, item });
+        return res.render("example", { ...this.appData, item });
     }
 
-    // Example AJAX function for dynamic content on other pages
+    // OPTIONAL, EXAMPLE FUNCTION (routes to (url)/ajaxTest)
     async ajaxTest(req, res) {
         const item = new ExampleItem({
             name: "Test",
             description: "Test"
         });
+        
         // Prepare the content to send as a partial
-        res.renderPartial("partials/ajaxTest", { ...this.appData, message: "This is the AJAX loaded content!", item });
+        return res.renderPartial("partials/ajaxTest", { ...this.appData, message: "This is the AJAX loaded content!", item });
     }
 }
