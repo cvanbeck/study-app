@@ -9,7 +9,7 @@ Node.js
 - Enter `node server.js` to launch server
 
 ## To activate collab notes functionality:
-- Navigate to backend/nodejs/etherpad/etherpad-lite-2.2.7
+- Navigate to backend/etherpad/etherpad-lite-2.2.7
 - Run pnpm i
 - Run pnpm run build:etherpad
 - Run pnpm run prod
