@@ -1,167 +1,224 @@
 <head>
     <link rel="stylesheet" type="text/css" href="/css/chat/chatPage.css" />
-</head>
-<h1>Chat with AI</h1>
-
-<form id="chat-form">
+  </head>
+  <h1>Chat with AI</h1>
+  
+  <form id="chat-form">
     <input type="text" id="prompt" name="prompt" placeholder="Message the AI" required>
     <button type="submit">Send</button>
-</form>
-
-<div id="chat-output"></div>
-
-<script>
-    /*
-    * Function to process the full AI content.
-    * It wraps text outside of <think> tags in <pre> elements
-    * and wraps content inside <think> tags in collapsible <details> boxes.
-    */
+  </form>
+  
+  <div id="chat-output"></div>
+  
+  <script>
+    // Wrap text outside <think> tags in <pre> and text inside in collapsible <details>.
     function processAIContent(content) {
-        if (content.indexOf("<think>") === -1) return "<pre>" + content + "</pre>";
-
-        let result = "";
-        let remaining = content;
-
-        while (true) {
-            let openIndex = remaining.indexOf("<think>");
-            if (openIndex === -1) {
-                if (remaining) {
-                    result += "<pre>" + remaining + "</pre>";
-                }
-                break;
-            }
-            // Wrap text before the <think> tag in <pre> tags.
-            let outsideText = remaining.substring(0, openIndex);
-            if (outsideText) {
-                result += "<pre>" + outsideText + "</pre>";
-            }
-            // Remove the opening <think> tag.
-            remaining = remaining.substring(openIndex + 7); // 7 chars for "<think>"
-
-            // Look for the closing tag.
-            let closeIndex = remaining.indexOf("</think>");
-            if (closeIndex === -1) {
-                // Unclosed think tag: wrap everything in an open details box.
-                result += `<details class="ai-think" open><summary>Thoughts</summary><div><pre>` +
-                    remaining + `</pre></div></details>`;
-                remaining = "";
-                break;
-            } else {
-                // Closed think block: wrap inner content in details.
-                let innerContent = remaining.substring(0, closeIndex);
-
-                // Check if the inner content is only whitespace or empty
-                const isEmpty = !innerContent.trim();
-
-                if (isEmpty) {
-                    result += `<details class="ai-think" style="display: none"><summary>Thoughts</summary><div><pre>` +
-                        innerContent + `</pre></div></details>`;
-                } else {
-                    result += `<details class="ai-think"><summary>Thoughts</summary><div><pre>` +
-                        innerContent + `</pre></div></details>`;
-                }
-
-                // Move past the closing tag (8 chars for "</think>")
-                remaining = remaining.substring(closeIndex + 8);
-            }
+      if (content.indexOf("<think>") === -1) return "<pre>" + content + "</pre>";
+      let result = "";
+      let remaining = content;
+      while (true) {
+        let openIndex = remaining.indexOf("<think>");
+        if (openIndex === -1) {
+          if (remaining) result += "<pre>" + remaining + "</pre>";
+          break;
         }
-        return result;
+        
+        // Wrap text before the <think> tag in <pre> tags.
+        let outsideText = remaining.substring(0, openIndex);
+        if (outsideText) result += "<pre>" + outsideText + "</pre>";
+        
+        // Move past the opening tag (7 chars for "<think>")
+        remaining = remaining.substring(openIndex + 7); // Skip "<think>"
+        
+        // Look for the closing tag.
+        let closeIndex = remaining.indexOf("</think>");
+        if (closeIndex === -1) {
+          
+            // Unclosed think tag: wrap everything in an open details box.
+          result += `<details class="ai-think" open><summary>Thoughts</summary><div><pre>` +
+            remaining + `</pre></div></details>`;
+          remaining = "";
+          break;
+        } else {
+          // Closed think block: wrap inner content in details.
+          let innerContent = remaining.substring(0, closeIndex);
+
+          // Check if the inner content is only whitespace or empty
+          const isEmpty = !innerContent.trim();
+
+          if (isEmpty) {
+            result += `<details class="ai-think" style="display: none"><summary>Thoughts</summary><div><pre>` +
+              innerContent + `</pre></div></details>`;
+          } else {
+            result += `<details class="ai-think"><summary>Thoughts</summary><div><pre>` +
+              innerContent + `</pre></div></details>`;
+          }
+
+          // Move past the closing tag (8 chars for "</think>")
+          remaining = remaining.substring(closeIndex + 8); // Skip "</think>"
+        }
+      }
+      return result;
     }
-
+  
+    // Extract complete JSON objects from a buffer string by balancing braces.
+    function extractJSONObjects(buffer) {
+      const objects = [];
+      let index = 0;
+      while (true) {
+        const start = buffer.indexOf('{', index);
+        if (start === -1) break;
+        let braceCount = 0, inString = false, escape = false;
+        let end = start;
+        for (; end < buffer.length; end++) {
+          const char = buffer[end];
+          if (inString) {
+            if (escape) {
+              escape = false;
+            } else if (char === '\\') {
+              escape = true;
+            } else if (char === '"') {
+              inString = false;
+            }
+          } else {
+            if (char === '"') {
+              inString = true;
+            } else if (char === '{') {
+              braceCount++;
+            } else if (char === '}') {
+              braceCount--;
+              if (braceCount === 0) {
+                end++; // include the closing brace
+                const objStr = buffer.slice(start, end);
+                objects.push(objStr);
+                index = end;
+                break;
+              }
+            }
+          }
+        }
+        if (braceCount !== 0) break;
+      }
+      return { objects, remainder: buffer.slice(index) };
+    }
+  
+    // Append the user's prompt and an empty AI response container to the chat output.
+    function appendChatMessages(prompt) {
+      const messageId = 'ai-response-' + Date.now();
+      $('#chat-output').append(`
+        <div class="chat-message user-message">
+          <strong>You:</strong>
+          <pre>${prompt}</pre>
+        </div>
+        <div id="${messageId}" class="chat-message ai-response">
+          <strong>AI:</strong>
+          <div class="ai-content"></div>
+        </div>
+      `);
+      return document.querySelector(`#${messageId} .ai-content`);
+    }
+  
+    // Create and append a new <pre> element to the given container.
+    function createNewPre(container) {
+      const newPre = document.createElement('pre');
+      container.appendChild(newPre);
+      return newPre;
+    }
+  
+    // Scroll the chat output to the bottom.
+    function updateScroll() {
+      $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
+    }
+  
+    // Process a complete JSON chunk from the SSE.
+    function processChunk(responseData, state) {
+      const content = responseData.choices[0].delta.content;
+      state.aiResponse += content;
+      if (content.indexOf("<think>") !== -1 || content.indexOf("</think>") !== -1) {
+        reprocessAndUpdate(state);
+      } else {
+        updateAppendTarget(content, state);
+      }
+    }
+  
+    // Re-render the accumulated AI response and update the current append target.
+    function reprocessAndUpdate(state) {
+      state.container.innerHTML = processAIContent(state.aiResponse);
+      let candidate = state.container.querySelector('pre:last-of-type');
+      if (candidate) {
+        let detailsParent = candidate.closest('details.ai-think');
+        state.currentAppendTarget = (detailsParent && !detailsParent.hasAttribute('open'))
+          ? createNewPre(state.container)
+          : candidate;
+      } else {
+        state.currentAppendTarget = createNewPre(state.container);
+      }
+    }
+  
+    // Append new text to the current target <pre> element.
+    function updateAppendTarget(newText, state) {
+      if (!state.currentAppendTarget) {
+        state.currentAppendTarget = createNewPre(state.container);
+      }
+      state.currentAppendTarget.textContent += newText;
+      state.currentAppendTarget.textContent = state.currentAppendTarget.textContent.trimStart();
+    }
+  
+    // Handle incoming SSE messages by extracting JSON chunks and processing them.
+    function handleSSEMessage(event, state) {
+      if (event.data === "[DONE]") {
+        state.eventSource.close();
+        return;
+      }
+      state.buffer += event.data;
+      const { objects, remainder } = extractJSONObjects(state.buffer);
+      state.buffer = remainder;
+      objects.forEach(objStr => {
+        try {
+          const responseData = JSON.parse(objStr);
+          processChunk(responseData, state);
+        } catch (e) {
+          console.error("Error parsing chunk:", e, "Chunk:", objStr);
+        }
+      });
+      updateScroll();
+    }
+  
+    // Handle SSE error events.
+    function handleSSEError(state) {
+      alert('An error occurred while streaming the response.');
+      state.eventSource.close();
+    }
+  
     $(document).ready(function () {
-        $('#chat-form').on('submit', function (e) {
-            e.preventDefault();
-
-            let prompt = $('#prompt').val();
-            $('#prompt').val("");
-
-            // Generate a unique ID for the AI response so it can be tracked with response streaming
-            const messageId = 'ai-response-' + Date.now();
-
-            // Append the user message and an empty container for the AI response.
-            $('#chat-output').append(`
-                <div class="chat-message user-message">
-                    <strong>You:</strong>
-                    <pre>${prompt}</pre>
-                </div>
-                <div id="${messageId}" class="chat-message ai-response">
-                    <strong>AI:</strong>
-                    <div class="ai-content"></div>
-                </div>
-            `);
-
-            const container = document.querySelector(`#${messageId} .ai-content`);
-            const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
-
-            let aiResponse = ''; // Accumulates the entire response.
-            let currentAppendTarget = null; // Pointer to the current <pre> element for plain text.
-
-            // Reprocesses the entire accumulated content and sets the append target.
-            function reprocessAndUpdate() {
-                container.innerHTML = processAIContent(aiResponse);
-                let candidate = container.querySelector('pre:last-of-type');
-                if (candidate) {
-                    // If the candidate is inside a closed think block, create a new <pre>.
-                    let detailsParent = candidate.closest('details.ai-think');
-                    if (detailsParent && !detailsParent.hasAttribute('open')) {
-                        let newPre = document.createElement('pre');
-                        container.appendChild(newPre);
-                        currentAppendTarget = newPre;
-                    } else {
-                        currentAppendTarget = candidate;
-                    }
-                } else {
-                    let newPre = document.createElement('pre');
-                    container.appendChild(newPre);
-                    currentAppendTarget = newPre;
-                }
-            }
-
-            function updateAppendTarget(newText) {
-                if (!currentAppendTarget) {
-                    let newPre = document.createElement('pre');
-                    container.appendChild(newPre);
-                    currentAppendTarget = newPre;
-                }
-                // Accumulate and trim the entire content
-                currentAppendTarget.textContent = currentAppendTarget.textContent + newText;
-                currentAppendTarget.textContent = currentAppendTarget.textContent.trimStart();
-            }
-
-
-            eventSource.onmessage = function (event) {
-                if (event.data === "[DONE]") {
-                    eventSource.close();
-                    return;
-                }
-                try {
-                    const rawData = event.data.trim().startsWith("data: ")
-                        ? event.data.substring(5)
-                        : event.data;
-                    if (rawData) {
-                        const responseData = JSON.parse(rawData);
-                        const content = responseData.choices[0].delta.content;
-                        aiResponse += content;
-
-                        // If the incoming chunk contains a think tag (opening or closing),
-                        // reprocess the full accumulated response.
-                        if (content.indexOf("<think>") !== -1 || content.indexOf("</think>") !== -1) {
-                            reprocessAndUpdate();
-                        } else {
-                            // Otherwise, just update the current append target.
-                            updateAppendTarget(content);
-                        }
-                        $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
-                    }
-                } catch (e) {
-                    console.error("Error parsing response:", e);
-                }
-            };
-
-            eventSource.onerror = function () {
-                alert('An error occurred while streaming the response.');
-                eventSource.close();
-            };
-        });
+      $('#chat-form').on('submit', function (e) {
+        e.preventDefault();
+        const prompt = $('#prompt').val();
+        $('#prompt').val("");
+        
+        // Append the messages and set up the container.
+        const container = appendChatMessages(prompt);
+        
+        // Create an EventSource for SSE.
+        const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
+        
+        // State to hold response data and related variables.
+        const state = {
+          aiResponse: '',
+          currentAppendTarget: null,
+          buffer: "",
+          container: container,
+          eventSource: eventSource
+        };
+  
+        // Set up SSE event handlers.
+        eventSource.onmessage = function (event) {
+          handleSSEMessage(event, state);
+        };
+  
+        eventSource.onerror = function () {
+          handleSSEError(state);
+        };
+      });
     });
-</script>
+  </script>  
