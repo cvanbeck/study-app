@@ -17,6 +17,15 @@
     pre {
         background-color: #B5EAEA; // Light teal for subtle distinction
         color: #0F3443;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        margin: 0;
+        padding: 10px;
+        border-radius: 8px;
+        max-width: 100%;
+        font-family: "Courier New", monospace;
+        font-size: 14px;
+        overflow-x: auto;             /* Allow horizontal scrolling if text overflows */
     }
 }
 
@@ -39,7 +48,6 @@ details.ai-think {
 
 .user-message {
     background-color: #e2e2e2;
-    text-align: right;
 }
 
 #chat-output {
