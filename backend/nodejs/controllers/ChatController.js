@@ -1,15 +1,21 @@
 import axios from "axios";
 import { Writable } from "stream";
+import BaseController from "./base/BaseController.js";
 
-export default class ChatController {
+export default class ChatController extends BaseController {
+    // REQUIRED FOR ALL CONTROLLERS
     constructor(appData) {
-        this.appData = appData; 
+        super(appData); // REQUIRED
+        this.conversationHistory = []; // Store conversation history here
     }
 
+    // REQUIRED FOR ALL CONTROLLERS
     async index(req, res) {
-        res.render("index", { ...this.appData });
+        this.conversationHistory = []; // Clear history when index is accessed
+        return res.render("index", { ...this.appData });
     }
 
+    // OPTIONAL, MAKES A CALL TO DEEPSEEK API TO GET AN AI CHATBOT RESPONSE
     async getChatResponse(req, res) {
         try {
             // Get prompt from the query parameter
@@ -18,6 +24,9 @@ export default class ChatController {
             if (!prompt) {
                 return res.status(400).json({ error: "Prompt is required" });
             }
+    
+            // Add the user prompt to conversation history
+            this.conversationHistory.push({ role: "user", content: prompt });
     
             // Set response type to stream for Server-Sent Events
             res.setHeader('Content-Type', 'text/event-stream');
@@ -29,7 +38,7 @@ export default class ChatController {
                 "https://ai.api.parsonlabs.com/v1/chat/completions",
                 {
                     model: "deepseek-r1:1.5b",
-                    messages: [{ role: "user", content: prompt }],
+                    messages: this.conversationHistory, // Use the conversation history for context
                     stream: true,  // Enable streaming
                 },
                 {
