@@ -6,7 +6,7 @@ html {
     overflow: auto;
 
     .body-content {
-      height: calc(100% - 58px);
+      height: calc(100% - 60px);
       display: flex;
       flex-direction: column;
       overflow: auto;
@@ -14,7 +14,7 @@ html {
       padding-right: 10px;
 
       .container {
-        height: 100%;
+        height: calc(100% - 10px);
         display: flex;
         flex-direction: column;
         margin-top: 10px;
