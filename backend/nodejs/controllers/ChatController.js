@@ -1,15 +1,19 @@
 import axios from "axios";
 import { Writable } from "stream";
+import BaseController from "./base/BaseController.js";
 
-export default class ChatController {
+export default class ChatController extends BaseController {
+    // REQUIRED FOR ALL CONTROLLERS
     constructor(appData) {
-        this.appData = appData; 
+        super(appData); // REQUIRED
     }
 
+    // REQUIRED FOR ALL CONTROLLERS
     async index(req, res) {
-        res.render("index", { ...this.appData });
+        return res.render("index", { ...this.appData });
     }
 
+    // OPTIONAL, MAKES A CALL TO DEEPSEEK API TO GET AN AI CHATBOT RESPONSE
     async getChatResponse(req, res) {
         try {
             // Get prompt from the query parameter
