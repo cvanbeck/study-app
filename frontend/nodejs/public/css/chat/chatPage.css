@@ -17,6 +17,15 @@
 .ai-response pre {
   background-color: #B5EAEA;
   color: #0F3443;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 100%;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  overflow-x: auto; /* Allow horizontal scrolling if text overflows */
 }
 
 details.ai-think {
@@ -36,15 +45,18 @@ details.ai-think summary {
 
 .user-message {
   background-color: #e2e2e2;
-  text-align: right;
 }
 
 #chat-output {
   display: flex;
   flex-direction: column;
+  border: 1px solid #ddd;
+  height: calc(100% - 165px);
+  overflow-y: auto;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }
-
-pre {
+#chat-output pre {
   white-space: pre-wrap;
   word-wrap: break-word;
   margin: 0;
@@ -71,13 +83,17 @@ pre {
   display: flex;
   align-items: center;
 }
-#chat-form input {
+#chat-form input, #chat-form textarea {
   flex-grow: 1;
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #ddd;
   font-size: 16px;
   margin-right: 10px;
+  max-height: 336px;
+}
+#chat-form textarea {
+  resize: none;
 }
 #chat-form label {
   padding-right: 10px;
@@ -93,14 +109,4 @@ pre {
 }
 #chat-form button:hover {
   background-color: #0056b3;
-}
-
-#chat-output {
-  border: 1px solid #ddd;
-  height: calc(100% - 70px);
-  margin-bottom: 100px;
-  /* Adjust height to leave space for the input box */
-  overflow-y: auto;
-  background-color: #f9f9f9;
-  border-radius: 8px;
 }/*# sourceMappingURL=chatPage.css.map */
