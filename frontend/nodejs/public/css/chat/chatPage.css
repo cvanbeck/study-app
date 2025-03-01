@@ -75,13 +75,17 @@ details.ai-think summary {
   display: flex;
   align-items: center;
 }
-#chat-form input {
+#chat-form input, #chat-form textarea {
   flex-grow: 1;
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #ddd;
   font-size: 16px;
   margin-right: 10px;
+  max-height: 336px;
+}
+#chat-form textarea {
+  resize: none;
 }
 #chat-form label {
   padding-right: 10px;
