@@ -6,10 +6,12 @@ export default class ChatController extends BaseController {
     // REQUIRED FOR ALL CONTROLLERS
     constructor(appData) {
         super(appData); // REQUIRED
+        this.conversationHistory = []; // Store conversation history here
     }
 
     // REQUIRED FOR ALL CONTROLLERS
     async index(req, res) {
+        this.conversationHistory = []; // Clear history when index is accessed
         return res.render("index", { ...this.appData });
     }
 
@@ -23,6 +25,9 @@ export default class ChatController extends BaseController {
                 return res.status(400).json({ error: "Prompt is required" });
             }
     
+            // Add the user prompt to conversation history
+            this.conversationHistory.push({ role: "user", content: prompt });
+    
             // Set response type to stream for Server-Sent Events
             res.setHeader('Content-Type', 'text/event-stream');
             res.setHeader('Cache-Control', 'no-cache');
@@ -33,7 +38,7 @@ export default class ChatController extends BaseController {
                 "https://ai.api.parsonlabs.com/v1/chat/completions",
                 {
                     model: "deepseek-r1:1.5b",
-                    messages: [{ role: "user", content: prompt }],
+                    messages: this.conversationHistory, // Use the conversation history for context
                     stream: true,  // Enable streaming
                 },
                 {
