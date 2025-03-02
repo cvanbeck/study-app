@@ -1,4 +1,3 @@
-import { Writable } from "stream";
 import BaseController from "./base/BaseController.js";
 import ChatService from "../services/ChatService.js";
 
@@ -20,24 +19,22 @@ export default class ChatController extends BaseController {
                 return res.status(400).json({ error: "Prompt is required" });
             }
 
-            res.setHeader('Content-Type', 'text/event-stream');
-            res.setHeader('Cache-Control', 'no-cache');
-            res.setHeader('Connection', 'keep-alive');
+            res.setHeader("Content-Type", "text/event-stream");
+            res.setHeader("Cache-Control", "no-cache");
+            res.setHeader("Connection", "keep-alive");
 
             const stream = await this.chatService.getChatResponse(prompt);
 
-            stream.on('data', (chunk) => {
+            stream.on("data", (chunk) => {
                 res.write(`data: ${chunk.toString()}\n\n`);
             });
 
-            stream.on('end', () => {
-                res.write('data: [DONE]\n\n');
+            stream.on("end", () => {
                 res.end();
             });
-
         } catch (error) {
             console.error("Chat API Error:", error);
-            res.write('data: Error occurred while fetching response\n\n');
+            res.write("data: Error occurred while fetching response\n\n");
             res.end();
         }
     }
