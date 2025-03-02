@@ -170,9 +170,33 @@
     return document.querySelector(`#${messageId} .ai-content`);
   }
 
-  // Scroll the chat output to the bottom
+  // Function to check if the user is near the bottom of the container
+  function isUserNearBottom() {
+    const chatOutput = $('#chat-output')[0];
+    const scrollPosition = chatOutput.scrollTop;
+    const scrollHeight = chatOutput.scrollHeight;
+    const clientHeight = chatOutput.clientHeight;
+
+    // Check if the user is within 100px of the bottom of the container
+    return scrollHeight - scrollPosition - clientHeight <= 100;
+  }
+
+  // Update scroll behavior: only scroll if the user is near the bottom or when the scrollbar first appears
   function updateScroll() {
-    $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
+    const chatOutput = $('#chat-output')[0];
+    const scrollHeight = chatOutput.scrollHeight;
+    const clientHeight = chatOutput.clientHeight;
+
+    // Check if there's a scrollbar (i.e., the content is overflowing)
+    const hasScrollbar = scrollHeight > clientHeight;
+
+    // If the user is near the bottom or if there's no scrollbar, auto-scroll to the bottom
+    if (hasScrollbar && isUserNearBottom()) {
+      chatOutput.scrollTop = scrollHeight; // Scroll to the bottom
+    } else if (!hasScrollbar) {
+      // If there's no scrollbar, scroll to the bottom the first time content overflows
+      chatOutput.scrollTop = scrollHeight;
+    }
   }
 
   $(document).ready(function () {
