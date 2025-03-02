@@ -164,6 +164,16 @@ li {
   color: #0056b3;
 }
 
+.CodeMirror {
+  height: -moz-fit-content !important;
+  height: fit-content !important;
+  overflow: hidden !important;
+}
+
+#stack-trace, #json-trace {
+  margin: 0;
+}
+
 @media screen and (max-width: 767px) {
   .stickyForumTitle {
     top: 12vh;
