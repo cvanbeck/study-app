@@ -30,7 +30,6 @@
     mangle: false      // deprecated setting
   });
 
-  // Process content with math expressions
   function processMathContent(content) {
     // First, protect math content by replacing it with placeholders
     const mathExpressions = [];
@@ -42,22 +41,31 @@
       return `MATHPLACEHOLDER_${id}`;
     };
 
+    // Function to escape characters that cause issues in MathJax
+    const escapeMath = (math) => {
+      return math.replace(/#/g, '\\#') // Escape hash signs
+        .replace(/\\%/g, '\\\\%')  // Escape % symbol if needed
+        .replace(/_/g, '\\_')      // Escape underscore
+        .replace(/\$/g, '\\$')     // Escape dollar sign
+        .replace(/&/g, '\\&');     // Escape ampersand
+    };
+
     // Handle the problematic multiline bracket case first
     let processedContent = content.replace(/\[\s*\n([\s\S]*?)\n\s*\]/g, (match, math) =>
-      storeMath(match, math, 'display'));
+      storeMath(match, escapeMath(math), 'display'));
 
     // Handle standard delimiters
     processedContent = processedContent
       // Display math
       .replace(/\$\$([\s\S]*?)\$\$/g, (match, math) =>
-        storeMath(match, math, 'display'))
+        storeMath(match, escapeMath(math), 'display'))
       .replace(/\\\[([\s\S]*?)\\\]/g, (match, math) =>
-        storeMath(match, math, 'display'))
+        storeMath(match, escapeMath(math), 'display'))
       // Inline math
       .replace(/\$([^\$\n]+?)\$/g, (match, math) =>
-        storeMath(match, math, 'inline'))
+        storeMath(match, escapeMath(math), 'inline'))
       .replace(/\\\(([\s\S]*?)\\\)/g, (match, math) =>
-        storeMath(match, math, 'inline'));
+        storeMath(match, escapeMath(math), 'inline'));
 
     // Parse with marked
     const parsedHTML = marked.parse(processedContent);
