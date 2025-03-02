@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();  // Load the .env file
+
 import expressLayouts from 'express-ejs-layouts';
 import express from 'express';
 import session from 'express-session';
@@ -11,12 +14,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const __frontend_dirname = join(__dirname, '../../frontend', 'nodejs');
 const port = 8000;
 
-// Instantiate your DbContext (database connection)
+// Connection string for the database you want to connect to
+// SQLLite uses a file path as the connection string.
+// Other database types have specific formats, look them up.
 const connectionString = '../sqllite-database/Chinook.db';
-const db = new SQLiteDbContext(connectionString);
 
-// Add the db instance to your shared appData object
-const appData = { appName: "Study App", db };
+const appData = { 
+    appName: "Study App", 
+    db: new SQLiteDbContext(connectionString), // Include the db in the appData object
+    environment: process.env.NODE_ENV,
+};
 
 const app = express();
 app.use(express.static(join(__frontend_dirname, 'public')));

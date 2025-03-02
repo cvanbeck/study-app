@@ -1,0 +1,41 @@
+<h1>500 - Internal Server Error</h1>
+<% if (environment === 'production') { %>
+    <p><%= message %></p>
+<% } else { %>
+    <div>Developer Environment enabled, showing stack trace.</div>
+    <div>This stack trace is also available in your NodeJS console.</div>
+    <p id="stack-trace"><%= stack %></p>
+    <p id="json-trace"><%= JSON.stringify(error, null, 2) %></p>
+<% } %>
+<a href="/">Go Home</a>
+
+<script>
+  $(document).ready(function() {
+    // Get the raw content from the elements
+    var stackTraceContent = $('#stack-trace').text();
+    var jsonTraceContent = $('#json-trace').text();
+
+    // Clear the contents of the targeted elements
+    $('#stack-trace').empty();
+    $('#json-trace').empty();
+
+    // Initialize CodeMirror with the stored content for stack trace and JSON trace
+    var stackTraceEditor = CodeMirror($('#stack-trace')[0], {
+      value: stackTraceContent,
+      lineNumbers: true,
+      mode: 'text/x-python',  // Python mode for stack traces
+      theme: 'dracula',
+      readOnly: true,
+      lineWrapping: true // Wrap long lines
+    });
+
+    var jsonTraceEditor = CodeMirror($('#json-trace')[0], {
+      value: jsonTraceContent,
+      lineNumbers: true,
+      mode: 'application/json', // JSON mode for JSON trace
+      theme: 'dracula',
+      readOnly: true,
+      lineWrapping: true // Wrap long lines
+    });
+  });
+</script>
