@@ -35,6 +35,29 @@ export default class ChatService {
             // Pipe the response stream through the JSONStreamService
             const jsonStreamService = new JSONStreamService();
             response.data.pipe(jsonStreamService);
+
+            // Builds and stores the assistant message as it is being streamed in
+            let assistantMessage = "";
+            jsonStreamService.on("data", (data) => {
+                try {
+                    const textData = data.toString().trim();
+                    if (textData === "[DONE]") return; // Ignore the [DONE] marker
+                    const parsedData = JSON.parse(textData);
+                    if (parsedData.fullContent) {
+                        assistantMessage = parsedData.fullContent;
+                    }
+                } catch (e) {
+                    console.error("Error parsing streamed data:", e);
+                }
+            });
+
+            // Stores the full assistant message in the conversation history array when stream ends
+            jsonStreamService.on("end", () => {
+                if (assistantMessage) {
+                    this.conversationHistory.push({ role: "assistant", content: assistantMessage });
+                }
+            });
+
             return jsonStreamService;
         } catch (error) {
             console.error("Chat API Error:", error);
