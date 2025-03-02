@@ -1,5 +1,16 @@
 <head>
   <link rel="stylesheet" type="text/css" href="/css/chat/chatPage.css" />
+  <!-- MathJax delimiter configuration for inline and display math -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)'], ['[', ']']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
+    };
+  </script>
+  <!-- Load MathJax -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 </head>
 <h1>Chat with AI</h1>
 
@@ -11,13 +22,58 @@
 <div id="chat-output"></div>
 
 <script>
-  // Configure marked options
+  // Configure marked options with custom renderer for math
   marked.setOptions({
     breaks: true,      // Convert \n to <br>
     gfm: true,         // GitHub flavored markdown
     headerIds: false,  // Don't add ids to headers
-    sanitize: true    // Prevent script injection
+    sanitize: false    // Changed to false to allow our custom processing
   });
+
+  // Process content with math expressions
+  function processMathContent(content) {
+    // First, protect math content by replacing it with placeholders
+    const mathExpressions = [];
+
+    // Function to store math and return placeholder
+    const storeMath = (match, math, type) => {
+      const id = mathExpressions.length;
+      mathExpressions.push({ math, type });
+      return `MATHPLACEHOLDER_${id}`;
+    };
+
+    // Handle the problematic multiline bracket case first
+    let processedContent = content.replace(/\[\s*\n([\s\S]*?)\n\s*\]/g, (match, math) =>
+      storeMath(match, math, 'display'));
+
+    // Handle standard delimiters
+    processedContent = processedContent
+      // Display math
+      .replace(/\$\$([\s\S]*?)\$\$/g, (match, math) =>
+        storeMath(match, math, 'display'))
+      .replace(/\\\[([\s\S]*?)\\\]/g, (match, math) =>
+        storeMath(match, math, 'display'))
+      // Inline math
+      .replace(/\$([^\$\n]+?)\$/g, (match, math) =>
+        storeMath(match, math, 'inline'))
+      .replace(/\\\(([\s\S]*?)\\\)/g, (match, math) =>
+        storeMath(match, math, 'inline'));
+
+    // Parse with marked
+    const parsedHTML = marked.parse(processedContent);
+
+    // Restore math expressions with proper delimiters for MathJax
+    const finalHTML = parsedHTML.replace(/MATHPLACEHOLDER_(\d+)/g, (match, id) => {
+      const { math, type } = mathExpressions[parseInt(id)];
+      if (type === 'display') {
+        return `<div class="math-display">\\[${math}\\]</div>`;
+      } else {
+        return `<span class="math-inline">\\(${math}\\)</span>`;
+      }
+    });
+
+    return finalHTML;
+  }
 
   // Process AI content, separating <think> tags from visible content
   function processAIContent(content) {
@@ -60,25 +116,33 @@
       const summaryElement = document.createElement('summary');
       summaryElement.textContent = 'Thoughts';
       detailsElement.appendChild(summaryElement);
+
       const innerDiv = document.createElement('div');
       innerDiv.className = 'markdown-content';
-      innerDiv.innerHTML = marked.parse(processedContent.thoughts);
+      innerDiv.innerHTML = processMathContent(processedContent.thoughts);
       detailsElement.appendChild(innerDiv);
       container.appendChild(detailsElement);
     }
 
-        // Styles the content outside of the <think></think> tags
+    // Styles the content outside of the <think></think> tags
     if (processedContent.visible) {
       const visibleContentDiv = document.createElement('div');
       visibleContentDiv.className = 'markdown-content';
-      visibleContentDiv.innerHTML = marked.parse(processedContent.visible);
+      visibleContentDiv.innerHTML = processMathContent(processedContent.visible);
       container.appendChild(visibleContentDiv);
+    }
+
+    // Trigger MathJax once after all content is added
+    if (typeof MathJax !== 'undefined') {
+      MathJax.typesetPromise([container]).catch(function (err) {
+        console.error('MathJax typeset failed: ', err);
+      });
     }
   }
 
   // Escape HTML entities to prevent script injection
   function escapeHTML(str) {
-    return str.replace(/[&<>"']/g, function(match) {
+    return str.replace(/[&<>"']/g, function (match) {
       const escapeMap = {
         "&": "&amp;",
         "<": "&lt;",
@@ -94,15 +158,15 @@
   function appendChatMessages(prompt) {
     const messageId = 'ai-response-' + Date.now();
     $('#chat-output').append(`
-      <div class="chat-message user-message">
-        <strong>You:</strong>
-        <pre>${escapeHTML(prompt)}</pre>
-      </div>
-      <div id="${messageId}" class="chat-message ai-response">
-        <strong>AI:</strong>
-        <div class="ai-content"></div>
-      </div>
-    `);
+        <div class="chat-message user-message">
+          <strong>You:</strong>
+          <pre>${escapeHTML(prompt)}</pre>
+        </div>
+        <div id="${messageId}" class="chat-message ai-response">
+          <strong>AI:</strong>
+          <div class="ai-content"></div>
+        </div>
+      `);
     return document.querySelector(`#${messageId} .ai-content`);
   }
 
@@ -128,9 +192,9 @@
        * Processing Section
        * handles the incoming messages from the server-side code
        */
-      
-       // Listens for messages sent through the stream and displays them on the webpage
-       eventSource.onmessage = function (event) {
+
+      // Listens for messages sent through the stream and displays them on the webpage
+      eventSource.onmessage = function (event) {
         if (event.data === "[DONE]") {
           eventSource.close();
           return;
@@ -153,10 +217,10 @@
 
     // Adjust the height of the textarea to fit its content
     function adjustTextareaHeight(textarea) {
-      // Reset the height to auto so we can measure the new content height
+            // Reset the height to auto so we can measure the new content height
       textarea.style.height = 'auto';
 
-      // Set the height to the scrollHeight, which will adjust according to content
+            // Set the height to the scrollHeight, which will adjust according to content
       textarea.style.height = textarea.scrollHeight + 'px';
     }
 
