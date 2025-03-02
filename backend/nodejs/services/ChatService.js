@@ -54,6 +54,7 @@ export default class ChatService {
             // Stores the full assistant message in the conversation history array when stream ends
             jsonStreamService.on("end", () => {
                 if (assistantMessage) {
+                    assistantMessage = assistantMessage.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
                     this.conversationHistory.push({ role: "assistant", content: assistantMessage });
                 }
             });
