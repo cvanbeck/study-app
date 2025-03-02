@@ -2,6 +2,7 @@ import express from 'express';
 import { readdir } from 'fs/promises';
 import { dirname, join, basename } from 'path';
 import { fileURLToPath } from 'url';
+import mapErrorRoutes from './mapErrorRoutes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -90,61 +91,8 @@ export default async function setupRoutes(app, appData) {
 
     app.use('/', router);
 
-    // Add 404 handler - must be after all other routes
-    app.use((req, res, next) => {
-      res.status(404);
-      
-      // Respond with HTML
-      if (req.accepts('html')) {
-        res.render('errors/404', { 
-          ...appData, 
-          url: req.url, 
-          title: '404 - Page Not Found' 
-        });
-        return;
-      }
-      
-      // Respond with JSON
-      if (req.accepts('json')) {
-        res.json({ error: 'Not found' });
-        return;
-      }
-      
-      // Default to plain text
-      res.type('txt').send('Not found');
-    });
-
-    // Add 500 error handler - must be the last error handled
-    app.use((err, req, res, next) => {
-      console.error('Server error:', err);
-      
-      // Set status to 500 if not already set
-      res.status(err.status || 500);
-      
-      // Respond with HTML
-      if (req.accepts('html')) {
-        res.render('errors/500', {
-          ...appData, 
-          error: process.env.NODE_ENV === 'production' ? {} : err,
-          title: '500 - Internal Server Error',
-          message: process.env.NODE_ENV === 'production' ? "Something went wrong on our end. Please try again later." : err.message,
-          stack: process.env.NODE_ENV !== 'production' ? err.stack : ''  // Only pass stack in development
-        });
-        return;
-      }
-      
-      // Respond with JSON
-      if (req.accepts('json')) {
-        res.json({
-          error: 'Server error',
-          message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message
-        });
-        return;
-      }
-      
-      // Default to plain text
-      res.type('txt').send(process.env.NODE_ENV === 'production' ? 'Server error' : err.message);
-    });
+    // After defining all routes
+    mapErrorRoutes(app, appData);
     
   } catch (err) {
     console.error('Error setting up routes:', err);

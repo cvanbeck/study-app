@@ -1,24 +1,87 @@
 <head>
   <link rel="stylesheet" type="text/css" href="/css/chat/chatPage.css" />
+  <!-- Load MathJax -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 </head>
-
 <h1>Chat with AI</h1>
 
 <form id="chat-form">
-  <textarea type="text" id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+  <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
   <button type="submit">Send</button>
 </form>
 
 <div id="chat-output"></div>
 
 <script>
-  // Configure marked options
+  // MathJax delimiter configuration for inline and display math
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)'], ['[', ']']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+  };
+
+  // Configure marked options with custom renderer for math
   marked.setOptions({
     breaks: true,      // Convert \n to <br>
     gfm: true,         // GitHub flavored markdown
     headerIds: false,  // Don't add ids to headers
-    sanitize: true    // Prevent script injection
+    sanitize: false,   // Changed to false to allow our custom processing
+    mangle: false      // deprecated setting
   });
+
+  function processMathContent(content) {
+    // First, protect math content by replacing it with placeholders
+    const mathExpressions = [];
+
+    // Function to store math and return placeholder
+    const storeMath = (match, math, type) => {
+      const id = mathExpressions.length;
+      mathExpressions.push({ math, type });
+      return `MATHPLACEHOLDER_${id}`;
+    };
+
+    // Function to escape characters that cause issues in MathJax
+    const escapeMath = (math) => {
+      return math.replace(/#/g, '\\#') // Escape hash signs
+        .replace(/\\%/g, '\\\\%')  // Escape % symbol if needed
+        .replace(/_/g, '\\_')      // Escape underscore
+        .replace(/\$/g, '\\$')     // Escape dollar sign
+        .replace(/&/g, '\\&');     // Escape ampersand
+    };
+
+    // Handle the problematic multiline bracket case first
+    let processedContent = content.replace(/\[\s*\n([\s\S]*?)\n\s*\]/g, (match, math) =>
+      storeMath(match, escapeMath(math), 'display'));
+
+    // Handle standard delimiters
+    processedContent = processedContent
+      // Display math
+      .replace(/\$\$([\s\S]*?)\$\$/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'display'))
+      .replace(/\\\[([\s\S]*?)\\\]/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'display'))
+      // Inline math
+      .replace(/\$([^\$\n]+?)\$/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'inline'))
+      .replace(/\\\(([\s\S]*?)\\\)/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'inline'));
+
+    // Parse with marked
+    const parsedHTML = marked.parse(processedContent);
+
+    // Restore math expressions with proper delimiters for MathJax
+    const finalHTML = parsedHTML.replace(/MATHPLACEHOLDER_(\d+)/g, (match, id) => {
+      const { math, type } = mathExpressions[parseInt(id)];
+      if (type === 'display') {
+        return `<div class="math-display">\\[${math}\\]</div>`;
+      } else {
+        return `<span class="math-inline">\\(${math}\\)</span>`;
+      }
+    });
+
+    return finalHTML;
+  }
 
   // Process AI content, separating <think> tags from visible content
   function processAIContent(content) {
@@ -43,56 +106,57 @@
     };
   }
 
-  // Extract complete JSON objects from a buffer string by balancing braces
-  function extractJSONObjects(buffer) {
-    const objects = [];
-    let index = 0;
-    while (true) {
-      const start = buffer.indexOf('{', index);
-      if (start === -1) break;
-      let braceCount = 0, inString = false, escape = false;
-      let end = start;
-      for (; end < buffer.length; end++) {
-        const char = buffer[end];
-        if (inString) {
-          if (escape) {
-            escape = false;
-          } else if (char === '\\') {
-            escape = true;
-          } else if (char === '"') {
-            inString = false;
-          }
-        } else {
-          if (char === '"') {
-            inString = true;
-          } else if (char === '{') {
-            braceCount++;
-          } else if (char === '}') {
-            braceCount--;
-            if (braceCount === 0) {
-              end++; // include the closing brace
-              const objStr = buffer.slice(start, end);
-              objects.push(objStr);
-              index = end;
-              break;
-            }
-          }
-        }
-      }
-      if (braceCount !== 0) break;
+  // Render the entire AI response from the server-side processed content
+  function renderFullResponse(fullRawContent, container) {
+    const processedContent = processAIContent(fullRawContent);
+    container.innerHTML = '';
+
+    /**
+     * Styling Section, takes the processed content and splits it into
+     * pre tags and summary/details tags
+     */
+
+    // Styles the content inside of the <think></think> tags
+    if (processedContent.thoughts.trim()) {
+      const detailsElement = document.createElement('details');
+      detailsElement.className = 'ai-think';
+      detailsElement.setAttribute('open', '');
+      const summaryElement = document.createElement('summary');
+      summaryElement.textContent = 'Thoughts';
+      detailsElement.appendChild(summaryElement);
+
+      const innerDiv = document.createElement('div');
+      innerDiv.className = 'markdown-content';
+      innerDiv.innerHTML = processMathContent(processedContent.thoughts);
+      detailsElement.appendChild(innerDiv);
+      container.appendChild(detailsElement);
     }
-    return { objects, remainder: buffer.slice(index) };
+
+    // Styles the content outside of the <think></think> tags
+    if (processedContent.visible) {
+      const visibleContentDiv = document.createElement('div');
+      visibleContentDiv.className = 'markdown-content';
+      visibleContentDiv.innerHTML = processMathContent(processedContent.visible);
+      container.appendChild(visibleContentDiv);
+    }
+
+    // Trigger MathJax once after all content is added
+    if (typeof MathJax !== 'undefined') {
+      MathJax.typesetPromise([container]).catch(function (err) {
+        console.error('MathJax typeset failed: ', err);
+      });
+    }
   }
 
-  // Function to escape HTML entities to prevent HTML rendering
+  // Escape HTML entities to prevent script injection
   function escapeHTML(str) {
     return str.replace(/[&<>"']/g, function (match) {
       const escapeMap = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
       };
       return escapeMap[match];
     });
@@ -102,114 +166,47 @@
   function appendChatMessages(prompt) {
     const messageId = 'ai-response-' + Date.now();
     $('#chat-output').append(`
-          <div class="chat-message user-message">
-            <strong>You:</strong>
-            <pre>${escapeHTML(prompt)}</pre>
-          </div>
-          <div id="${messageId}" class="chat-message ai-response">
-            <strong>AI:</strong>
-            <div class="ai-content"></div>
-          </div>
-        `);
+        <div class="chat-message user-message">
+          <strong>You:</strong>
+          <pre>${escapeHTML(prompt)}</pre>
+        </div>
+        <div id="${messageId}" class="chat-message ai-response">
+          <strong>AI:</strong>
+          <div class="ai-content"></div>
+        </div>
+      `);
     return document.querySelector(`#${messageId} .ai-content`);
   }
 
-  // Scroll the chat output to the bottom
+  // Function to check if the user is near the bottom of the container
+  function isUserNearBottom() {
+    const chatOutput = $('#chat-output')[0];
+    const scrollPosition = chatOutput.scrollTop;
+    const scrollHeight = chatOutput.scrollHeight;
+    const clientHeight = chatOutput.clientHeight;
+
+    // Check if the user is within 100px of the bottom of the container
+    return scrollHeight - scrollPosition - clientHeight <= 100;
+  }
+
+  // Update scroll behavior: only scroll if the user is near the bottom or when the scrollbar first appears
   function updateScroll() {
-    $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
-  }
+    const chatOutput = $('#chat-output')[0];
+    const scrollHeight = chatOutput.scrollHeight;
+    const clientHeight = chatOutput.clientHeight;
 
-  // Render the entire AI response with processed content
-  function renderFullResponse(state) {
-    // Process the raw content to separate thoughts and visible content
-    const processedContent = processAIContent(state.fullRawContent);
+    // Check if there's a scrollbar (i.e., the content is overflowing)
+    const hasScrollbar = scrollHeight > clientHeight;
 
-    // Clear the existing content in the container before re-rendering
-    state.container.innerHTML = '';
-
-    // Check if there are any thoughts to display
-    if (processedContent.thoughts.trim()) {
-      // Create a <details> element to show thoughts (collapsible)
-      const detailsElement = document.createElement('details');
-      detailsElement.className = 'ai-think';
-      detailsElement.setAttribute('open', ''); // Keep thoughts expanded by default
-
-      // Add a <summary> to label the thoughts section
-      const summaryElement = document.createElement('summary');
-      summaryElement.textContent = 'Thoughts';
-      detailsElement.appendChild(summaryElement);
-
-      // Create a div to hold the markdown-rendered thoughts content
-      const innerDiv = document.createElement('div');
-      innerDiv.className = 'markdown-content';
-      innerDiv.innerHTML = marked.parse(processedContent.thoughts); // Parse thoughts as markdown
-
-      // Append the markdown content inside the <details> element
-      detailsElement.appendChild(innerDiv);
-
-      // Add the thoughts section to the container
-      state.container.appendChild(detailsElement);
-    }
-
-    // Check if there is visible content to display
-    if (processedContent.visible) {
-      // Create a div for the visible content, rendered as markdown
-      const visibleContentDiv = document.createElement('div');
-      visibleContentDiv.className = 'markdown-content';
-      visibleContentDiv.innerHTML = marked.parse(processedContent.visible); // Parse visible content as markdown
-
-      // Append the visible content to the container
-      state.container.appendChild(visibleContentDiv);
+    // If the user is near the bottom or if there's no scrollbar, auto-scroll to the bottom
+    if (hasScrollbar && isUserNearBottom()) {
+      chatOutput.scrollTop = scrollHeight; // Scroll to the bottom
+    } else if (!hasScrollbar) {
+      // If there's no scrollbar, scroll to the bottom the first time content overflows
+      chatOutput.scrollTop = scrollHeight;
     }
   }
 
-
-  // Process a complete JSON chunk from the SSE
-  function processChunk(responseData, state) {
-    // Extract content from the chunk
-    const content = responseData.choices[0].delta.content;
-    // Create a chunk object with an order indicator (using responseData.created)
-    const chunk = {
-      created: responseData.created,  // assumes a timestamp or sequence number is provided
-      content: content
-    };
-    // Add the chunk to the state.chunks array
-    state.chunks.push(chunk);
-    // Sort chunks by the created field (oldest first)
-    state.chunks.sort((a, b) => a.created - b.created);
-    // Rebuild the full raw content by joining the sorted chunk contents
-    state.fullRawContent = state.chunks.map(chunk => chunk.content).join('');
-    // Render the response with the correctly ordered content
-    renderFullResponse(state);
-    updateScroll();
-  }
-
-  // Handle incoming SSE messages by extracting JSON chunks and processing them
-  function handleSSEMessage(event, state) {
-    if (event.data === "[DONE]") {
-      state.eventSource.close();
-      return;
-    }
-    state.buffer += event.data;
-    const { objects, remainder } = extractJSONObjects(state.buffer);
-    state.buffer = remainder;
-    objects.forEach(objStr => {
-      try {
-        const responseData = JSON.parse(objStr);
-        processChunk(responseData, state);
-      } catch (e) {
-        console.error("Error parsing chunk:", e, "Chunk:", objStr);
-      }
-    });
-  }
-
-  // Handle SSE error events
-  function handleSSEError(state) {
-    alert('An error occurred while streaming the response.');
-    state.eventSource.close();
-  }
-
-  // Set up form submission to start streaming response via SSE
   $(document).ready(function () {
     $('#chat-form').on('submit', function (e) {
       e.preventDefault();
@@ -223,21 +220,30 @@
       // Create an EventSource for SSE.
       const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
 
-      // State to hold response data and related variables, including the chunks array for ordering.
-      const state = {
-        fullRawContent: '',
-        buffer: "",
-        chunks: [],
-        container: container,
-        eventSource: eventSource
-      };
+      /**
+       * Processing Section
+       * handles the incoming messages from the server-side code
+       */
 
+      // Listens for messages sent through the stream and displays them on the webpage
       eventSource.onmessage = function (event) {
-        handleSSEMessage(event, state);
+        if (event.data === "[DONE]") {
+          eventSource.close();
+          return;
+        }
+        try {
+          const data = JSON.parse(event.data);
+          renderFullResponse(data.fullContent, container);
+          updateScroll();
+        } catch (e) {
+          console.error("Error parsing server update:", e);
+        }
       };
 
+      // Listens for errors that occurred through the stream and closes it if encountering
       eventSource.onerror = function () {
-        handleSSEError(state);
+        alert('An error occurred while streaming the response.');
+        eventSource.close();
       };
     });
 
@@ -250,23 +256,21 @@
       textarea.style.height = textarea.scrollHeight + 'px';
     }
 
-    // Handle keydown event to adjust height
+    // Handle keydown event to adjust height and submit on Enter
     $('#prompt').on('keydown', function (e) {
-      // Adjust height on each keydown event
       adjustTextareaHeight(this);
-
       if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault(); // Prevent the default enter behavior (new line)
-        $('#chat-form').submit(); // Trigger form submission
+        e.preventDefault();
+        $('#chat-form').submit();
       }
     });
 
-    // Handle keydown event to adjust height
-    $('#prompt').on('input', function (e) {
-      // Adjust height on each input event
+    // Handle input event to adjust height
+    $('#prompt').on('input', function () {
       adjustTextareaHeight(this);
     });
 
+    // Initially set the textarea height
     adjustTextareaHeight($('#prompt')[0]);
   });
 </script>
