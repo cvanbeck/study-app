@@ -89,6 +89,63 @@ export default async function setupRoutes(app, appData) {
     }
 
     app.use('/', router);
+
+    // Add 404 handler - must be after all other routes
+    app.use((req, res, next) => {
+      res.status(404);
+      
+      // Respond with HTML
+      if (req.accepts('html')) {
+        res.render('errors/404', { 
+          ...appData, 
+          url: req.url, 
+          title: '404 - Page Not Found' 
+        });
+        return;
+      }
+      
+      // Respond with JSON
+      if (req.accepts('json')) {
+        res.json({ error: 'Not found' });
+        return;
+      }
+      
+      // Default to plain text
+      res.type('txt').send('Not found');
+    });
+
+    // Add 500 error handler - must be the last error handled
+    app.use((err, req, res, next) => {
+      console.error('Server error:', err);
+      
+      // Set status to 500 if not already set
+      res.status(err.status || 500);
+      
+      // Respond with HTML
+      if (req.accepts('html')) {
+        res.render('errors/500', {
+          ...appData, 
+          error: process.env.NODE_ENV === 'production' ? {} : err,
+          title: '500 - Internal Server Error',
+          message: process.env.NODE_ENV === 'production' ? "Something went wrong on our end. Please try again later." : err.message,
+          stack: process.env.NODE_ENV !== 'production' ? err.stack : ''  // Only pass stack in development
+        });
+        return;
+      }
+      
+      // Respond with JSON
+      if (req.accepts('json')) {
+        res.json({
+          error: 'Server error',
+          message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message
+        });
+        return;
+      }
+      
+      // Default to plain text
+      res.type('txt').send(process.env.NODE_ENV === 'production' ? 'Server error' : err.message);
+    });
+    
   } catch (err) {
     console.error('Error setting up routes:', err);
     throw err;
@@ -97,13 +154,13 @@ export default async function setupRoutes(app, appData) {
 
 // Helper function to set up a route handler
 function setupRouteHandler(router, route, controllerName, methodName, methodFn, appData) {
-  router.all(route, async (req, res) => {
+  router.all(route, async (req, res, next) => {
     try {
       // Create a wrapper for res.render that automatically adds the controller folder
       const originalRender = res.render;
       res.render = function(view, options) {
         // Only prepend the controller name if the view doesn't already specify a complete path
-        if (!view.startsWith('/') && !view.includes(':')) {
+        if (!view.startsWith('/') && !view.includes(':') && !view.startsWith('errors/')) {
           // If view doesn't include a slash, assume it's directly in the controller folder
           if (!view.includes('/')) {
             view = `${controllerName}/${view}`;
@@ -133,10 +190,8 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
         res.render(`${methodName}.ejs`, { ...appData, ...data });
       }
     } catch (err) {
-      console.error(`Error handling route ${route}:`, err);
-      if (!res.headersSent) { // Ensure the response is sent only once
-        res.status(500).send('Internal Server Error');
-      }
+      // Pass the error to Express error handler
+      next(err);
     }
   });
 }
