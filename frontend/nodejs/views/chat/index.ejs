@@ -1,14 +1,5 @@
 <head>
   <link rel="stylesheet" type="text/css" href="/css/chat/chatPage.css" />
-  <!-- MathJax delimiter configuration for inline and display math -->
-  <script>
-    window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)'], ['[', ']']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
-      }
-    };
-  </script>
   <!-- Load MathJax -->
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 </head>
@@ -22,12 +13,21 @@
 <div id="chat-output"></div>
 
 <script>
+  // MathJax delimiter configuration for inline and display math
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)'], ['[', ']']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+  };
+
   // Configure marked options with custom renderer for math
   marked.setOptions({
     breaks: true,      // Convert \n to <br>
     gfm: true,         // GitHub flavored markdown
     headerIds: false,  // Don't add ids to headers
-    sanitize: false    // Changed to false to allow our custom processing
+    sanitize: false,   // Changed to false to allow our custom processing
+    mangle: false      // deprecated setting
   });
 
   // Process content with math expressions
