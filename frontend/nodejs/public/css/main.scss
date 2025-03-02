@@ -186,6 +186,15 @@ li {
   }
 }
 
+.CodeMirror {
+  height: fit-content !important;
+  overflow: hidden !important;
+}
+
+#stack-trace, #json-trace {
+  margin: 0;
+}
+
 @media screen and (max-width: 767px) {
   .stickyForumTitle {
     top: 12vh;
