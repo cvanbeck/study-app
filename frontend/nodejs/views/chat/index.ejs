@@ -1,11 +1,10 @@
 <head>
   <link rel="stylesheet" type="text/css" href="/css/chat/chatPage.css" />
 </head>
-
 <h1>Chat with AI</h1>
 
 <form id="chat-form">
-  <textarea type="text" id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+  <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
   <button type="submit">Send</button>
 </form>
 
@@ -43,56 +42,49 @@
     };
   }
 
-  // Extract complete JSON objects from a buffer string by balancing braces
-  function extractJSONObjects(buffer) {
-    const objects = [];
-    let index = 0;
-    while (true) {
-      const start = buffer.indexOf('{', index);
-      if (start === -1) break;
-      let braceCount = 0, inString = false, escape = false;
-      let end = start;
-      for (; end < buffer.length; end++) {
-        const char = buffer[end];
-        if (inString) {
-          if (escape) {
-            escape = false;
-          } else if (char === '\\') {
-            escape = true;
-          } else if (char === '"') {
-            inString = false;
-          }
-        } else {
-          if (char === '"') {
-            inString = true;
-          } else if (char === '{') {
-            braceCount++;
-          } else if (char === '}') {
-            braceCount--;
-            if (braceCount === 0) {
-              end++; // include the closing brace
-              const objStr = buffer.slice(start, end);
-              objects.push(objStr);
-              index = end;
-              break;
-            }
-          }
-        }
-      }
-      if (braceCount !== 0) break;
+  // Render the entire AI response from the server-side processed content
+  function renderFullResponse(fullRawContent, container) {
+    const processedContent = processAIContent(fullRawContent);
+    container.innerHTML = '';
+
+    /**
+     * Styling Section, takes the processed content and splits it into
+     * pre tags and summary/details tags
+     */
+
+    // Styles the content inside of the <think></think> tags
+    if (processedContent.thoughts.trim()) {
+      const detailsElement = document.createElement('details');
+      detailsElement.className = 'ai-think';
+      detailsElement.setAttribute('open', '');
+      const summaryElement = document.createElement('summary');
+      summaryElement.textContent = 'Thoughts';
+      detailsElement.appendChild(summaryElement);
+      const innerDiv = document.createElement('div');
+      innerDiv.className = 'markdown-content';
+      innerDiv.innerHTML = marked.parse(processedContent.thoughts);
+      detailsElement.appendChild(innerDiv);
+      container.appendChild(detailsElement);
     }
-    return { objects, remainder: buffer.slice(index) };
+
+        // Styles the content outside of the <think></think> tags
+    if (processedContent.visible) {
+      const visibleContentDiv = document.createElement('div');
+      visibleContentDiv.className = 'markdown-content';
+      visibleContentDiv.innerHTML = marked.parse(processedContent.visible);
+      container.appendChild(visibleContentDiv);
+    }
   }
 
-  // Function to escape HTML entities to prevent HTML rendering
+  // Escape HTML entities to prevent script injection
   function escapeHTML(str) {
-    return str.replace(/[&<>"']/g, function (match) {
+    return str.replace(/[&<>"']/g, function(match) {
       const escapeMap = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
       };
       return escapeMap[match];
     });
@@ -102,15 +94,15 @@
   function appendChatMessages(prompt) {
     const messageId = 'ai-response-' + Date.now();
     $('#chat-output').append(`
-          <div class="chat-message user-message">
-            <strong>You:</strong>
-            <pre>${escapeHTML(prompt)}</pre>
-          </div>
-          <div id="${messageId}" class="chat-message ai-response">
-            <strong>AI:</strong>
-            <div class="ai-content"></div>
-          </div>
-        `);
+      <div class="chat-message user-message">
+        <strong>You:</strong>
+        <pre>${escapeHTML(prompt)}</pre>
+      </div>
+      <div id="${messageId}" class="chat-message ai-response">
+        <strong>AI:</strong>
+        <div class="ai-content"></div>
+      </div>
+    `);
     return document.querySelector(`#${messageId} .ai-content`);
   }
 
@@ -119,97 +111,6 @@
     $('#chat-output').scrollTop($('#chat-output')[0].scrollHeight);
   }
 
-  // Render the entire AI response with processed content
-  function renderFullResponse(state) {
-    // Process the raw content to separate thoughts and visible content
-    const processedContent = processAIContent(state.fullRawContent);
-
-    // Clear the existing content in the container before re-rendering
-    state.container.innerHTML = '';
-
-    // Check if there are any thoughts to display
-    if (processedContent.thoughts.trim()) {
-      // Create a <details> element to show thoughts (collapsible)
-      const detailsElement = document.createElement('details');
-      detailsElement.className = 'ai-think';
-      detailsElement.setAttribute('open', ''); // Keep thoughts expanded by default
-
-      // Add a <summary> to label the thoughts section
-      const summaryElement = document.createElement('summary');
-      summaryElement.textContent = 'Thoughts';
-      detailsElement.appendChild(summaryElement);
-
-      // Create a div to hold the markdown-rendered thoughts content
-      const innerDiv = document.createElement('div');
-      innerDiv.className = 'markdown-content';
-      innerDiv.innerHTML = marked.parse(processedContent.thoughts); // Parse thoughts as markdown
-
-      // Append the markdown content inside the <details> element
-      detailsElement.appendChild(innerDiv);
-
-      // Add the thoughts section to the container
-      state.container.appendChild(detailsElement);
-    }
-
-    // Check if there is visible content to display
-    if (processedContent.visible) {
-      // Create a div for the visible content, rendered as markdown
-      const visibleContentDiv = document.createElement('div');
-      visibleContentDiv.className = 'markdown-content';
-      visibleContentDiv.innerHTML = marked.parse(processedContent.visible); // Parse visible content as markdown
-
-      // Append the visible content to the container
-      state.container.appendChild(visibleContentDiv);
-    }
-  }
-
-
-  // Process a complete JSON chunk from the SSE
-  function processChunk(responseData, state) {
-    // Extract content from the chunk
-    const content = responseData.choices[0].delta.content;
-    // Create a chunk object with an order indicator (using responseData.created)
-    const chunk = {
-      created: responseData.created,  // assumes a timestamp or sequence number is provided
-      content: content
-    };
-    // Add the chunk to the state.chunks array
-    state.chunks.push(chunk);
-    // Sort chunks by the created field (oldest first)
-    state.chunks.sort((a, b) => a.created - b.created);
-    // Rebuild the full raw content by joining the sorted chunk contents
-    state.fullRawContent = state.chunks.map(chunk => chunk.content).join('');
-    // Render the response with the correctly ordered content
-    renderFullResponse(state);
-    updateScroll();
-  }
-
-  // Handle incoming SSE messages by extracting JSON chunks and processing them
-  function handleSSEMessage(event, state) {
-    if (event.data === "[DONE]") {
-      state.eventSource.close();
-      return;
-    }
-    state.buffer += event.data;
-    const { objects, remainder } = extractJSONObjects(state.buffer);
-    state.buffer = remainder;
-    objects.forEach(objStr => {
-      try {
-        const responseData = JSON.parse(objStr);
-        processChunk(responseData, state);
-      } catch (e) {
-        console.error("Error parsing chunk:", e, "Chunk:", objStr);
-      }
-    });
-  }
-
-  // Handle SSE error events
-  function handleSSEError(state) {
-    alert('An error occurred while streaming the response.');
-    state.eventSource.close();
-  }
-
-  // Set up form submission to start streaming response via SSE
   $(document).ready(function () {
     $('#chat-form').on('submit', function (e) {
       e.preventDefault();
@@ -223,21 +124,30 @@
       // Create an EventSource for SSE.
       const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
 
-      // State to hold response data and related variables, including the chunks array for ordering.
-      const state = {
-        fullRawContent: '',
-        buffer: "",
-        chunks: [],
-        container: container,
-        eventSource: eventSource
+      /**
+       * Processing Section
+       * handles the incoming messages from the server-side code
+       */
+      
+       // Listens for messages sent through the stream and displays them on the webpage
+       eventSource.onmessage = function (event) {
+        if (event.data === "[DONE]") {
+          eventSource.close();
+          return;
+        }
+        try {
+          const data = JSON.parse(event.data);
+          renderFullResponse(data.fullContent, container);
+          updateScroll();
+        } catch (e) {
+          console.error("Error parsing server update:", e);
+        }
       };
 
-      eventSource.onmessage = function (event) {
-        handleSSEMessage(event, state);
-      };
-
+      // Listens for errors that occurred through the stream and closes it if encountering
       eventSource.onerror = function () {
-        handleSSEError(state);
+        alert('An error occurred while streaming the response.');
+        eventSource.close();
       };
     });
 
@@ -250,23 +160,21 @@
       textarea.style.height = textarea.scrollHeight + 'px';
     }
 
-    // Handle keydown event to adjust height
+    // Handle keydown event to adjust height and submit on Enter
     $('#prompt').on('keydown', function (e) {
-      // Adjust height on each keydown event
       adjustTextareaHeight(this);
-
       if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault(); // Prevent the default enter behavior (new line)
-        $('#chat-form').submit(); // Trigger form submission
+        e.preventDefault();
+        $('#chat-form').submit();
       }
     });
 
-    // Handle keydown event to adjust height
-    $('#prompt').on('input', function (e) {
-      // Adjust height on each input event
+    // Handle input event to adjust height
+    $('#prompt').on('input', function () {
       adjustTextareaHeight(this);
     });
 
+    // Initially set the textarea height
     adjustTextareaHeight($('#prompt')[0]);
   });
 </script>
