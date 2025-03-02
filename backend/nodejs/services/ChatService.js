@@ -1,4 +1,5 @@
 import axios from "axios";
+import JSONStreamService from "./JSONStreamService.js";
 
 export default class ChatService {
     constructor() {
@@ -18,7 +19,6 @@ export default class ChatService {
         this.conversationHistory.push({ role: "user", content: prompt });
 
         try {
-            // Make API request
             const response = await axios.post(
                 "https://ai.api.parsonlabs.com/v1/chat/completions",
                 {
@@ -32,7 +32,10 @@ export default class ChatService {
                 }
             );
 
-            return response.data;
+            // Pipe the response stream through the JSONStreamService
+            const jsonStreamService = new JSONStreamService();
+            response.data.pipe(jsonStreamService);
+            return jsonStreamService;
         } catch (error) {
             console.error("Chat API Error:", error);
             throw new Error("Error occurred while fetching response");
