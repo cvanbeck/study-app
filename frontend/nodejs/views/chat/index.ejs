@@ -7,6 +7,16 @@
 
 <form id="chat-form">
   <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+
+  //Buttons to select prompt mode
+  <div id="prompt-buttons">
+    <button type="button" data-mode="default">Normal</button>
+    <button type="button" data-mode="steps">Explain in steps</button>
+    <button type="button" data-mode="example">Explain with real world examples</button>
+    <button type="button" data-mode="flashcards">Generate Flashcards</button>
+  </div>
+  //Hidden but stores selected mode
+  <input type="hidden" id="response-mode" name="mode" value="default">
   <button type="submit">Send</button>
 </form>
 
@@ -163,11 +173,12 @@
   }
 
   // Append the user's prompt and an empty AI response container to the chat output
-  function appendChatMessages(prompt) {
+  function appendChatMessages(prompt, mode) {
     const messageId = 'ai-response-' + Date.now();
+    const modeText = mode !== 'default' ? ` (${mode.replace('-', ' ')})` : '';
     $('#chat-output').append(`
         <div class="chat-message user-message">
-          <strong>You:</strong>
+          <strong>You${modeText}:</strong>
           <pre>${escapeHTML(prompt)}</pre>
         </div>
         <div id="${messageId}" class="chat-message ai-response">
@@ -208,17 +219,25 @@
   }
 
   $(document).ready(function () {
+    //Handle click event for modes
+    $('#prompt-buttons button').on('click', function() {
+      const selectedMode = $(this).data('mode');
+      $('#response-mode').val(selectedMode);
+      $('#chat-form').submit();
+    });
+
     $('#chat-form').on('submit', function (e) {
       e.preventDefault();
       const prompt = $('#prompt').val();
+      const mode = $('#response-mode').val();
       $('#prompt').val("");
       adjustTextareaHeight($('#prompt')[0]);
 
       // Append the messages and set up the container.
-      const container = appendChatMessages(prompt);
+      const container = appendChatMessages(prompt, mode);
 
       // Create an EventSource for SSE.
-      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
+      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}&mode=${mode}`);
 
       /**
        * Processing Section
