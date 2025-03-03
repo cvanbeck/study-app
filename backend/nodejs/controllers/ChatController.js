@@ -15,6 +15,8 @@ export default class ChatController extends BaseController {
     async getChatResponse(req, res) {
         try {
             let prompt = req.query.prompt;
+            let mode = req.query.mode || "default";
+            
             if (!prompt) {
                 return res.status(400).json({ error: "Prompt is required" });
             }
@@ -23,7 +25,7 @@ export default class ChatController extends BaseController {
             res.setHeader("Cache-Control", "no-cache");
             res.setHeader("Connection", "keep-alive");
 
-            const stream = await this.chatService.getChatResponse(prompt);
+            const stream = await this.chatService.getChatResponse(prompt, mode);
 
             stream.on("data", (chunk) => {
                 res.write(`data: ${chunk.toString()}\n\n`);
