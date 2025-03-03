@@ -10,13 +10,28 @@ export default class ChatService {
         this.conversationHistory = [];
     }
 
-    async getChatResponse(prompt) {
+    async getChatResponse(prompt, mode) {
         if (!prompt) {
             throw new Error("Prompt is required");
         }
 
+        let formattedPrompt;
+        switch (mode) {
+            case "steps":
+                formattedPrompt = `Explain in a step by step format: ${prompt}`;
+                break;
+            case "example":
+                formattedPrompt = `Explain with a real world example: ${prompt}`;
+                break;
+            case "flashcards":
+                formattedPrompt = `Generate 10 questions and answers for flashcards on this subject: ${prompt}`;
+                break;
+            default:
+                formattedPrompt = prompt;
+        }
+
         // Add user input to conversation history
-        this.conversationHistory.push({ role: "user", content: prompt });
+        this.conversationHistory.push({ role: "user", content: formattedPrompt });
 
         try {
             const response = await axios.post(
