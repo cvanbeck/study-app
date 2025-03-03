@@ -223,13 +223,14 @@
     $('#prompt-buttons button').on('click', function() {
       const selectedMode = $(this).data('mode');
       $('#response-mode').val(selectedMode);
-      $('#chat-form').submit();
+      $('prompt-buttons button').removeClass("selected");
+      $(this).addClass("selected");
     });
 
     $('#chat-form').on('submit', function (e) {
       e.preventDefault();
       const prompt = $('#prompt').val();
-      const mode = $('#response-mode').val();
+      const mode = $('#response-mode').val(); || "default";
       $('#prompt').val("");
       adjustTextareaHeight($('#prompt')[0]);
 
