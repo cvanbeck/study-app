@@ -8,14 +8,14 @@
 <form id="chat-form">
   <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
 
-  //Buttons to select prompt mode
+  <!--Buttons to select prompt mode-->
   <div id="prompt-buttons">
     <button type="button" data-mode="default">Normal</button>
     <button type="button" data-mode="steps">Explain in steps</button>
     <button type="button" data-mode="example">Explain with real world examples</button>
     <button type="button" data-mode="flashcards">Generate Flashcards</button>
   </div>
-  //Hidden but stores selected mode
+  <!--Hidden but stores selected mode-->
   <input type="hidden" id="response-mode" name="mode" value="default">
   <button type="submit">Send</button>
 </form>
