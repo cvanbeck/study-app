@@ -1,10 +1,10 @@
+import BaseController from "./base/BaseController.js";
 import axios from "axios";
 import Note from '../models/Note.js';
-// import ExampleItem from '../models/exampleItem.js';
 
-export default class NotesController {
+export default class NotesController extends BaseController{
     constructor(appData) {
-        this.appData = appData;
+        super(appData);
     }
 
     async index(req, res) {
