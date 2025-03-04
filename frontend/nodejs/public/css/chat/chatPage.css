@@ -164,7 +164,7 @@ details.ai-think summary {
 }
 #settings-dropdown label {
   display: block;
-  padding: 5px;
+  padding: 10px;
   cursor: pointer;
   -webkit-user-select: none;
      -moz-user-select: none;
