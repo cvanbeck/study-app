@@ -35,8 +35,6 @@ details.ai-think {
   border-radius: 4px;
   margin-top: 10px;
   padding: 5px;
-  max-height: 300px;
-  overflow: auto;
 }
 details.ai-think pre {
   background: #c0d8e8;
