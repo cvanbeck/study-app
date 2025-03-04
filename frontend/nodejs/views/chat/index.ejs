@@ -217,11 +217,11 @@
     const modeText = $('input[name="mode"]:checked').closest("label").text().trim(); // Get the label of the selected radio button
     $('#chat-output').append(`
         <div class="chat-message user-message">
-          <strong>You (${modeText}):</strong>
+          <div class="chatboxHeader"><span>You (${modeText}):</span></div>
           <pre>${escapeHTML(prompt)}</pre>
         </div>
         <div id="${messageId}" class="chat-message ai-response">
-          <strong>AI (${modeText}):</strong>
+          <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
           <div class="ai-content"></div>
         </div>
       `);
@@ -302,11 +302,11 @@
       const messageId = 'ai-response-' + Date.now();
       $('#chat-output').append(`
       <div class="chat-message user-message">
-        <strong>You (${modeText}):</strong>
+        <div class="chatboxHeader"><span>You (${modeText}):</span></div>
         <pre>${escapeHTML(prompt)}</pre>
       </div>
       <div id="${messageId}" class="chat-message ai-response">
-        <strong>AI (${modeText}):</strong>
+        <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
         <div class="ai-content"></div>
       </div>
     `);
@@ -315,7 +315,7 @@
       // Pass both parameters (chat mode and thoughts default) to the server
       const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}&mode=${chatMode}`);
 
-            /**
+      /**
        * Processing Section
        * handles the incoming messages from the server-side code
        */
