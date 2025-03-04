@@ -36,6 +36,8 @@ details.ai-think {
     border-radius: 4px;
     margin-top: 10px;
     padding: 5px;
+    max-height: 300px;
+    overflow: auto;
 
     pre {
         background: #c0d8e8; // Slightly darker than before
@@ -63,6 +65,12 @@ details.ai-think {
     background-color: #f9f9f9;
     border-radius: 8px;
     padding-bottom: 120px;
+
+    .chatboxHeader {
+        span {
+            font-weight: bold;
+        }
+    }
 
     pre {
         white-space: pre-wrap;
