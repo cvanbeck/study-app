@@ -215,7 +215,7 @@
   function appendChatMessages(prompt, mode) {
     const messageId = 'ai-response-' + Date.now();
     const modeText = $('input[name="mode"]:checked').closest("label").text().trim(); // Get the label of the selected radio button
-    
+
     $('#chat-output').append(`
         <div class="chat-message user-message">
           <div class="chatboxHeader"><span>You (${modeText}):</span></div>
@@ -230,27 +230,27 @@
   }
 
   // Function to check if the user is near the bottom of the container
-  function isUserNearBottom() {
+  function isUserNearBottom(threshold = 100) {
     const chatOutput = $('#chat-output')[0];
     const scrollPosition = chatOutput.scrollTop;
     const scrollHeight = chatOutput.scrollHeight;
     const clientHeight = chatOutput.clientHeight;
 
     // Check if the user is within 100px of the bottom of the container
-    return scrollHeight - scrollPosition - clientHeight <= 100;
+    return scrollHeight - scrollPosition - clientHeight <= threshold;
   }
 
   // Update scroll behavior: only scroll if the user is near the bottom or when the scrollbar first appears
-  function updateScroll() {
+  function updateScroll(threshold = 100) {
     const chatOutput = $('#chat-output')[0];
     const scrollHeight = chatOutput.scrollHeight;
     const clientHeight = chatOutput.clientHeight;
-
+    
     // Check if there's a scrollbar (i.e., the content is overflowing)
     const hasScrollbar = scrollHeight > clientHeight;
 
     // If the user is near the bottom or if there's no scrollbar, auto-scroll to the bottom
-    if (hasScrollbar && isUserNearBottom()) {
+    if (hasScrollbar && isUserNearBottom(threshold)) {
       chatOutput.scrollTop = scrollHeight; // Scroll to the bottom
     } else if (!hasScrollbar) {
       // If there's no scrollbar, scroll to the bottom the first time content overflows
@@ -259,27 +259,27 @@
   }
 
   $(document).ready(function () {
-  // Toggle dropdown settings menu
-  $('#settings-toggle').on('click', function (e) {
-    e.stopPropagation();
-    const $dropdown = $('#settings-dropdown');
-    
-    if ($dropdown.is(':visible')) {
-      $dropdown.slideUp();
-    } else {
-      $dropdown.slideDown({
-        start: function() {
-          $(this).css('display', 'flex');
-        }
-      });
-    }
-  });
+    // Toggle dropdown settings menu
+    $('#settings-toggle').on('click', function (e) {
+      e.stopPropagation();
+      const $dropdown = $('#settings-dropdown');
 
-  $(document).on('click', function (event) {
-    if (!$(event.target).closest('#settings-container').length) {
-      $('#settings-dropdown').slideUp();
-    }
-  });
+      if ($dropdown.is(':visible')) {
+        $dropdown.slideUp();
+      } else {
+        $dropdown.slideDown({
+          start: function () {
+            $(this).css('display', 'flex');
+          }
+        });
+      }
+    });
+
+    $(document).on('click', function (event) {
+      if (!$(event.target).closest('#settings-container').length) {
+        $('#settings-dropdown').slideUp();
+      }
+    });
 
     //Handle mode selection
     $('#settings-dropdown input[type="radio"]').on('change', function () {
@@ -305,15 +305,16 @@
       const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
       const messageId = 'ai-response-' + Date.now();
       $('#chat-output').append(`
-      <div class="chat-message user-message">
-        <div class="chatboxHeader"><span>You (${modeText}):</span></div>
-        <pre>${escapeHTML(prompt)}</pre>
-      </div>
-      <div id="${messageId}" class="chat-message ai-response">
-        <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
-        <div class="ai-content"></div>
-      </div>
-    `);
+        <div class="chat-message user-message">
+          <div class="chatboxHeader"><span>You (${modeText}):</span></div>
+          <pre>${escapeHTML(prompt)}</pre>
+        </div>
+        <div id="${messageId}" class="chat-message ai-response">
+          <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
+          <div class="ai-content"></div>
+        </div>
+      `);
+      updateScroll(300);
       const container = document.querySelector(`#${messageId} .ai-content`);
 
       // Pass both parameters (chat mode and thoughts default) to the server
