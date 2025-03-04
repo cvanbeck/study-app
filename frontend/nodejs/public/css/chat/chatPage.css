@@ -107,6 +107,19 @@ details.ai-think summary {
   cursor: pointer;
   font-size: 16px;
 }
+.settings-button {
+  display: inline-block;
+  padding: 10px;
+  background: #444;
+  color: white;
+  border-radius: 5px;
+  cursor: pointers;
+  text-align: center;
+  user-select: none;
+}
+.settings-button:hover {
+  background: #555;
+}
 #settings-container {
   position: relative;
   display: inline-block;
