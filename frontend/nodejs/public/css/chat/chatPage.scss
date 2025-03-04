@@ -151,6 +151,7 @@ details.ai-think {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
+    user-select: none;
 
     &:hover {
         background: #555;
@@ -170,9 +171,11 @@ details.ai-think {
         display: block;
         padding: 5px;
         cursor: pointer;
+        user-select: none;
 
         &:hover {
             background: #444;
+            color: white;
         }
     }
 }

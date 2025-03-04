@@ -143,6 +143,9 @@ details.ai-think summary {
   padding: 10px;
   border-radius: 5px;
   cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 #settings-toggle:hover {
   background: #555;
@@ -161,9 +164,13 @@ details.ai-think summary {
   display: block;
   padding: 5px;
   cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 #settings-dropdown label:hover {
   background: #444;
+  color: white;
 }
 
 .mode-toggle:checked + span {
