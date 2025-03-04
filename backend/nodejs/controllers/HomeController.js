@@ -52,4 +52,16 @@ export default class HomeController extends BaseController {
         // Prepare the content to send as a partial
         return res.renderPartial("partials/ajaxTest", { ...this.appData, message: "This is the AJAX loaded content!", item });
     }
+
+    // OPTIONAL, EXAMPLE FUNCTION (routes to (url)/ajaxModalTest)
+    async ajaxModalTest(req, res) {
+        const item = new ExampleItem({
+            name: "Modal Test",
+            description: "This is content loaded in a Bootbox modal!"
+        });
+
+        // Render the partial view
+        return res.renderPartial("partials/ajaxTest", { ...this.appData, message: "This content is loaded in a Bootbox modal!", item });
+    }
+
 }
