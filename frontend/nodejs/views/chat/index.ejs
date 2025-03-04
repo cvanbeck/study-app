@@ -215,6 +215,7 @@
   function appendChatMessages(prompt, mode) {
     const messageId = 'ai-response-' + Date.now();
     const modeText = $('input[name="mode"]:checked').closest("label").text().trim(); // Get the label of the selected radio button
+    
     $('#chat-output').append(`
         <div class="chat-message user-message">
           <div class="chatboxHeader"><span>You (${modeText}):</span></div>
@@ -284,7 +285,10 @@
     $('#settings-dropdown input[type="radio"]').on('change', function () {
       const selectedMode = $(this).val();
       $('#response-mode').val(selectedMode);
+
+      $("#prompt").attr("placeholder", `Message the AI (${$('input[name="mode"]:checked').closest("label").text().trim()})`);
     });
+    $("#prompt").attr("placeholder", `Message the AI (${$('input[name="mode"]:checked').closest("label").text().trim()})`);
 
     $('#chat-form').on('submit', function (e) {
       e.preventDefault();
