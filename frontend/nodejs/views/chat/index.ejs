@@ -230,17 +230,19 @@
   $(document).ready(function () {
     //Toggle dropdown settings menu
     $('#settings-toggle').on('click', function(e) {
-      e.preventDefault();
-      $('#settings-dropdown').toggle();
+      e.stopPropogation();
+      $('#settings-dropdown').slideToggle();
+    });
+    $(document).on('click', function (event) {
+      if (!$(event.target).closest('#settings-container').length) {
+        $('#settings-dropdown').slideUp();
+      }
     });
 
     //Handle mode selection
-    $('#settings-dropdown input[type="checkbox"]').on('change', function() {
-      let selectedModes = [];
-      $('#settings-dropdown input[type="checkbox"]:checked').each(function() {
-        selectedModes.push($(this).attr('id').replace('-mode', ''));
-      });
-      $('#response-mode').val(selectedModes.length ? selectedModes.join(',') : "default");
+    $('#settings-dropdown input[type="radio"]').on('change', function() {
+      const selectedMode = $(this).val();
+      $('#response-mode').val(selectedMode);
     });
 
     $('#chat-form').on('submit', function (e) {
