@@ -15,6 +15,9 @@ export default class ChatService {
             throw new Error("Prompt is required");
         }
 
+        // Add user input to conversation history
+        this.conversationHistory.push({ role: "user", content: prompt });
+
         let formattedPrompt;
         switch (mode) {
             case "steps":
@@ -30,15 +33,12 @@ export default class ChatService {
                 formattedPrompt = prompt;
         }
 
-        // Add user input to conversation history
-        this.conversationHistory.push({ role: "user", content: formattedPrompt });
-
         try {
             const response = await axios.post(
                 "https://ai.api.parsonlabs.com/v1/chat/completions",
                 {
                     model: "deepseek-r1:1.5b",
-                    messages: this.conversationHistory,
+                    messages: [{ role: "user", content: formattedPrompt }],
                     stream: true,
                 },
                 {
