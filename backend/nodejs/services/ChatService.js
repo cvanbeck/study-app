@@ -27,7 +27,7 @@ export default class ChatService {
                 formattedPrompt = `Explain with a real world example: ${prompt}`;
                 break;
             case "flashcards":
-                formattedPrompt = `Generate 10 questions and answers for flashcards on this subject: ${prompt}`;
+                formattedPrompt = `Generate 10 questions and answers on this subject: ${prompt}`;
                 break;
             default:
                 formattedPrompt = prompt;
