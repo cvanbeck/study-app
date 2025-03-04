@@ -42,6 +42,9 @@ details.ai-think pre {
 details.ai-think summary {
   cursor: pointer;
   font-weight: bold;
+  position: sticky;
+  top: 0;
+  background: #d0e4f0;
 }
 
 .user-message {
@@ -152,12 +155,13 @@ details.ai-think summary {
 }
 
 #settings-dropdown {
+  z-index: 1;
   display: none;
   position: absolute;
   background: white;
   border: 1px solid #ccc;
-  padding: 10px;
-  width: 200px;
+  width: -moz-fit-content;
+  width: fit-content;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
@@ -176,6 +180,22 @@ details.ai-think summary {
   background: #444;
   color: white;
   padding-left: 20px;
+}
+#settings-dropdown .segment-group {
+  width: 200px;
+  padding: 10px;
+}
+#settings-dropdown .segment-group:not(:first-child) {
+  padding-top: 10px;
+}
+#settings-dropdown .segment-group .segment-group-heading {
+  font-weight: bold;
+}
+#settings-dropdown .segment-group:nth-child(odd) {
+  background-color: #ffffff;
+}
+#settings-dropdown .segment-group:nth-child(even) {
+  background-color: #f5f5f5;
 }
 
 .mode-toggle:checked + span {
