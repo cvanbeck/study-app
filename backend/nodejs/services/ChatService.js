@@ -10,7 +10,7 @@ export default class ChatService {
         this.conversationHistory = [];
     }
 
-    async getChatResponse(prompt) {
+    async getChatResponse(prompt, mode) {
         if (!prompt) {
             throw new Error("Prompt is required");
         }
@@ -18,12 +18,27 @@ export default class ChatService {
         // Add user input to conversation history
         this.conversationHistory.push({ role: "user", content: prompt });
 
+        let formattedPrompt;
+        switch (mode) {
+            case "steps":
+                formattedPrompt = `Explain in a step by step format: ${prompt}`;
+                break;
+            case "example":
+                formattedPrompt = `Explain with a real world example: ${prompt}`;
+                break;
+            case "flashcards":
+                formattedPrompt = `Generate 10 questions and answers on this subject: ${prompt}`;
+                break;
+            default:
+                formattedPrompt = prompt;
+        }
+
         try {
             const response = await axios.post(
                 "https://ai.api.parsonlabs.com/v1/chat/completions",
                 {
                     model: "deepseek-r1:1.5b",
-                    messages: this.conversationHistory,
+                    messages: [{ role: "user", content: formattedPrompt }],
                     stream: true,
                 },
                 {
