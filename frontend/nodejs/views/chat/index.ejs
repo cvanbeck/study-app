@@ -229,12 +229,18 @@
   }
 
   $(document).ready(function () {
-    //Handle click event for modes
-    $('#prompt-buttons button').on('click', function() {
-      const selectedMode = $(this).data('mode');
-      $('#response-mode').val(selectedMode);
-      $('prompt-buttons button').removeClass("active");
-      $(this).addClass("active");
+    //Toggle dropdown settings menu
+    $('#settings-toggle').on('click', function() {
+      $('settings-dropdown').toggle();
+    });
+
+    //Handle mode selection
+    $('.mode-toggle').on('change', function() {
+      let selectedModes = [];
+      $('.mode-toggle:checked').each(function() {
+        selectedModes.push($(this).data('mode'));
+      });
+      $('#response-mode').val(selectedModes.length ? selectedModes.join(',') : "default");
     });
 
     $('#chat-form').on('submit', function (e) {
