@@ -11,6 +11,9 @@
     "name": "placeholder",
     "email": "placeholder@placeholder.com"
   },
+  "scripts": {
+    "postinstall": "cd ../etherpad/etherpad-lite-2.2.7 && pnpm install"
+  },
   "dependencies": {
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
@@ -25,6 +28,7 @@
     "sqlite": "^5.1.1",
     "pg": "^8.13.3",
     "axios": "^1.8.1",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "pnpm": "^10.5.2"
   }
 }
