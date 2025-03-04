@@ -223,8 +223,8 @@
     $('#prompt-buttons button').on('click', function() {
       const selectedMode = $(this).data('mode');
       $('#response-mode').val(selectedMode);
-      $('prompt-buttons button').removeClass("selected");
-      $(this).addClass("selected");
+      $('prompt-buttons button').removeClass("active");
+      $(this).addClass("active");
     });
 
     $('#chat-form').on('submit', function (e) {
