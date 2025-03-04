@@ -9,11 +9,21 @@
   <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
 
   <!--Buttons to select prompt mode-->
-  <div id="prompt-buttons">
-    <button type="button" data-mode="default">Normal</button>
-    <button type="button" data-mode="steps">Explain in steps</button>
-    <button type="button" data-mode="example">Explain with real world examples</button>
-    <button type="button" data-mode="flashcards">Generate Flashcards</button>
+  <div id="settings-container">
+    <button id="settings-toggle">
+      Settings
+    </button>
+    <div id="settings-dropdown">
+      <label>
+        <input type="checkbox" class="mode-toggle" data-mode="steps"> Explain in Steps
+      </label>
+      <label>
+        <input type="checkbox" class="mode-toggle" data-mode="example"> Real World Example
+      </label>
+      <label>
+        <input type="checkbox" class="mode-toggle" data-mode="flashcards"> Generate Flashcards
+      </label>
+    </div>
   </div>
   <!--Hidden but stores selected mode-->
   <input type="hidden" id="response-mode" name="mode" value="default">
