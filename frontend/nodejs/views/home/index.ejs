@@ -9,6 +9,9 @@
 
 <p>THIS IS AN ITEM QUERIED FROM THE DATABASE: [<%= dbItem.EmployeeId %>: <%= dbItem.Title %>, <%= dbItem.FirstName %> <%= dbItem.LastName %>]</p>
 
+<!-- Button to trigger the AJAX request for SweetAlert2 modal -->
+<p><button id="ajaxSweetAlertButton">Click to Load SweetAlert2 Modal</button></p>
+
 <!-- Button to trigger the AJAX request -->
 <p><button id="ajaxButton">Click to Load AJAX Content</button></p>
 
@@ -33,6 +36,25 @@
             },
             error: function(xhr, status, error) {
                 console.error('Error fetching AJAX content:', status, error);
+            }
+        });
+    });
+
+    $('#ajaxSweetAlertButton').on('click', function() {
+        $.ajax({
+            url: '/home/ajaxModalTest',
+            method: 'GET',
+            dataType: 'html',
+            success: function(data) {
+                Swal.fire({
+                    title: 'AJAX Modal Content',
+                    html: data, // Inject the fetched HTML content
+                    showCloseButton: true,
+                    width: '600px' // Customize the size
+                });
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching AJAX modal content:', status, error);
             }
         });
     });

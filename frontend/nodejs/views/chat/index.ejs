@@ -5,10 +5,29 @@
 </head>
 <h1>Chat with AI</h1>
 
-<form id="chat-form">
-  <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
-  <button type="submit">Send</button>
-</form>
+<div id="settings-container">
+    <div id="settings-toggle">Settings</div>
+    <div id="settings-dropdown" style="display: none;">
+      <label>
+        <input type="radio" name="mode" value="default" checked> Normal
+      </label><br>
+      <label>
+        <input type="radio" name="mode" value="steps"> Explain in Steps
+      </label><br>
+      <label>
+        <input type="radio" name="mode" value="example"> Real World Example
+      </label><br>
+      <label>
+        <input type="radio" name="mode" value="flashcards"> Generate Flashcards
+      </label>
+    </div>
+  </div>
+  <!--Hidden but stores selected mode-->
+  <form id="chat-form">
+    <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+    <input type="hidden" id="response-mode" name="mode" value="default">
+    <button type="submit">Send</button>
+  </form>
 
 <div id="chat-output"></div>
 
@@ -163,11 +182,12 @@
   }
 
   // Append the user's prompt and an empty AI response container to the chat output
-  function appendChatMessages(prompt) {
+  function appendChatMessages(prompt, mode) {
     const messageId = 'ai-response-' + Date.now();
+    const modeText = mode !== 'default' ? ` (${mode.replace('-', ' ')})` : '';
     $('#chat-output').append(`
         <div class="chat-message user-message">
-          <strong>You:</strong>
+          <strong>You${modeText}:</strong>
           <pre>${escapeHTML(prompt)}</pre>
         </div>
         <div id="${messageId}" class="chat-message ai-response">
@@ -208,17 +228,35 @@
   }
 
   $(document).ready(function () {
+    //Toggle dropdown settings menu
+    $('#settings-toggle').on('click', function(e) {
+      e.stopPropagation();
+      $('#settings-dropdown').slideToggle();
+    });
+    $(document).on('click', function (event) {
+      if (!$(event.target).closest('#settings-container').length) {
+        $('#settings-dropdown').slideUp();
+      }
+    });
+
+    //Handle mode selection
+    $('#settings-dropdown input[type="radio"]').on('change', function() {
+      const selectedMode = $(this).val();
+      $('#response-mode').val(selectedMode);
+    });
+
     $('#chat-form').on('submit', function (e) {
       e.preventDefault();
       const prompt = $('#prompt').val();
+      const mode = $('#response-mode').val();
       $('#prompt').val("");
       adjustTextareaHeight($('#prompt')[0]);
 
       // Append the messages and set up the container.
-      const container = appendChatMessages(prompt);
+      const container = appendChatMessages(prompt, mode);
 
       // Create an EventSource for SSE.
-      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}`);
+      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}&mode=${mode}`);
 
       /**
        * Processing Section
