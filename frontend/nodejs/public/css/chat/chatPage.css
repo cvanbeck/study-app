@@ -78,6 +78,7 @@ details.ai-think summary {
 }
 
 #chat-form {
+  z-index: 1;
   position: fixed;
   bottom: 20px;
   left: 50%;
