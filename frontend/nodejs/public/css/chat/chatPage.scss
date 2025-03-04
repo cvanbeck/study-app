@@ -132,10 +132,10 @@ details.ai-think {
     cursor: pointers;
     text-align: center;
     user-select: none;
-}
 
-.settings-button:hover {
-    background: #555;
+    &:hover {
+        background: #555;
+    }
 }
 
 #settings-container {
@@ -151,10 +151,10 @@ details.ai-think {
     padding: 10px;
     border-radius: 5px;
     cursor: pointer;
-}
 
-#settings-toggle:hover {
-    background: #555;
+    &:hover {
+        background: #555;
+    }
 }
 
 #settings-dropdown {
@@ -165,16 +165,16 @@ details.ai-think {
     padding: 10px;
     width: 200px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-}
 
-#settings-dropdown label {
-    display: block;
-    padding: 5px;
-    cursor: pointer;
-}
+    label {
+        display: block;
+        padding: 5px;
+        cursor: pointer;
 
-#settings-dropdown label:hover {
-    background: #444;
+        &:hover {
+            background: #444;
+        }
+    }
 }
 
 .mode-toggle:checked+span {
