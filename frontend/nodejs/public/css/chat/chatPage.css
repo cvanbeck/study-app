@@ -25,7 +25,8 @@
   max-width: 100%;
   font-family: "Courier New", monospace;
   font-size: 14px;
-  overflow-x: auto; /* Allow horizontal scrolling if text overflows */
+  overflow-x: auto;
+  /* Allow horizontal scrolling if text overflows */
 }
 
 details.ai-think {
@@ -55,6 +56,7 @@ details.ai-think summary {
   overflow-y: auto;
   background-color: #f9f9f9;
   border-radius: 8px;
+  padding-bottom: 120px;
 }
 #chat-output pre {
   white-space: pre-wrap;
@@ -83,7 +85,8 @@ details.ai-think summary {
   display: flex;
   align-items: center;
 }
-#chat-form input, #chat-form textarea {
+#chat-form input,
+#chat-form textarea {
   flex-grow: 1;
   padding: 10px;
   border-radius: 10px;
@@ -107,6 +110,10 @@ details.ai-think summary {
   cursor: pointer;
   font-size: 16px;
 }
+#chat-form button:hover {
+  background-color: #0056b3;
+}
+
 .settings-button {
   display: inline-block;
   padding: 10px;
@@ -115,16 +122,21 @@ details.ai-think summary {
   border-radius: 5px;
   cursor: pointers;
   text-align: center;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
+
 .settings-button:hover {
   background: #555;
 }
+
 #settings-container {
   position: relative;
   display: inline-block;
   margin-bottom: 10px;
 }
+
 #settings-toggle {
   background: #444;
   color: white;
@@ -133,9 +145,11 @@ details.ai-think summary {
   border-radius: 5px;
   cursor: pointer;
 }
+
 #settings-toggle:hover {
   background: #555;
 }
+
 #settings-dropdown {
   display: none;
   position: absolute;
@@ -145,18 +159,18 @@ details.ai-think summary {
   width: 200px;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 }
+
 #settings-dropdown label {
   display: block;
   padding: 5px;
   cursor: pointer;
 }
+
 #settings-dropdown label:hover {
   background: #444;
 }
+
 .mode-toggle:checked + span {
   font-weight: bold;
   color: #ffcc00;
-}
-#chat-form button:hover {
-  background-color: #0056b3;
 }/*# sourceMappingURL=chatPage.css.map */

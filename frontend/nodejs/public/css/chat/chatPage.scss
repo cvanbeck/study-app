@@ -25,7 +25,8 @@
         max-width: 100%;
         font-family: "Courier New", monospace;
         font-size: 14px;
-        overflow-x: auto;             /* Allow horizontal scrolling if text overflows */
+        overflow-x: auto;
+        /* Allow horizontal scrolling if text overflows */
     }
 }
 
@@ -58,6 +59,7 @@ details.ai-think {
     overflow-y: auto;
     background-color: #f9f9f9;
     border-radius: 8px;
+    padding-bottom: 120px;
 
     pre {
         white-space: pre-wrap;
@@ -87,7 +89,8 @@ details.ai-think {
     display: flex;
     align-items: center;
 
-    input, textarea {
+    input,
+    textarea {
         flex-grow: 1;
         padding: 10px;
         border-radius: 10px;
@@ -118,4 +121,63 @@ details.ai-think {
             background-color: #0056b3;
         }
     }
+}
+
+.settings-button {
+    display: inline-block;
+    padding: 10px;
+    background: #444;
+    color: white;
+    border-radius: 5px;
+    cursor: pointers;
+    text-align: center;
+    user-select: none;
+}
+
+.settings-button:hover {
+    background: #555;
+}
+
+#settings-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+#settings-toggle {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#settings-toggle:hover {
+    background: #555;
+}
+
+#settings-dropdown {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 200px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#settings-dropdown label {
+    display: block;
+    padding: 5px;
+    cursor: pointer;
+}
+
+#settings-dropdown label:hover {
+    background: #444;
+}
+
+.mode-toggle:checked+span {
+    font-weight: bold;
+    color: #ffcc00;
 }
