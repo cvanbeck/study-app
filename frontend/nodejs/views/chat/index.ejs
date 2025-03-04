@@ -10,9 +10,9 @@
 
   <!--Buttons to select prompt mode-->
   <div id="settings-container">
-    <button id="settings-toggle">
+    <div id="settings-toggle">
       Settings
-    </button>
+    </div>
     <div id="settings-dropdown">
       <label>
         <input type="checkbox" class="mode-toggle" data-mode="steps"> Explain in Steps
@@ -231,6 +231,7 @@
   $(document).ready(function () {
     //Toggle dropdown settings menu
     $('#settings-toggle').on('click', function() {
+      e.preventDefault();
       $('settings-dropdown').toggle();
     });
 
