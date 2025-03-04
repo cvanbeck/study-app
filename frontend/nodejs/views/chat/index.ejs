@@ -6,8 +6,11 @@
 <h1>Chat with AI</h1>
 
 <div id="settings-container">
-    <div id="settings-toggle">Settings</div>
-    <div id="settings-dropdown" style="display: none;">
+  <div id="settings-toggle">Settings</div>
+  <div id="settings-dropdown" style="display: none;">
+    <!-- Chat Mode Segment (reserved) -->
+    <div class="segment-group">
+      <span class="segment-group-heading">Chat Mode:</span>
       <label>
         <input type="radio" name="mode" value="default" checked> Normal
       </label>
@@ -21,13 +24,25 @@
         <input type="radio" name="mode" value="flashcards"> Generate Flashcards
       </label>
     </div>
+    <!-- New Thoughts Default Segment -->
+    <div class="segment-group">
+      <span class="segment-group-heading">Thoughts Tag Default:</span>
+      <label>
+        <input type="radio" name="thoughtsDefault" value="open" checked> Open
+      </label>
+      <label>
+        <input type="radio" name="thoughtsDefault" value="closed"> Closed
+      </label>
+    </div>
   </div>
-  <!--Hidden but stores selected mode-->
-  <form id="chat-form">
-    <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
-    <input type="hidden" id="response-mode" name="mode" value="default">
-    <button type="submit">Send</button>
-  </form>
+</div>
+
+<!--Hidden but stores selected mode-->
+<form id="chat-form">
+  <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+  <input type="hidden" id="response-mode" name="mode" value="default">
+  <button type="submit">Send</button>
+</form>
 
 <div id="chat-output"></div>
 
@@ -126,8 +141,15 @@
   }
 
   // Render the entire AI response from the server-side processed content
-  function renderFullResponse(fullRawContent, container) {
+  function renderFullResponse(fullRawContent, container, isFinal = false) {
     const processedContent = processAIContent(fullRawContent);
+    // Retrieve the current default from settings.
+    const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
+    // If no persisted state is set, initialize it from the default setting.
+    if (typeof window.persistedThoughtsState === 'undefined') {
+      window.persistedThoughtsState = (thoughtsDefault === 'open');
+    }
+
     container.innerHTML = '';
 
     /**
@@ -139,9 +161,12 @@
     if (processedContent.thoughts.trim()) {
       const detailsElement = document.createElement('details');
       detailsElement.className = 'ai-think';
-      detailsElement.setAttribute('open', '');
+      // Use the persisted state rather than re-setting from the default every time.
+      if (window.persistedThoughtsState) {
+        detailsElement.setAttribute('open', '');
+      }
       const summaryElement = document.createElement('summary');
-      summaryElement.textContent = 'Thoughts';
+      summaryElement.textContent = isFinal ? 'Thoughts' : 'Thinking...';
       detailsElement.appendChild(summaryElement);
 
       const innerDiv = document.createElement('div');
@@ -149,6 +174,11 @@
       innerDiv.innerHTML = processMathContent(processedContent.thoughts);
       detailsElement.appendChild(innerDiv);
       container.appendChild(detailsElement);
+
+      // When the user toggles the details element, update the persisted state.
+      detailsElement.addEventListener('toggle', function () {
+        window.persistedThoughtsState = detailsElement.open;
+      });
     }
 
     // Styles the content outside of the <think></think> tags
@@ -159,7 +189,7 @@
       container.appendChild(visibleContentDiv);
     }
 
-    // Trigger MathJax once after all content is added
+    // Trigger MathJax once, after all content is added
     if (typeof MathJax !== 'undefined') {
       MathJax.typesetPromise([container]).catch(function (err) {
         console.error('MathJax typeset failed: ', err);
@@ -228,19 +258,30 @@
   }
 
   $(document).ready(function () {
-    //Toggle dropdown settings menu
-    $('#settings-toggle').on('click', function(e) {
-      e.stopPropagation();
-      $('#settings-dropdown').slideToggle();
-    });
-    $(document).on('click', function (event) {
-      if (!$(event.target).closest('#settings-container').length) {
-        $('#settings-dropdown').slideUp();
-      }
-    });
+  // Toggle dropdown settings menu
+  $('#settings-toggle').on('click', function (e) {
+    e.stopPropagation();
+    const $dropdown = $('#settings-dropdown');
+    
+    if ($dropdown.is(':visible')) {
+      $dropdown.slideUp();
+    } else {
+      $dropdown.slideDown({
+        start: function() {
+          $(this).css('display', 'flex');
+        }
+      });
+    }
+  });
+
+  $(document).on('click', function (event) {
+    if (!$(event.target).closest('#settings-container').length) {
+      $('#settings-dropdown').slideUp();
+    }
+  });
 
     //Handle mode selection
-    $('#settings-dropdown input[type="radio"]').on('change', function() {
+    $('#settings-dropdown input[type="radio"]').on('change', function () {
       const selectedMode = $(this).val();
       $('#response-mode').val(selectedMode);
     });
@@ -248,17 +289,33 @@
     $('#chat-form').on('submit', function (e) {
       e.preventDefault();
       const prompt = $('#prompt').val();
-      const mode = $('#response-mode').val();
+      // Read the two separate radio groups:
+      const chatMode = $('input[name="mode"]:checked').val();
+      const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
+
       $('#prompt').val("");
       adjustTextareaHeight($('#prompt')[0]);
 
       // Append the messages and set up the container.
-      const container = appendChatMessages(prompt, mode);
+      // Use the chat mode for the display label.
+      const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
+      const messageId = 'ai-response-' + Date.now();
+      $('#chat-output').append(`
+      <div class="chat-message user-message">
+        <strong>You (${modeText}):</strong>
+        <pre>${escapeHTML(prompt)}</pre>
+      </div>
+      <div id="${messageId}" class="chat-message ai-response">
+        <strong>AI (${modeText}):</strong>
+        <div class="ai-content"></div>
+      </div>
+    `);
+      const container = document.querySelector(`#${messageId} .ai-content`);
 
-      // Create an EventSource for SSE.
-      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}&mode=${mode}`);
+      // Pass both parameters (chat mode and thoughts default) to the server
+      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}&mode=${chatMode}`);
 
-      /**
+            /**
        * Processing Section
        * handles the incoming messages from the server-side code
        */
@@ -266,19 +323,23 @@
       // Listens for messages sent through the stream and displays them on the webpage
       eventSource.onmessage = function (event) {
         if (event.data === "[DONE]") {
+          // Re-render content with isFinal = true
+          renderFullResponse(lastFullContent, container, true);
           eventSource.close();
           return;
         }
         try {
           const data = JSON.parse(event.data);
-          renderFullResponse(data.fullContent, container);
+          // Store the last content for final rendering
+          window.lastFullContent = data.fullContent;
+          // Render with "Thinking..." while streaming (isFinal = false)
+          renderFullResponse(data.fullContent, container, false);
           updateScroll();
         } catch (e) {
           console.error("Error parsing server update:", e);
         }
       };
 
-      // Listens for errors that occurred through the stream and closes it if encountering
       eventSource.onerror = function () {
         alert('An error occurred while streaming the response.');
         eventSource.close();
