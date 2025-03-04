@@ -9,13 +9,16 @@
     <div id="settings-toggle">Settings</div>
     <div id="settings-dropdown" style="display: none;">
       <label>
-        <input type="checkbox" id="steps-mode"> Explain in Steps
+        <input type="radio" name="mode" value="default" checked> Normal
       </label><br>
       <label>
-        <input type="checkbox" id="example-mode"> Real World Example
+        <input type="radio" name="mode" value="steps"> Explain in Steps
       </label><br>
       <label>
-        <input type="checkbox" id="flashcards-mode"> Generate Flashcards
+        <input type="radio" name="mode" value="example"> Real World Example
+      </label><br>
+      <label>
+        <input type="radio" name="mode" value="flashcards"> Generate Flashcards
       </label>
     </div>
   </div>
