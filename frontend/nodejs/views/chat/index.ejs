@@ -184,14 +184,14 @@
   // Append the user's prompt and an empty AI response container to the chat output
   function appendChatMessages(prompt, mode) {
     const messageId = 'ai-response-' + Date.now();
-    const modeText = mode !== 'default' ? ` (${mode.replace('-', ' ')})` : '';
+    const modeText = $('input[name="mode"]:checked').closest("label").text().trim(); // Get the label of the selected radio button
     $('#chat-output').append(`
         <div class="chat-message user-message">
-          <strong>You${modeText}:</strong>
+          <strong>You (${modeText}):</strong>
           <pre>${escapeHTML(prompt)}</pre>
         </div>
         <div id="${messageId}" class="chat-message ai-response">
-          <strong>AI:</strong>
+          <strong>AI (${modeText}):</strong>
           <div class="ai-content"></div>
         </div>
       `);
