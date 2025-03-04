@@ -12,23 +12,25 @@
     "email": "placeholder@placeholder.com"
   },
   "scripts": {
-    "postinstall": "cd ../etherpad/etherpad-lite-2.2.7 && pnpm install"
+    "postinstall": "cd ../etherpad/etherpad-lite-2.2.7 && pnpm install",
+    "build-ether": "cd cd ../etherpad/etherpad-lite-2.2.7 && pnpm run build:etherpad",
+    "run-ether": "cd ../etherpad/etherpad-lite-2.2.7 && pnpm run prod"
   },
   "dependencies": {
+    "axios": "^1.8.1",
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
+    "dotenv": "^16.4.7",
     "ejs": "^3.1.6",
     "express": "^4.18.1",
     "express-ejs-layouts": "^2.5.1",
     "express-session": "^1.17.3",
     "mysql": "^2.18.1",
-    "pug": "^3.0.2",
-    "uuid": "^9.0.1",
-    "sqlite3": "^5.1.7",
-    "sqlite": "^5.1.1",
     "pg": "^8.13.3",
-    "axios": "^1.8.1",
-    "dotenv": "^16.4.7",
-    "pnpm": "^10.5.2"
+    "pnpm": "^10.5.2",
+    "pug": "^3.0.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "uuid": "^9.0.1"
   }
 }
