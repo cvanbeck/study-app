@@ -139,14 +139,11 @@ details.ai-think summary {
 #settings-dropdown {
   display: none;
   position: absolute;
-  background: #333;
-  color: white;
-  border-radius: 5px;
+  background: white;
+  border: 1px solid #ccc;
   padding: 10px;
   width: 200px;
-  top: 40px;
-  left: 0;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 }
 #settings-dropdown label {
   display: block;
