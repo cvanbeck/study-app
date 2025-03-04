@@ -232,7 +232,7 @@
     });
 
     //Handle mode selection
-    $('#settings-dropdown input[type="checkbox"]').on('change', fucntion() {
+    $('#settings-dropdown input[type="checkbox"]').on('change', function() {
       let selectedModes = [];
       $('#settings-dropdown input[type="checkbox"]:checked').each(function() {
         selectedModes.push($(this).attr('id').replace('-mode', ''));
