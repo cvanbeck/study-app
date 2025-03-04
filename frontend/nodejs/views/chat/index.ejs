@@ -5,14 +5,8 @@
 </head>
 <h1>Chat with AI</h1>
 
-<form id="chat-form">
-  <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
-
-  <!--Buttons to select prompt mode-->
-  <div id="settings-container">
-    <div id="settings-toggle">
-      Settings
-    </div>
+<div id="settings-container">
+    <div id="settings-toggle">Settings</div>
     <div id="settings-dropdown" style="display: none;">
       <label>
         <input type="checkbox" id="steps-mode"> Explain in Steps
@@ -26,9 +20,11 @@
     </div>
   </div>
   <!--Hidden but stores selected mode-->
-  <input type="hidden" id="response-mode" name="mode" value="default">
-  <button type="submit">Send</button>
-</form>
+  <form id="chat-form">
+    <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+    <input type="hidden" id="response-mode" name="mode" value="default">
+    <button type="submit">Send</button>
+  </form>
 
 <div id="chat-output"></div>
 
@@ -230,16 +226,16 @@
 
   $(document).ready(function () {
     //Toggle dropdown settings menu
-    $('#settings-toggle').on('click', function() {
+    $('#settings-toggle').on('click', function(e) {
       e.preventDefault();
       $('#settings-dropdown').toggle();
     });
 
     //Handle mode selection
-    $('.mode-toggle').on('change', function() {
+    $('#settings-dropdown input[type="checkbox"]').on('change', fucntion() {
       let selectedModes = [];
-      $('.mode-toggle:checked').each(function() {
-        selectedModes.push($(this).data('mode'));
+      $('#settings-dropdown input[type="checkbox"]:checked').each(function() {
+        selectedModes.push($(this).attr('id').replace('-mode', ''));
       });
       $('#response-mode').val(selectedModes.length ? selectedModes.join(',') : "default");
     });
