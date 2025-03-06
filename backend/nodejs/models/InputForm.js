@@ -1,9 +1,8 @@
-export default class Note {
+export default class InputForm {
     constructor(data = {}) {
-        this.id = data.id || crypto.randomUUID();
         this.name = data.name || '';
+        this.type = data.type || '';
         this.content = data.content || '';
     }
 
-    setContent
 }
