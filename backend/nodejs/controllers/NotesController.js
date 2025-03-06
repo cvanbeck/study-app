@@ -1,10 +1,11 @@
 import BaseController from "./base/BaseController.js";
-import axios from "axios";
 import Note from '../models/Note.js';
+import InputForm from '../models/InputForm.js';
 
 export default class NotesController extends BaseController{
     constructor(appData) {
         super(appData);
+        this.currentNote;
     }
 
     async index(req, res) {
@@ -12,31 +13,38 @@ export default class NotesController extends BaseController{
     }
 
 
+    // Generates a note item and calls storeNote in notesservice 
+    async generateNote(req, res) {
+        const item = new Note({
+            name: "Modal Test",
+            
+        });
 
-    async getToken() {
-        try {
-            const response = await axios.post('http://localhost:9001/oidc/token', new URLSearchParams({
-                grant_type: 'client_credentials',
-                client_id: 'client_credentials',
-                client_secret: 'client_credentials'
-            }), {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
-            return response.data.access_token;
-        } catch (error) {
-            console.error('Error obtaining token:', error.response ? error.response.data : error.message);
-        }
-    }
-    
-    async newNote(req, res) {
-        let note = new Note();
-        let padID = this.getRndInteger(100, 10000000000).toString()
-        res.renderPartial("partials/newNote", { ...this.appData, padID});
-
+        return res.renderPartial("partials/note", { ...this.appData, message: "This content is loaded in a Bootbox modal!", item });
     }
 
-    getRndInteger(min, max) {
-        return Math.floor(Math.random() * (max - min) ) + min;
-      }
+    // Calls getNote in noteservice. requires note ID from client, retrieves note based on ID.
+    async getExistingNote(req, res) {
+        
+
+        return res.renderPartial("partials/note", { ...this.appData, message: "This content is loaded in a Bootbox modal!", item });
+    }
+
+    // Update note object with current content
+    async updateNote() {
+
+    }
+
+    // Displays a bootbox where user inputs the code
+    async getCode(req, res) {
+        const form = new InputForm({
+            name: "Modal Test",
+            
+        });
+        return res.renderPartial("partials/codeInput", { ...this.appData, message: "This content is loaded in a Bootbox modal!", form });
+
+    }
+
+
 
 }
