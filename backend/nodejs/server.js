@@ -10,7 +10,7 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import SQLiteDbContext from './database/SQLiteDbContext.js';
 import http from 'http';
-import { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import cors from 'cors';
 
 
@@ -46,17 +46,20 @@ import("./routes/mapRoutes.js").then(module => module.default(app, appData));
 
 
 
-app.use(cors());
+app.use(cors()); 
 // const server = http.createServer(app); //Only needed for ws to run on the same port. WS can run on another port.
-const wss = new WebSocketServer({ port: 8001 });
+const wss = new WebSocketServer({ port: 8001 }); 
 
+
+
+//Pings when a new client is connected
 wss.on('connection', (ws) => {
     console.log('New Client Connected');
 
-
+    //Calls when a message recieved from client
     ws.on('message', (message, isBinary) => {
         wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) {
+            if (client !== ws && client.readyState === WebSocket.OPEN) { //excludes message sender
                 client.send(message, { binary: isBinary });
 
             }
