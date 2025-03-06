@@ -245,7 +245,7 @@
     const chatOutput = $('#chat-output')[0];
     const scrollHeight = chatOutput.scrollHeight;
     const clientHeight = chatOutput.clientHeight;
-    
+
     // Check if there's a scrollbar (i.e., the content is overflowing)
     const hasScrollbar = scrollHeight > clientHeight;
 
@@ -305,50 +305,67 @@
       const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
       const messageId = 'ai-response-' + Date.now();
       $('#chat-output').append(`
-        <div class="chat-message user-message">
-          <div class="chatboxHeader"><span>You (${modeText}):</span></div>
-          <pre>${escapeHTML(prompt)}</pre>
-        </div>
-        <div id="${messageId}" class="chat-message ai-response">
-          <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
-          <div class="ai-content"></div>
-        </div>
-      `);
+    <div class="chat-message user-message">
+      <div class="chatboxHeader"><span>You (${modeText}):</span></div>
+      <pre>${escapeHTML(prompt)}</pre>
+    </div>
+    <div id="${messageId}" class="chat-message ai-response">
+      <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
+      <div class="ai-content"></div>
+    </div>
+  `);
       updateScroll(300);
       const container = document.querySelector(`#${messageId} .ai-content`);
 
-      // Pass both parameters (chat mode and thoughts default) to the server
-      const eventSource = new EventSource(`/chat/getChatResponse?prompt=${encodeURIComponent(prompt)}&mode=${chatMode}`);
+      fetch('/chat/getChatResponse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ prompt, mode: chatMode })
+      })
+        .then(response => {
+          const reader = response.body.getReader();
+          const textDecoder = new TextDecoder();
+          let lastFullContent = '';
 
-      /**
-       * Processing Section
-       * handles the incoming messages from the server-side code
-       */
+          function read() {
+            reader.read().then(({ done, value }) => {
+              if (done) {
+                renderFullResponse(lastFullContent, container, true);
+                return;
+              }
+              const chunk = textDecoder.decode(value, { stream: true });
+              // Process SSE formatted messages
+              const lines = chunk.split('\n');
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  let jsonPart = line.substring(6);
+                  if (jsonPart === "[DONE]") continue;
 
-      // Listens for messages sent through the stream and displays them on the webpage
-      eventSource.onmessage = function (event) {
-        if (event.data === "[DONE]") {
-          // Re-render content with isFinal = true
-          renderFullResponse(lastFullContent, container, true);
-          eventSource.close();
-          return;
-        }
-        try {
-          const data = JSON.parse(event.data);
-          // Store the last content for final rendering
-          window.lastFullContent = data.fullContent;
-          // Render with "Thinking..." while streaming (isFinal = false)
-          renderFullResponse(data.fullContent, container, false);
-          updateScroll();
-        } catch (e) {
-          console.error("Error parsing server update:", e);
-        }
-      };
-
-      eventSource.onerror = function () {
-        alert('An error occurred while streaming the response.');
-        eventSource.close();
-      };
+                  if (jsonPart.trim().endsWith('"}')) {
+                    try {
+                      const parsedData = JSON.parse(jsonPart);
+                      if (parsedData.fullContent) {
+                        lastFullContent = parsedData.fullContent;
+                        renderFullResponse(lastFullContent, container, false);
+                        updateScroll();
+                      }
+                    } catch (e) {
+                      console.error("Error parsing streamed data:", jsonPart);
+                    }
+                  }
+                }
+              }
+              read();
+            });
+          }
+          read();
+        })
+        .catch(err => {
+          alert('An error occurred while streaming the response.');
+          console.error(err);
+        });
     });
 
     // Adjust the height of the textarea to fit its content

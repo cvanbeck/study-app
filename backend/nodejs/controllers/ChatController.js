@@ -14,9 +14,10 @@ export default class ChatController extends BaseController {
 
     async getChatResponse(req, res) {
         try {
-            let prompt = req.query.prompt;
-            let mode = req.query.mode || "default";
-            
+            // Read prompt and mode from the POST body
+            const prompt = req.body.prompt;
+            const mode = req.body.mode || "default";
+
             if (!prompt) {
                 return res.status(400).json({ error: "Prompt is required" });
             }
@@ -30,7 +31,7 @@ export default class ChatController extends BaseController {
             stream.on("data", (chunk) => {
                 res.write(`data: ${chunk.toString()}\n\n`);
             });
-
+            
             stream.on("end", () => {
                 res.end();
             });
