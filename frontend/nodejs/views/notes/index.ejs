@@ -1,5 +1,7 @@
-<!-- This is the index box. It contains all the links for the pages accessible in the site. 
-     The navigation bar already has this, but for the purpose of the assignment this is included. -->
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+</head>
     <div class="indexBox">
         <p>Notes</p>
     </div>
@@ -7,10 +9,10 @@
 
     
     <!-- Custom div to load the partial content -->
-    <div id="ajaxContent"></div>
+    <div id="editor"></div>
 
     <!-- Button to trigger the AJAX request -->
-    <p><button id="ajaxButton">Click to create a new note</button></p>
+    <!-- <p><button id="ajaxButton">Click to create a new note</button></p> -->
 
 
     
@@ -20,19 +22,32 @@
         appendToHeading('Notes'); // Running the function I defined in layout.ejs
         // This function is able to be called here because the script for it was created before the scripts variable was placed on the layout
 
-            // AJAX request function using jQuery
-        $('#ajaxButton').on('click', function() {
-            $.ajax({
-                url: '/notes/newNote',
-                method: 'GET',
-                dataType: 'html', // Expecting HTML content from the server
-                success: function(data) {
-                    $('#ajaxContent').html(data); // Update the #ajaxContent div with the returned content
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching AJAX content:', status, error);
-                }
-            });
+        const quill = new Quill('#editor', {
+            theme: 'snow'
         });
+
+        const ws = new WebSocket('ws://localhost:8001');
+
+        ws.addEventListener('open', () => {
+            console.log("Successfully Connected");
+            quill.update();
+        })
+        ws.addEventListener('message', (e) => {
+
+            try {
+                quill.updateContents(JSON.parse(e.data));
+            } catch (error){
+                console.error('Error parsing message:', error);
+            }
+        });
+
+
+
+        quill.on('text-change', (delta, oldDelta, source) => {
+            if(source == 'user') {
+                ws.send(JSON.stringify(delta.ops));
+            }
+        });
+
         
     </script>
