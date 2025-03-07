@@ -5,5 +5,17 @@ export default class Note {
         this.content = data.content || '';
     }
 
-    setContent
+    setContent(content) {
+        this.content = JSON.stringify(content);
+    }
+
+    getContent() {
+        return this.content;
+    }
+
+    getID() {
+        return this.id;
+    }
+
+
 }
