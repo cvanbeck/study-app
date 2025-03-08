@@ -6,16 +6,18 @@
         <p>Notes</p>
     </div>
 
+    <a href="/notes/notesession">Click here to join a session</a>
+
+    <p><button id="newNoteButton">Click to create a new note</button></p>
+    <p><button id="existingNoteSweetAlertButton">Click to load an existing note</button></p>
+    <p><button id="sessionButton">Click to create a session</button></p>
+    <p><button id="joinButton">Click to join a session</button></p>
+
 
     
     <div id="editor"></div>
 
-    <p><button id="newNoteButton">Click to create a new note</button></p>
-    <p><button id="existingNoteSweetAlertButton">Click to join an existing note</button></p>
-
-
-    <div id="noteContent"></div>
-    
+    <%- include('buttons') %>
     <!-- Passes the below content to the scripts variable in layout.ejs -->
     <%- contentFor('scripts') %>
     <script>
@@ -30,18 +32,6 @@
 
         ws.addEventListener('open', () => {
             console.log("Successfully Connected");
-            quill.update();
-            $.ajax({
-                url: '/notes/generateNote',
-                method: 'GET',
-                dataType: 'text', 
-                success: function(data) {
-                    currentID = data;
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching AJAX content:', status, error);
-                }
-            });
         })
         ws.addEventListener('message', (e) => {
 
@@ -90,6 +80,7 @@
             });
         });
 
+        // triggers a popup form for inputting a join code
         $('#existingNoteSweetAlertButton').on('click', function() {
             Swal.fire({
                 title: 'Enter note code',
@@ -105,8 +96,49 @@
                             },
                             body: JSON.stringify({ result })
                         }).then(response => response.json()).then(note =>{
-                            console.log(note);
-                            console.log(note.id);
+                            currentID = note.id;
+                            
+                            quill.setContents(JSON.parse(note.content));
+                        });
+                    } catch (error) {
+                        Swal.showValidationMessage(
+                        error
+                        );
+                    }
+                }
+            });
+
+        });
+
+        $('#sessionButton').on('click', function() {
+            $.ajax({
+                url: `/notes/generateSession?id=${encodeURIComponent(currentID)}`,
+                method: 'GET',
+                dataType: 'text',
+                success: function(data) {
+                    console.log(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching AJAX content:', status, error);
+                }
+            });
+        });
+
+        $('#joinButton').on('click', function() {
+            Swal.fire({
+                title: 'Enter note code',
+                input: "text",
+                showCloseButton: true,
+                width: '600px', // Customize the size
+                preConfirm: async (result) => {
+                    try {
+                        await fetch('/notes/joinSession', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ result })
+                        }).then(response => response.json()).then(note =>{
                             currentID = note.id;
                             
                             quill.setContents(JSON.parse(note.content));
