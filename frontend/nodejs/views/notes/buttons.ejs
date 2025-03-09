@@ -60,7 +60,7 @@
                             },
                             body: JSON.stringify({ result })
                         }).then(response => response.text()).then(note =>{ // Result is converted to string
-                            editorPage(note); 
+                            editorPage(note, result); 
                         });
                     } catch (error) {
                         Swal.showValidationMessage(
@@ -73,9 +73,13 @@
         });
 
         // Stores data in session storage for retrival on redirect
-        function editorPage(data) {
+        function editorPage(data, urlParam) {
             sessionStorage.setItem("data", (data)); // Sends to session storage
             let path = window.location.pathname === "/notes" ? "notes/editor" : "editor";
+            if(urlParam) {
+                path = path + `?session=${urlParam}`;
+                console.log
+            }
             window.location.assign(path); // Redirects to editor page
         }
     </script>
