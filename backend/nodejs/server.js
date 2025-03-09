@@ -53,17 +53,25 @@ const wss = new WebSocketServer({ port: 8001 });
 
 
 //Pings when a new client is connected
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
     console.log('New Client Connected');
-
-    //Calls when a message recieved from client
+    // Calls when data is recieved from client
     ws.on('message', (message, isBinary) => {
-        wss.clients.forEach((client) => {
-            if (client !== ws && client.readyState === WebSocket.OPEN) { //excludes message sender
-                client.send(message, { binary: isBinary });
+        const data = JSON.parse(message); // Response depends on message type
+        switch(data.type) {
+            case "init": // When a new client first connects
+                ws.id = data.content;
+                break;
+            case "collab": // When a client joins a collab session
+                ws.session = data.content;
+            case "sync": // Sync tape updates clients Quill editor view with current content. Excludes message sender
+                wss.clients.forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN && client.id === ws.id) {  // only if ID matches
+                        client.send(JSON.stringify(data.content));
+                    }
+                });
+        }
 
-            }
-        });
     });
 
     ws.on('close', () => {
