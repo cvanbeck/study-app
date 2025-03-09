@@ -1,6 +1,5 @@
 import BaseController from "./base/BaseController.js";
 import Note from '../models/Note.js';
-import InputForm from '../models/InputForm.js';
 import NoteService from "../services/NoteService.js";
 import SessionService from "../services/SessionService.js";
 
@@ -23,7 +22,7 @@ export default class NotesController extends BaseController{
         });
         this.noteService.storeNote(note);
         console.log(note.id);
-        return res.renderPartial("partials/noteID", { ...this.appData, message: "This content is loaded in a Bootbox modal!", note });
+        return res.send(note);
     }
 
     // Calls getNote in noteservice. requires note ID from client, retrieves note based on ID.
@@ -35,7 +34,7 @@ export default class NotesController extends BaseController{
             const note = await this.noteService.getNote(id);
             if (note) {
                 
-                res.json(note);
+                res.send(note);
             } else {
                 res.status(404).send("Note not found.");
             }
@@ -52,17 +51,16 @@ export default class NotesController extends BaseController{
         this.noteService.updateNote(content, id);
     }
 
-    
+    // Generates a session code and stores with noteID sent from view
     async generateSession(req, res) {
-        const sessionCode = this.#createSessionCode(7)
-        const noteID = req.query.id;
+        const sessionCode = this.#createSessionCode(7) // Random 7 character code
+        const noteID = req.query.id; // Note ID retrieved from view query
         this.sessionService.storeCode(sessionCode, noteID);
         console.log(sessionCode);
-        // return res.render("noteSession", { ...this.appData, sessionCode});
         return res.send(sessionCode);
     }
       
-
+    // Generates a code for sharing a collaborative session
     #createSessionCode(length) {
         return btoa(
             crypto
@@ -73,14 +71,14 @@ export default class NotesController extends BaseController{
             .slice(0, length);
     }
 
+    // Calls sends session code to sessionService for note retrival
     async joinSession(req, res) {
-        const code = req.body.result; // Get the note id from the query parameter
-        console.log(code);
+        const code = req.body.result; // Get the session code
         try {
             // Fetch the note from the database
             const note = await this.sessionService.getNote(code);
             if (note) {
-                res.json(note);
+                res.send(note);
             } else {
                 res.status(404).send("Note not found.");
             }
@@ -88,6 +86,12 @@ export default class NotesController extends BaseController{
             console.error('Error fetching note or updating pad:', error);
             res.status(500).send("Internal server error");
         }
+
+    }
+
+    // Required for loading editor page
+    async editor (req, res) {
+        return res.render("editor", { ...this.appData});
 
     }
 

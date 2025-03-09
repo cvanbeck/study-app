@@ -6,6 +6,7 @@ export default class NoteService {
 
     }
 
+    // Stores a note in DB
     async storeNote(note) {
         try {
             const result = await this.dbContext.query("INSERT INTO Notes VALUES (?, ?, ?)", [note.id, note.name, note.content]);
@@ -16,6 +17,7 @@ export default class NoteService {
         }
     }
 
+    // Retrieve note using Note ID
     async getNote(id) {
         try {
             const result = await this.dbContext.query("SELECT * FROM Notes WHERE id = ?", [id]);
@@ -40,6 +42,7 @@ export default class NoteService {
         }
     }
 
+    // Updates contents of an existing note in the DB
     async updateNote(content, id) {
         try {
             const result = await this.dbContext.query("UPDATE Notes SET Content = ? WHERE id = ?", [content, id]);
