@@ -6,6 +6,7 @@ export default class SessionService {
 
     }
 
+    // Store a code with a note
     async storeCode(code, id) { 
         try {
             const result = await this.dbContext.query("INSERT INTO SessionCodes VALUES (?, ?)", [code, id]);
@@ -16,6 +17,7 @@ export default class SessionService {
         }
     }
 
+    // Retrieves a note from the DB based on session code linked to Note ID
     async getNote(code) {
         try {
             const result = await this.dbContext.query("SELECT id, name, content FROM SessionCodes JOIN Notes on SessionCodes.NoteID = Notes.id WHERE code = ?", [code]);
