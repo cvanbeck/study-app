@@ -50,7 +50,6 @@ app.use(cors());
 const wss = new WebSocketServer({ port: 8001 }); 
 
 
-
 //Pings when a new client is connected
 wss.on('connection', (ws, req, client) => {
     console.log('New Client Connected');
@@ -61,7 +60,13 @@ wss.on('connection', (ws, req, client) => {
         const data = JSON.parse(message); // Response depends on message type
         switch(data.type) {
             case "init": // When a new client first connects
-                ws.session = data.content;
+                ws.session = data.content; // Stores the current session code
+                // Sends the new clients ID to all other clients in the same session
+                wss.clients.forEach((client) => {
+                    if(client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session) {
+                        client.send(JSON.stringify({ type: 'newClient', data: ws.id }));
+                    }
+                });
                 break;
             case "collab": // When a client joins a collab session
                 ws.session = data.content;
@@ -70,6 +75,14 @@ wss.on('connection', (ws, req, client) => {
                 wss.clients.forEach((client) => {
                     if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session) {  // only if collab session ID matches
                         client.send(JSON.stringify({ type: 'update', data: data.content }));
+                    }
+                });
+                break;
+            case "cursorSync": // Sends new cursor movements to other clients
+                wss.clients.forEach((client) => {
+                    console.log(data)
+                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session) {
+                        client.send(JSON.stringify({ type: 'cursorUpdate', data: data.data }));
                     }
                 });
                 break;
