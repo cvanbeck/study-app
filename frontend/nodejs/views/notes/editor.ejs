@@ -2,6 +2,7 @@
     <head>
         <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script> 
         <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+        <!-- <script src="quill-cursors.js"></script> -->
     </head>    
     
     <!-- Contains scripts from button.ejs -->
@@ -13,30 +14,41 @@
 
 
     <script>
+
+        // Quill.register('modules/cursors', QuillCursors);
         // Quill object for API calls
         const quill = new Quill('#editor', {
-            theme: 'snow'
+            theme: 'snow',
+            // modules: {
+            //     cursors: true
+            // }
         });
         
         const data = JSON.parse(sessionStorage.getItem("data")); // Retrieve the data temporarily stored in sessionStorage
         let currentID = data.id; // Set the current Note ID
         quill.setContents(JSON.parse(data.content)); // Append page with loaded note contents
 
-        const ws = new WebSocket('ws://localhost:8001?session=abc'); // Websocket Object
+        const ws = new WebSocket('ws://localhost:8001'); // Websocket Object
 
         ws.addEventListener('open', () => {
             console.log("Successfully Connected");
             ws.send(JSON.stringify({type: "init", content: currentID})); // Sends note ID to websocket server on first connection
         });
 
-        ws.addEventListener('message', (e) => {
-            // updates note with contents from another ws client
-            try {
-                quill.updateContents(JSON.parse(e.data));  // Sync editor view with other websocket connections
-                quill.update();
-            } catch (error){
-                console.error('Error parsing message:', error);
+        ws.addEventListener('message', (event) => {
+            const message = JSON.parse(event.data);
+            if (message.type === 'update') { // updates note with contents from another ws client
+                try {
+                    quill.updateContents(message.data);  // Sync editor view with other websocket connections
+                    quill.update();
+                } catch (error){
+                    console.error('Error parsing message:', error);
+                }
+            } else if (message.type === 'id') { // stores the ID defined by the wss
+                ws.id = message.data;
+                console.log(ws.id);
             }
+
         });
 
         // Sends changes to the websocket server & controller
@@ -49,13 +61,13 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ content , id: currentID })
+                        body: JSON.stringify({ content , id: currentID }) // Sends request to update note in db to controller
                     });
                 } catch (error) {
                     console.error(error);
                 }
 
-                ws.send(JSON.stringify({ type: "sync", content: delta.ops, id: currentID }));
+                ws.send(JSON.stringify({ type: "sync", content: delta.ops, id: currentID })); // sends updated note contents to websocket server
             }
         });
 

@@ -9,7 +9,6 @@ import bodyParser from 'body-parser';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import SQLiteDbContext from './database/SQLiteDbContext.js';
-import http from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
 import cors from 'cors';
 
@@ -53,23 +52,27 @@ const wss = new WebSocketServer({ port: 8001 });
 
 
 //Pings when a new client is connected
-wss.on('connection', (ws, req) => {
+wss.on('connection', (ws, req, client) => {
     console.log('New Client Connected');
+    ws.id = crypto.randomUUID(); // sets client id
+    ws.send(JSON.stringify({ type: 'id', data: ws.id })); // sends id back to client (for cursor labels)
     // Calls when data is recieved from client
     ws.on('message', (message, isBinary) => {
         const data = JSON.parse(message); // Response depends on message type
         switch(data.type) {
             case "init": // When a new client first connects
-                ws.id = data.content;
+                ws.session = data.content;
                 break;
             case "collab": // When a client joins a collab session
                 ws.session = data.content;
+                break;
             case "sync": // Sync tape updates clients Quill editor view with current content. Excludes message sender
                 wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && client.id === ws.id) {  // only if ID matches
-                        client.send(JSON.stringify(data.content));
+                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session) {  // only if collab session ID matches
+                        client.send(JSON.stringify({ type: 'update', data: data.content }));
                     }
                 });
+                break;
         }
 
     });
