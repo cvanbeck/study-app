@@ -29,6 +29,7 @@ export default class NotesController extends BaseController{
     async getExistingNote(req, res) {
         const id = req.body.result; // Get the note id from the query parameter
         console.log(id);
+
         try {
             // Fetch the note from the database
             const note = await this.noteService.getNote(id);
