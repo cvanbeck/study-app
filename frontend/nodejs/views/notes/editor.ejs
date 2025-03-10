@@ -2,8 +2,8 @@
     <head>
         <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script> 
         <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
-        <!-- <script src="quill-cursors.js"></script> -->
-    </head>    
+        <script src="https://cdn.jsdelivr.net/npm/quill-cursors@4.0.4/dist/quill-cursors.min.js"></script>
+    </head>
     
     <!-- Contains scripts from button.ejs -->
     <%- include('buttons') %>
@@ -15,14 +15,20 @@
 
     <script>
 
-        // Quill.register('modules/cursors', QuillCursors);
+        Quill.register('modules/cursors', QuillCursors); // Register a module to Quill
+
         // Quill object for API calls
         const quill = new Quill('#editor', {
             theme: 'snow',
-            // modules: {
-            //     cursors: true
-            // }
+            modules: {
+                cursors: true
+            }
         });
+        
+        const cursors = quill.getModule('cursors');
+
+
+        
         
         const data = JSON.parse(sessionStorage.getItem("data")); // Retrieve the data temporarily stored in sessionStorage
         let currentID = data.id; // Set the current Note ID
@@ -35,6 +41,7 @@
             ws.send(JSON.stringify({type: "init", content: currentID})); // Sends note ID to websocket server on first connection
         });
 
+        // Updates view based on message type recieved from wss
         ws.addEventListener('message', (event) => {
             const message = JSON.parse(event.data);
             if (message.type === 'update') { // updates note with contents from another ws client
@@ -44,12 +51,21 @@
                 } catch (error){
                     console.error('Error parsing message:', error);
                 }
-            } else if (message.type === 'id') { // stores the ID defined by the wss
-                ws.id = message.data;
-                console.log(ws.id);
+            } else if (message.type === 'id') {  
+                ws.id = message.data; // stores the ID defined by the wss
+                const cursor = cursors.createCursor(ws.id, 'You', 'blue'); // creates this users cursor
+            } else if (message.type === 'newClient') { // Adds a new cursor when new ws client connects
+                cursors.createCursor(message.data, 'OtherUser', 'red');
+            } else if (message.type === 'cursorUpdate') { // Updates page from cursor movements from other ws clients
+                if (!cursors.cursors().some(cursor => cursor.id === message.data.id)) { // Adds cursor if the client doesnt exist in the cursor list
+                    cursors.createCursor(message.data.id, 'OtherUser', 'red');
+                }
+                cursors.moveCursor(message.data.id, message.data.range);
+                cursors.update();
             }
 
         });
+        
 
         // Sends changes to the websocket server & controller
         quill.on('text-change', (delta, oldDelta, source) => {
@@ -67,9 +83,18 @@
                     console.error(error);
                 }
 
-                ws.send(JSON.stringify({ type: "sync", content: delta.ops, id: currentID })); // sends updated note contents to websocket server
+                ws.send(JSON.stringify({ type: "sync", content: delta.ops })); // sends updated note contents to websocket server
             }
         });
+
+        // Updates view with other users cursor movements
+        quill.on('selection-change', (range, oldRange, source) => {
+            if(source == 'user') {
+                cursors.moveCursor(ws.id, range);
+                cursors.update();
+                ws.send(sendMessage('cursorSync', { id: ws.id, range: range }));
+            }
+        })
 
         // Generates a collab session code and stores in DB
         $('#sessionButton').on('click', function() {
@@ -85,5 +110,12 @@
                 }
             });
         });
+
+        // Helper function for sending messages to the websocket server
+        function sendMessage(messagetype, messagedata) {
+
+            return JSON.stringify({ type: messagetype, data: messagedata });
+
+        }
 
     </script>
