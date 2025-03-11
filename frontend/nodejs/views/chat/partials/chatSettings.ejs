@@ -1,0 +1,63 @@
+<div id="settings-container">
+    <div id="settings-toggle">Settings</div>
+    <div id="settings-dropdown" style="display: none;">
+        <!-- Chat Mode Segment (reserved) -->
+        <div class="segment-group">
+            <span class="segment-group-heading">Chat Mode:</span>
+            <label>
+                <input type="radio" name="mode" value="default" checked> Normal
+            </label>
+            <label>
+                <input type="radio" name="mode" value="steps"> Explain in Steps
+            </label>
+            <label>
+                <input type="radio" name="mode" value="example"> Real World Example
+            </label>
+            <label>
+                <input type="radio" name="mode" value="flashcards"> Generate Flashcards
+            </label>
+        </div>
+        <!-- New Thoughts Default Segment -->
+        <div class="segment-group">
+            <span class="segment-group-heading">Thoughts Tag Default:</span>
+            <label>
+                <input type="radio" name="thoughtsDefault" value="open" checked> Open
+            </label>
+            <label>
+                <input type="radio" name="thoughtsDefault" value="closed"> Closed
+            </label>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle dropdown settings menu
+    $('#settings-toggle').on('click', function (e) {
+        e.stopPropagation();
+        const $dropdown = $('#settings-dropdown');
+
+        if ($dropdown.is(':visible')) {
+            $dropdown.slideUp();
+        } else {
+            $dropdown.slideDown({
+                start: function () {
+                    $(this).css('display', 'flex');
+                }
+            });
+        }
+    });
+
+    $(document).on('click', function (event) {
+        if (!$(event.target).closest('#settings-container').length) {
+            $('#settings-dropdown').slideUp();
+        }
+    });
+
+    //Handle mode selection
+    $('#settings-dropdown input[type="radio"]').on('change', function () {
+        const selectedMode = $(this).val();
+        $('#response-mode').val(selectedMode);
+
+        $("#prompt").attr("placeholder", `Message the AI (${$('input[name="mode"]:checked').closest("label").text().trim()})`);
+    });
+</script>

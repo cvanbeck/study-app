@@ -1,0 +1,90 @@
+<script>
+    $(document).ready(function () {
+        // Set the placeholder based on the selected chat mode
+        $("#prompt").attr("placeholder", `Message the AI (${$('input[name="mode"]:checked').closest("label").text().trim()})`);
+
+        // Handle the form submission and stream the AI response
+        $('#chat-form').on('submit', function (e) {
+            e.preventDefault();
+            const prompt = $('#prompt').val();
+            const chatMode = $('input[name="mode"]:checked').val();
+            const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
+
+            $('#prompt').val("");
+            adjustTextareaHeight($('#prompt')[0]);
+
+            const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
+            const messageId = 'ai-response-' + Date.now();
+            $('#chat-output').append(`
+                <div class="chat-message user-message">
+                    <div class="chatboxHeader"><span>You (${modeText}):</span></div>
+                    <pre>${escapeHTML(prompt)}</pre>
+                </div>
+                <div id="${messageId}" class="chat-message ai-response">
+                    <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
+                    <div class="ai-content"></div>
+                </div>
+            `);
+            updateScroll(300);
+            const container = document.querySelector(`#${messageId} .ai-content`);
+
+            var lastFullContent = '';
+            var receivedLength = 0;
+
+            $.ajax({
+                url: '/chat/getChatResponse',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ prompt: prompt, mode: chatMode }),
+                xhr: function () {
+                    var xhr = new window.XMLHttpRequest();
+                    xhr.responseType = 'text';
+                    xhr.addEventListener('progress', function () {
+                        const chunk = xhr.responseText.substring(receivedLength);
+                        receivedLength = xhr.responseText.length;
+                        const lines = chunk.split('\n');
+                        lines.forEach(function (line) {
+                            if (line.indexOf("data: ") === 0) {
+                                const jsonPart = line.substring(6);
+                                if (jsonPart === "[DONE]") return;
+                                if (jsonPart.trim().endsWith('"}')) {
+                                    try {
+                                        const parsedData = JSON.parse(jsonPart);
+                                        if (parsedData.fullContent) {
+                                            lastFullContent = parsedData.fullContent;
+                                            renderFullResponse(lastFullContent, container, false);
+                                            updateScroll();
+                                        }
+                                    } catch (e) {
+                                        console.error("Error parsing streamed data:", jsonPart);
+                                    }
+                                }
+                            }
+                        });
+                    });
+                    xhr.addEventListener('loadend', function () {
+                        renderFullResponse(lastFullContent, container, true);
+                    });
+                    return xhr;
+                },
+                error: function (err) {
+                    alert('An error occurred while streaming the response.');
+                    console.error(err);
+                }
+            });
+        });
+
+        // Adjust textarea height on keydown and input events
+        $('#prompt').on('keydown', function (e) {
+            adjustTextareaHeight(this);
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                $('#chat-form').submit();
+            }
+        });
+        $('#prompt').on('input', function () {
+            adjustTextareaHeight(this);
+        });
+        adjustTextareaHeight($('#prompt')[0]);
+    });
+</script>
