@@ -1,0 +1,72 @@
+<!-- Load MathJax -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+<script>
+  // MathJax delimiter configuration for inline and display math
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)'], ['[', ']']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+  };
+
+  // Configure marked options with custom renderer for math
+  marked.setOptions({
+    breaks: true,      // Convert \n to <br>
+    gfm: true,         // GitHub flavored markdown
+    headerIds: false,  // Don't add ids to headers
+    sanitize: false,   // Changed to false to allow our custom processing
+    mangle: false      // deprecated setting
+  });
+
+  function processMathContent(content) {
+    // First, protect math content by replacing it with placeholders
+    const mathExpressions = [];
+
+    // Function to store math and return placeholder
+    const storeMath = (match, math, type) => {
+      const id = mathExpressions.length;
+      mathExpressions.push({ math, type });
+      return `MATHPLACEHOLDER_${id}`;
+    };
+
+    // Function to escape characters that cause issues in MathJax
+    const escapeMath = (math) => {
+      return math.replace(/#/g, '\\#') // Escape hash signs
+        .replace(/\\%/g, '\\\\%')  // Escape % symbol if needed
+        .replace(/_/g, '\\_')      // Escape underscore
+        .replace(/\$/g, '\\$')     // Escape dollar sign
+        .replace(/&/g, '\\&');     // Escape ampersand
+    };
+
+    // Handle the problematic multiline bracket case first
+    let processedContent = content.replace(/\[\s*\n([\s\S]*?)\n\s*\]/g, (match, math) =>
+      storeMath(match, escapeMath(math), 'display'));
+
+    // Handle standard delimiters
+    processedContent = processedContent
+      // Display math
+      .replace(/\$\$([\s\S]*?)\$\$/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'display'))
+      .replace(/\\\[([\s\S]*?)\\\]/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'display'))
+      // Inline math
+      .replace(/\$([^\$\n]+?)\$/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'inline'))
+      .replace(/\\\(([\s\S]*?)\\\)/g, (match, math) =>
+        storeMath(match, escapeMath(math), 'inline'));
+
+    // Parse with marked
+    const parsedHTML = marked.parse(processedContent);
+
+    // Restore math expressions with proper delimiters for MathJax
+    const finalHTML = parsedHTML.replace(/MATHPLACEHOLDER_(\d+)/g, (match, id) => {
+      const { math, type } = mathExpressions[parseInt(id)];
+      if (type === 'display') {
+        return `<div class="math-display">\\[${math}\\]</div>`;
+      } else {
+        return `<span class="math-inline">\\(${math}\\)</span>`;
+      }
+    });
+
+    return finalHTML;
+  }
