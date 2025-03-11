@@ -6,8 +6,8 @@
     </head>
     
     <!-- Contains scripts from button.ejs -->
-    <%- include('buttons') %>
-    <p><button id="sessionButton">Create Collab Session</button></p>
+    <%- include('buttons') %> <button id="sessionButton">Create Collab Session</button>
+    <p> Session Code: <span id="sessionCode"></span></p>
     
     <!-- Quill Text Editor always with this div id  -->
     <div id="editor"></div>
@@ -28,17 +28,18 @@
         const cursors = quill.getModule('cursors');
 
 
-        
-        
         const data = JSON.parse(sessionStorage.getItem("data")); // Retrieve the data temporarily stored in sessionStorage
         let currentID = data.id; // Set the current Note ID
+        let currentSession = new URLSearchParams(window.location.search).get('session'); // gets sessionCode from url parameters
+        $('#sessionCode').html(currentSession); // appends to HTML
         quill.setContents(JSON.parse(data.content)); // Append page with loaded note contents
 
         const ws = new WebSocket('ws://localhost:8001'); // Websocket Object
 
         ws.addEventListener('open', () => {
             console.log("Successfully Connected");
-            ws.send(JSON.stringify({type: "init", content: currentID})); // Sends note ID to websocket server on first connection
+
+            ws.send(JSON.stringify({type: "init", content: currentID, session: currentSession})); // Sends note ID to websocket server on first connection
         });
 
         // Updates view based on message type recieved from wss
@@ -98,17 +99,23 @@
 
         // Generates a collab session code and stores in DB
         $('#sessionButton').on('click', function() {
-            $.ajax({
-                url: `/notes/generateSession?id=${encodeURIComponent(currentID)}`,
-                method: 'GET',
-                dataType: 'text',
-                success: function(data) {
-                    console.log(data); // Prints code (currently no UI element);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching AJAX content:', status, error);
-                }
-            });
+            if(typeof currentSession !== 'string') { // Creates session if a session doesn't exist
+                $.ajax({
+                    url: `/notes/generateSession?id=${encodeURIComponent(currentID)}`,
+                    method: 'GET',
+                    dataType: 'text',
+                    success: function(data) {
+                        $('#sessionCode').html(data);
+                        currentSession = data; // Stores session Code
+                        ws.send(sendMessage('newSession', data)); // Sends to wss
+                        
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching AJAX content:', status, error);
+                    }
+                });
+                
+            }
         });
 
         // Helper function for sending messages to the websocket server
