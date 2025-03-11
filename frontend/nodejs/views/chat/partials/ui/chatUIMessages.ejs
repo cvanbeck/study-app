@@ -1,0 +1,47 @@
+<script>
+    // Append the user's message and a container for the AI response
+    function appendChatMessages(prompt, mode) {
+        const messageId = 'ai-response-' + Date.now();
+        const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
+        $('#chat-output').append(`
+        <div class="chat-message user-message">
+          <div class="chatboxHeader"><span>You (${modeText}):</span></div>
+          <pre>${escapeHTML(prompt)}</pre>
+        </div>
+        <div id="${messageId}" class="chat-message ai-response">
+          <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
+          <div class="ai-content"></div>
+        </div>
+      `);
+        return document.querySelector(`#${messageId} .ai-content`);
+    }
+
+    // Check if the user is near the bottom of the chat output container
+    function isUserNearBottom(threshold = 100) {
+        const chatOutput = $('#chat-output')[0];
+        const scrollPosition = chatOutput.scrollTop;
+        const scrollHeight = chatOutput.scrollHeight;
+        const clientHeight = chatOutput.clientHeight;
+        return scrollHeight - scrollPosition - clientHeight <= threshold;
+    }
+
+    // Update scrolling based on the user's current position
+    function updateScroll(threshold = 100) {
+        const chatOutput = $('#chat-output')[0];
+        const scrollHeight = chatOutput.scrollHeight;
+        const clientHeight = chatOutput.clientHeight;
+        const hasScrollbar = scrollHeight > clientHeight;
+
+        if (hasScrollbar && isUserNearBottom(threshold)) {
+            chatOutput.scrollTop = scrollHeight;
+        } else if (!hasScrollbar) {
+            chatOutput.scrollTop = scrollHeight;
+        }
+    }
+
+    // Adjust the height of the textarea to fit its content
+    function adjustTextareaHeight(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+</script>
