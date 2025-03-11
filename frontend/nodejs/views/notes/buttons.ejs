@@ -78,7 +78,6 @@
             let path = window.location.pathname === "/notes" ? "notes/editor" : "editor";
             if(urlParam) {
                 path = path + `?session=${urlParam}`;
-                console.log
             }
             window.location.assign(path); // Redirects to editor page
         }

@@ -60,10 +60,11 @@ wss.on('connection', (ws, req, client) => {
         const data = JSON.parse(message); // Response depends on message type
         switch(data.type) {
             case "init": // When a new client first connects
-                ws.session = data.content; // Stores the current session code
+                ws.note = data.content; // Stores the current session code
+                ws.session = data.session;
                 // Sends the new clients ID to all other clients in the same session
                 wss.clients.forEach((client) => {
-                    if(client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session) {
+                    if(client !== ws && client.readyState === WebSocket.OPEN && typeof ws.session === 'string' && client.session === ws.session && client.note === ws.note) { // both note ID and session code must match
                         client.send(JSON.stringify({ type: 'newClient', data: ws.id }));
                     }
                 });
@@ -73,19 +74,20 @@ wss.on('connection', (ws, req, client) => {
                 break;
             case "sync": // Sync tape updates clients Quill editor view with current content. Excludes message sender
                 wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session) {  // only if collab session ID matches
+                    if (client !== ws && client.readyState === WebSocket.OPEN && typeof ws.session === 'string' && client.session === ws.session && client.note === ws.note) {  // only if collab session ID matches
                         client.send(JSON.stringify({ type: 'update', data: data.content }));
                     }
                 });
                 break;
             case "cursorSync": // Sends new cursor movements to other clients
                 wss.clients.forEach((client) => {
-                    console.log(data)
-                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session) {
+                    if (client !== ws && client.readyState === WebSocket.OPEN && typeof ws.session === 'string' && client.session === ws.session && client.note === ws.note) {
                         client.send(JSON.stringify({ type: 'cursorUpdate', data: data.data }));
                     }
                 });
                 break;
+            case "newSession": // received when user generates a collab session
+                ws.session = data.data;
         }
 
     });
