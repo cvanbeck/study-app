@@ -1,0 +1,80 @@
+<script>
+    // Process AI content, separating <think> tags from visible content
+    function processAIContent(content) {
+        const thinkMatch = content.match(/<think>([\s\S]*?)(?:<\/think>|$)/);
+        if (!thinkMatch) {
+            return {
+                thoughts: "",
+                visible: content
+            };
+        }
+        const thoughtContent = thinkMatch[1];
+        let visibleContent = content.replace(/<think>[\s\S]*?(?:<\/think>|$)/, "");
+        return {
+            thoughts: thoughtContent,
+            visible: visibleContent
+        };
+    }
+
+    // Render the full AI response into the container
+    function renderFullResponse(fullRawContent, container, isFinal = false) {
+        const processedContent = processAIContent(fullRawContent);
+        // Retrieve the current default from settings.
+        const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
+        if (typeof window.persistedThoughtsState === 'undefined') {
+            window.persistedThoughtsState = (thoughtsDefault === 'open');
+        }
+        container.innerHTML = '';
+
+        // Process <think> content (hidden internal logic)
+        if (processedContent.thoughts.trim()) {
+            const detailsElement = document.createElement('details');
+            detailsElement.className = 'ai-think';
+            if (window.persistedThoughtsState) {
+                detailsElement.setAttribute('open', '');
+            }
+            const summaryElement = document.createElement('summary');
+            summaryElement.textContent = isFinal ? 'Thoughts' : 'Thinking...';
+            detailsElement.appendChild(summaryElement);
+
+            const innerDiv = document.createElement('div');
+            innerDiv.className = 'markdown-content';
+            innerDiv.innerHTML = processMathContent(processedContent.thoughts);
+            detailsElement.appendChild(innerDiv);
+            container.appendChild(detailsElement);
+
+            detailsElement.addEventListener('toggle', function () {
+                window.persistedThoughtsState = detailsElement.open;
+            });
+        }
+
+        // Process visible content
+        if (processedContent.visible) {
+            const visibleContentDiv = document.createElement('div');
+            visibleContentDiv.className = 'markdown-content';
+            visibleContentDiv.innerHTML = processMathContent(processedContent.visible);
+            container.appendChild(visibleContentDiv);
+        }
+
+        // Trigger MathJax rendering
+        if (typeof MathJax !== 'undefined') {
+            MathJax.typesetPromise([container]).catch(function (err) {
+                console.error('MathJax typeset failed: ', err);
+            });
+        }
+    }
+
+    // Escape HTML entities to prevent script injection
+    function escapeHTML(str) {
+        return str.replace(/[&<>"']/g, function (match) {
+            const escapeMap = {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            };
+            return escapeMap[match];
+        });
+    }
+</script>
