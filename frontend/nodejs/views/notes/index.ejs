@@ -1,6 +1,7 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/css/notes/notesPage.css" />
 </head>
     <div class="indexBox">
         <p>Notes</p>
@@ -9,11 +10,36 @@
     <!-- Contains scripts from button.ejs -->
     <%- include('buttons') %>
 
+    <!-- Note & AI chat container -->
+    <div id="notes-container">
+        <!-- Notes Editor -->
+        <div id="editor-container">
+            <div id="editor"></div>
+        </div>
+
+        <div id="ai-assistant">
+            <h2>Ai Assistant</h2>
+            <%- include('../chat/partials/chatSettings.ejs') %>
+
+            <!-- Chat Form -->
+            <form id="chat-form">
+                <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+                <input type="hidden" id="response-mode" name="mode" value="default">
+                <button type="submit">Send</button>
+            </form>
+
+            <div id="chat-output"></div>
+            <%- include('../chat/partials/ui/chatUIMessages.ejs') %>
+            <%- include('../chat/partials/ui/chatUIMarkup.ejs') %>
+        </div>
+    </div>
+
     <!-- Passes the below content to the scripts variable in layout.ejs -->
     <%- contentFor('scripts') %>
     <script>
-
         appendToHeading('Notes');
-
-        
     </script>
+
+    <!-- AI Chat Processing -->
+    <%- include('../chat/partials/chatProcessing.ejs') %>
+    <%- include('../chat/partials/chatStream.ejs') %>
