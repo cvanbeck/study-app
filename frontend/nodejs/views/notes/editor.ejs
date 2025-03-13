@@ -3,14 +3,36 @@
         <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script> 
         <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/quill-cursors@4.0.4/dist/quill-cursors.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="/css/notes/notesPage.css" />
     </head>
     
     <!-- Contains scripts from button.ejs -->
     <%- include('buttons') %> <button id="sessionButton">Create Collab Session</button>
     <p> Session Code: <span id="sessionCode"></span></p>
     
-    <!-- Quill Text Editor always with this div id  -->
-    <div id="editor"></div>
+    <!-- Note & AI chat container -->
+    <div id="notes-container">
+        <!-- Notes Editor -->
+        <div id="editor-container">
+            <div id="editor"></div>
+        </div>
+
+        <div id="ai-assistant">
+            <h2>Ai Assistant</h2>
+            <%- include('../chat/partials/chatSettings.ejs') %>
+
+            <!-- Chat Form -->
+            <form id="chat-form">
+                <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+                <input type="hidden" id="response-mode" name="mode" value="default">
+                <button type="submit">Send</button>
+            </form>
+
+            <div id="chat-output"></div>
+            <%- include('../chat/partials/ui/chatUIMessages.ejs') %>
+            <%- include('../chat/partials/ui/chatUIMarkup.ejs') %>
+        </div>
+    </div>
 
 
     <script>
@@ -38,7 +60,6 @@
 
         ws.addEventListener('open', () => {
             console.log("Successfully Connected");
-
             ws.send(JSON.stringify({type: "init", content: currentID, session: currentSession})); // Sends note ID to websocket server on first connection
         });
 
@@ -126,3 +147,7 @@
         }
 
     </script>
+
+    <!-- AI Chat Processing -->
+    <%- include('../chat/partials/chatProcessing.ejs') %>
+    <%- include('../chat/partials/chatStream.ejs') %>
