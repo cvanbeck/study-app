@@ -237,3 +237,32 @@ details.ai-think {
             background: #444;
             color: white;
             padding-left
+        }
+    }
+
+    .segment-group {
+        width: 200px;
+        padding: 10px;
+
+        &:not(:first-child) {
+            padding-top: 10px;
+        }
+
+        .segment-group-heading {
+            font-weight: bold;
+        }
+
+        &:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        &:nth-child(even) {
+            background-color: #f5f5f5;
+        }
+    }
+}
+
+.mode-toggle:checked+span {
+    font-weight: bold;
+    color: #ffcc00;
+}
