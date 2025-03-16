@@ -160,12 +160,12 @@
                             },
                             body: JSON.stringify({ result })
                         }).then(response => response.json()).then(data =>{ // Result is converted to JSON
-                            if(data.page !== window.location.pathname) {
-                                window.location.assign(data.page + `?session=${result}`);
+                            if(data.page !== window.location.pathname) { // Checks if the current page is the same as page stored in db
+                                window.location.assign(data.page + `?session=${result}`); // Redirects to the correct page for the session type
 
                             } else {
                                 setupNote(data.note);
-                                window.history.pushState("", "", window.location.pathname+`?session=${result}`);
+                                window.history.pushState("", "", window.location.pathname+`?session=${result}`); // Applies the session code onto the URL & adds page onto browser history
                                 currentSession = result;
                                 connectWebSocket();
                             }
