@@ -21,6 +21,7 @@
         });
         
         const cursors = quill.getModule('cursors');
+        quill.disable();
 
         let currentSession = new URLSearchParams(window.location.search).get('session'); // gets sessionCode from url parameters
 
@@ -29,7 +30,7 @@
             $('#sessionCode').html(currentSession); // appends to HTML
         }
 
-        let ws = ''; // Websocket Object
+        let ws = ''; // Empty Websocket Object
 
         
 
@@ -184,6 +185,7 @@
         function setupNote(data) {
             currentID = data.id;
             quill.setContents(JSON.parse(data.content));
+            quill.enable();
         }
 
         // Connects to the websockets
