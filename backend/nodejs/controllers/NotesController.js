@@ -28,7 +28,6 @@ export default class NotesController extends BaseController{
     // Calls getNote in noteservice. requires note ID from client, retrieves note based on ID.
     async getExistingNote(req, res) {
         const id = req.body.result; // Get the note id from the query parameter
-        console.log(id);
 
         try {
             // Fetch the note from the database
@@ -56,7 +55,9 @@ export default class NotesController extends BaseController{
     async generateSession(req, res) {
         const sessionCode = this.#createSessionCode(7) // Random 7 character code
         const noteID = req.query.id; // Note ID retrieved from view query
-        this.sessionService.storeCode(sessionCode, noteID);
+        const sessionPage = new URL(req.get('Referer')).pathname; // Gets the url path of the notes page
+
+        this.sessionService.storeCode(sessionCode, sessionPage, noteID);
         console.log(sessionCode);
         return res.send(sessionCode);
     }
@@ -77,9 +78,9 @@ export default class NotesController extends BaseController{
         const code = req.body.result; // Get the session code
         try {
             // Fetch the note from the database
-            const note = await this.sessionService.getNote(code);
-            if (note) {
-                res.send(note);
+            const result = await this.sessionService.getNote(code);
+            if (result) {
+                res.send(result);
             } else {
                 res.status(404).send("Note not found.");
             }
@@ -90,10 +91,8 @@ export default class NotesController extends BaseController{
 
     }
 
-    // Required for loading editor page
-    async editor (req, res) {
-        return res.render("editor", { ...this.appData});
-
+    async notesAI (req, res) {
+        return res.render("notesAI", { ...this.appData});
     }
 
 
