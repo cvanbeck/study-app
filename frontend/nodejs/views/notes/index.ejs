@@ -1,19 +1,23 @@
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
-</head>
+
     <div class="indexBox">
         <p>Notes</p>
     </div>
 
-    <!-- Contains scripts from button.ejs -->
-    <%- include('buttons') %>
+    <a href="/notes/notesAI">Notes with AI</a>
+
+    <p><button id="newNoteButton">New Note</button> <button id="existingNoteSweetAlertButton">Load Note</button> <button id="joinButton">Join Collab Session</button> <button id="sessionButton">Create Collab Session</button></p>
+    <p>Session Code: <span id="sessionCode"></span></p>
+
+
+
+    <div id="editor"></div>
+
+
+
+    <%- include('../notes/partials/note.ejs') %>
 
     <!-- Passes the below content to the scripts variable in layout.ejs -->
     <%- contentFor('scripts') %>
     <script>
-
         appendToHeading('Notes');
-
-        
     </script>
