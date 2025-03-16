@@ -91,6 +91,7 @@ export default class NotesController extends BaseController{
 
     }
 
+    // Renders the Notes with AI page
     async notesAI (req, res) {
         return res.render("notesAI", { ...this.appData});
     }
