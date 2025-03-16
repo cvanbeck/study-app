@@ -5,8 +5,6 @@
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 </head>
 
-
-
     <script>
 
          // Register a module to Quill
@@ -16,7 +14,9 @@
         const quill = new Quill('#editor', {
             theme: 'snow',
             modules: {
-                cursors: true
+                cursors: {
+                    transformOnTextChange: true,
+                },
             }
         });
         
@@ -168,6 +168,7 @@
                                 setupNote(data.note);
                                 window.history.pushState("", "", window.location.pathname+`?session=${result}`); // Applies the session code onto the URL & adds page onto browser history
                                 currentSession = result;
+                                $('#sessionCode').html(currentSession);
                                 connectWebSocket();
                             }
                         });
@@ -210,12 +211,12 @@
                         }
                     } else if (message.type === 'id') {  
                         ws.id = message.data; // stores the ID defined by the wss
-                        const cursor = cursors.createCursor(ws.id, 'You', 'blue'); // creates this users cursor
+                        const cursor = cursors.createCursor(ws.id, 'You', 'red'); // creates this users cursor
                     } else if (message.type === 'newClient') { // Adds a new cursor when new ws client connects
-                        cursors.createCursor(message.data, 'OtherUser', 'red');
+                        cursors.createCursor(message.data, 'OtherUser', 'orange');
                     } else if (message.type === 'cursorUpdate') { // Updates page from cursor movements from other ws clients
                         if (!cursors.cursors().some(cursor => cursor.id === message.data.id)) { // Adds cursor if the client doesnt exist in the cursor list
-                            cursors.createCursor(message.data.id, 'OtherUser', 'red');
+                            cursors.createCursor(message.data.id, 'OtherUser', 'orange');
                         }
                         cursors.moveCursor(message.data.id, message.data.range);
                         cursors.update();
