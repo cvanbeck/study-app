@@ -1,0 +1,38 @@
+<head>
+    <link rel="stylesheet" type="text/css" href="/css/notes/notesPage.css" />
+</head>
+
+    <!-- Contains scripts from button.ejs -->
+    <p><button id="newNoteButton">New Note</button> <button id="existingNoteSweetAlertButton">Load Note</button> <button id="joinButton">Join Collab Session</button> <button id="sessionButton">Create Collab Session</button></p> 
+    <p> Session Code: <span id="sessionCode"></span></p>
+
+    <!-- Note & AI chat container -->
+    <div id="notes-container">
+        <!-- Notes Editor -->
+        <div id="editor-container">
+            <div id="editor"></div>
+        </div>
+
+        <div id="ai-assistant">
+            <h2>Ai Assistant</h2>
+            <%- include('../chat/partials/chatSettings.ejs') %>
+
+            <!-- Chat Form -->
+            <form id="chat-form">
+                <textarea id="prompt" name="prompt" placeholder="Message the AI" rows="1" required></textarea>
+                <input type="hidden" id="response-mode" name="mode" value="default">
+                <button type="submit">Send</button>
+            </form>
+
+            <div id="chat-output"></div>
+            <%- include('../chat/partials/ui/chatUIMessages.ejs') %>
+            <%- include('../chat/partials/ui/chatUIMarkup.ejs') %>
+        </div>
+    </div>
+
+    <%- include('../notes/partials/note.ejs') %>
+
+
+    <!-- AI Chat Processing -->
+    <%- include('../chat/partials/chatProcessing.ejs') %>
+    <%- include('../chat/partials/chatStream.ejs') %>
