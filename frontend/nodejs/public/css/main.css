@@ -72,7 +72,6 @@ li {
 
 .indexBox {
   border: 1px solid lightgray;
-  width: 280px;
   padding: 10px;
   display: flex;
   flex-direction: column;
