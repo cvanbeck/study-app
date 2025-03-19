@@ -9,6 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default async function setupRoutes(app, appData) {
   const router = express.Router();
   const controllersDir = join(__dirname, '..', 'controllers');
+  app.locals.navLinks = []; // Store dynamic routes for navbar
 
   try {
     const files = await readdir(controllersDir);
@@ -48,6 +49,16 @@ export default async function setupRoutes(app, appData) {
             route = `/${controllerName}/${methodName}`;
           }
 
+          // Check if the method contains a render call (but not renderPartial) by examining its toString representation
+          const methodString = method.toString();
+          const hasRenderCall = methodString.includes('res.render') && !methodString.includes('res.renderPartial');
+          const returnsObject = methodString.includes('return {');
+
+          if ((hasRenderCall || returnsObject) && !app.locals.navLinks.includes(route)) {
+            app.locals.navLinks.push(route);
+            console.log(`Added to navLinks: ${route}`);
+          }
+
           console.log(`Mapping route: ${route} -> ${controllerName}/${methodName} (object method)`);
 
           // Register the route with Express
@@ -76,6 +87,16 @@ export default async function setupRoutes(app, appData) {
             route = controllerName === 'home' ? '/' : `/${controllerName}`;
           } else {
             route = `/${controllerName}/${methodName}`;
+          }
+
+          // Check if the method contains a render call (but not renderPartial) by examining its toString representation
+          const methodString = controller[methodName].toString();
+          const hasRenderCall = methodString.includes('res.render') && !methodString.includes('res.renderPartial');
+          const returnsObject = methodString.includes('return {');
+
+          if ((hasRenderCall || returnsObject) && !app.locals.navLinks.includes(route)) {
+            app.locals.navLinks.push(route);
+            console.log(`Added to navLinks: ${route}`);
           }
 
           console.log(`> Mapping route: ${route} -> ${controllerName}/${methodName} (class method)`);
