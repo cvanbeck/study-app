@@ -78,6 +78,7 @@ wss.on('connection', (ws, req, client) => {
                         client.send(JSON.stringify({ type: 'update', data: data.content }));
                     }
                 });
+                ws.idle = false; // sets the client to an active state
                 break;
             case "cursorSync": // Sends new cursor movements to other clients
                 wss.clients.forEach((client) => {
@@ -88,6 +89,14 @@ wss.on('connection', (ws, req, client) => {
                 break;
             case "newSession": // received when user generates a collab session
                 ws.session = data.data;
+                break;
+
+            case "inactivity": // client is inactive
+                ws.idle = true;
+                const sessionClients = [...wss.clients].filter(clientFilter(ws)); // keeps clients only part of the shared session
+                console.log(sessionClients.every(idleSession)); // returns true if all clients in session are idle
+                break;
+
         }
 
     });
@@ -96,5 +105,17 @@ wss.on('connection', (ws, req, client) => {
         console.log('Client Disconnected');
     });
 });
+
+// Filter returning clients that are part of the same notes collab session
+function clientFilter(ws) {
+    return function(client) {
+        return client.note === ws.note && client.session == ws.session;
+    }
+}
+
+// Returns true if all clients connected to a session are inactive
+function idleSession(client) {
+    return client.idle;
+}
 
 app.listen(port, () => console.log(`${appData.appName} listening on port ${port}!`));
