@@ -173,7 +173,9 @@ details.ai-think summary {
   border-radius: 5px;
   cursor: pointer;
   text-align: center;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 .settings-button:hover {
   background: #555;
@@ -193,7 +195,9 @@ details.ai-think summary {
   padding: 10px;
   border-radius: 5px;
   cursor: pointer;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
 }
 #settings-toggle:hover {
   background: #555;
@@ -205,6 +209,7 @@ details.ai-think summary {
   position: absolute;
   background: white;
   border: 1px solid #ccc;
+  width: -moz-fit-content;
   width: fit-content;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   border-bottom-left-radius: 10px;
@@ -214,7 +219,9 @@ details.ai-think summary {
   display: block;
   padding: 10px;
   cursor: pointer;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
   border-radius: 5px;
   transition: padding-left 0.3s ease;
 }
@@ -243,6 +250,4 @@ details.ai-think summary {
 .mode-toggle:checked + span {
   font-weight: bold;
   color: #ffcc00;
-}
-
-/*# sourceMappingURL=notesPage.css.map */
+}/*# sourceMappingURL=notesPage.css.map */
