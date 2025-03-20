@@ -14,10 +14,12 @@ html body .body-content {
   padding-right: 10px;
 }
 html body .body-content .container {
-  height: calc(100% - 10px);
   display: flex;
   flex-direction: column;
   margin-top: 10px;
+}
+html body .container-fluid, html body .container {
+  height: calc(100% - 80px);
 }
 
 html,
