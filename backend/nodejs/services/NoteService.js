@@ -78,10 +78,13 @@ export default class NoteService {
         return noteContent
     }
 
-    async getDeltas(id) {
+    async getDeltas(id, maxVersion) {
         try {
-            
-            const result = await this.dbContext.query("SELECT * FROM NoteVersionControl WHERE NoteID = ?", [id]);
+            let queryString = "SELECT * FROM NoteVersionControl WHERE NoteID = ?";
+            if(maxVersion) {
+                queryString = queryString.concat(" AND Version <= ?");
+            }
+            const result = await this.dbContext.query(queryString, [id, maxVersion]);
 
             if (result && result.length > 0) {
                 const deltas = result.map(row => {
@@ -114,6 +117,14 @@ export default class NoteService {
         } catch (error) {
             console.error('Error querying Notes table:', error);
         }
+    }
+
+    async getNoteVersion(id, version) {
+        const deltas = await this.getDeltas(id, version);
+        const note = new Note({ id: "none" });
+
+        note.setContent(this.buildNote(note.content, deltas));
+        return note;  
     }
 
 }
