@@ -74,6 +74,11 @@ export default async function setupRoutes(app, appData) {
 /**
  * Checks if the provided value is a class constructor.
  *
+ *  - `/^\s*class\s+/` checks if the string representation starts with `class`,
+ *      allowing for optional leading whitespace.
+ *  - `/\[native code\]/` checks if the function is a built-in (native) class,
+ *      as native classes are often represented with `[native code]` in their string output.
+ *
  * @param {*} value - The value to check.
  * @returns {boolean} True if the value is a class constructor; otherwise, false.
  */
