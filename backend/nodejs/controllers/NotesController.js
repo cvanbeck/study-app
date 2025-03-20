@@ -18,7 +18,6 @@ export default class NotesController extends BaseController {
         res.render("index.ejs", { ...this.appData, user: req.session.user });
     }
 
-
     // Generates a note item and calls storeNote in notesservice 
     async generateNote(req, res) {
         const note = new Note({
