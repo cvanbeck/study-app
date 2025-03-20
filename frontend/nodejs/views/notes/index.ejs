@@ -1,27 +1,59 @@
+<head>
+    <link rel="stylesheet" type="text/css" href="/css/notes/notesPage.css" />
+</head>
 
-    <div class="indexBox">
-        <p>Notes</p>
+<div class="container mt-4 notes-container">
+    <div class="header-section d-flex justify-content-between align-items-center">
+        <h2>Collaborative Notes</h2>
+        <div class="session-info">
+            <span class="text-muted">Session Code:</span>
+            <span id="sessionCode" class="badge bg-primary session-badge">N/A</span>
+        </div>
     </div>
 
-    <a href="/notes/notesAI">Notes with AI</a>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="d-grid gap-2 d-md-flex">
+                <button id="newNoteButton" class="btn btn-primary">New Note</button>
+                <button id="existingNoteSweetAlertButton" class="btn btn-outline-primary">Load Note</button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button id="joinButton" class="btn btn-success">Join Collab Session</button>
+                <button id="sessionButton" class="btn btn-outline-success" disabled>Create Collab Session</button>
+            </div>
+        </div>
+    </div>
 
-    <p><button id="newNoteButton">New Note</button> <button id="existingNoteSweetAlertButton">Load Note</button> <button id="joinButton">Join Collab Session</button> <button id="sessionButton">Create Collab Session</button></p>
-    <p>Session Code: <span id="sessionCode"></span></p>
-    <button id="versionControlAlertButton">Version Control</button>
-    <button id="currentNoteButton">Current Version</button>
-    <button id="deleteAlertButton">Delete a Version</button>
-    
+    <div class="version-controls d-flex justify-content-between">
+        <div>
+            <button id="versionControlAlertButton" class="btn btn-sm btn-outline-secondary">View Version</button>
+            <button id="currentNoteButton" class="btn btn-sm btn-outline-secondary ms-2">Return to Current</button>
+            <button id="deleteAlertButton" class="btn btn-sm btn-outline-danger ms-2">Delete Version</button>
+        </div>
+    </div>
 
+    <!-- Editor Container -->
+    <div class="quill-container editor-overlay mt-3">
+        <div id="editor"></div>
+        <!-- This is the partial note.ejs that contains the overlay -->
+        <div class="editor-blur" id="editorOverlay">
+            <p class="blur-message">No note selected</p>
+            <div class="d-grid gap-2 d-md-block">
+                <button id="newNoteOverlayButton" class="btn btn-primary">New Note</button>
+                <button id="loadNoteOverlayButton" class="btn btn-outline-primary">Load Note</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Passes the below content to the scripts variable in layout.ejs -->
+<%- contentFor('scripts') %>
 
-    <div id="editor"></div>
+<%- include('../notes/partials/note.ejs') %>
 
-
-
-    <%- include('../notes/partials/note.ejs') %>
-
-    <!-- Passes the below content to the scripts variable in layout.ejs -->
-    <%- contentFor('scripts') %>
-    <script>
-        appendToHeading('Notes');
-    </script>
+<script>
+    // Call this on page load
+    appendToHeading('Notes');
+</script>

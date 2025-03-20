@@ -8,6 +8,7 @@
 
 /* Notes and AI Assistant Container */
 #notes-container {
+  margin: 0 auto;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -252,4 +253,62 @@ details.ai-think summary {
 .mode-toggle:checked + span {
   font-weight: bold;
   color: #ffcc00;
+}
+
+.header-section {
+  margin-bottom: 1.5rem;
+}
+
+.session-badge {
+  font-size: 1rem;
+}
+
+.btn-group {
+  margin-bottom: 1.5rem;
+}
+
+.quill-container {
+  margin-top: 20px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+#editor {
+  min-height: 400px;
+  background: white;
+}
+
+.editor-overlay {
+  position: relative;
+}
+
+.editor-blur {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(3px);
+          backdrop-filter: blur(3px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 5px;
+}
+
+.blur-message {
+  color: #495057;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.navbar-brand {
+  font-weight: 600;
+}
+
+.version-controls {
+  margin-top: 15px;
 }/*# sourceMappingURL=notesPage.css.map */
