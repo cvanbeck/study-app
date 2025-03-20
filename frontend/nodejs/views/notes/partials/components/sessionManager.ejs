@@ -1,0 +1,75 @@
+<script>
+    // -----------------------------
+    // Session Management
+    // -----------------------------
+    const SessionManager = {
+        async createSession() {
+            if (typeof State.currentSession !== 'string') {
+                WebSocketManager.disconnect();
+                try {
+                    const sessionCode = await API.generateSession(State.currentID);
+
+                    UI.updateSessionDisplay(sessionCode, true);
+                    State.currentSession = sessionCode;
+
+                    // Update URL with session parameter
+                    window.history.pushState("", "", window.location.pathname + `?session=${sessionCode}`);
+
+                    WebSocketManager.connect();
+                    WebSocketManager.sendMessage('newSession', sessionCode);
+                } catch (error) {
+                    console.error('Error creating session:', error);
+                }
+            }
+        },
+
+        promptJoinSession() {
+            UI.promptForID('Enter Session Code', async (sessionCode) => {
+                WebSocketManager.disconnect();
+                await this.joinSession(sessionCode);
+            });
+        },
+
+        async joinSession(sessionCode) {
+            try {
+                const data = await API.joinSession(sessionCode);
+
+                if (data.page !== window.location.pathname) {
+                    window.location.assign(data.page + `?session=${sessionCode}`);
+                } else {
+                    Editor.setContent(data.note);
+
+                    // Update URL and session state
+                    window.history.pushState("", "", window.location.pathname + `?session=${sessionCode}`);
+                    State.currentSession = sessionCode;
+                    UI.updateSessionDisplay(sessionCode, true);
+
+                    WebSocketManager.connect();
+                    UI.toggleSessionButton(true);
+                    UI.toggleEditorOverlay(true);
+                }
+            } catch (error) {
+                console.error('Error joining session:', error);
+                throw error;
+            }
+        },
+
+        async loadSessionNote() {
+            try {
+                const data = await API.joinSession(State.currentSession);
+
+                if (data.page !== window.location.pathname) {
+                    window.location.assign(data.page + `?session=${State.currentSession}`);
+                } else {
+                    Editor.setContent(data.note);
+                    WebSocketManager.connect();
+                }
+
+                UI.toggleSessionButton(true);
+                UI.toggleEditorOverlay(true);
+            } catch (error) {
+                console.error('Error loading session note:', error);
+            }
+        }
+    };
+</script>

@@ -1,0 +1,51 @@
+<script>
+    // -----------------------------
+    // Version Control
+    // -----------------------------
+    const VersionManager = {
+        async createNewVersion() {
+            if (State.currentID) {
+                await API.createNewVersion(State.currentID);
+            }
+        },
+
+        promptViewVersion() {
+            UI.showVersionAlert('Enter Note Version', async (version) => {
+                const result = await API.getNoteVersion(State.currentID, version);
+                State.currentVersion = Editor.quill.getContents();
+                Editor.setPreviewContent(result);
+            });
+        },
+
+        returnToCurrentVersion() {
+            if (!State.currentID) {
+                return UI.showAlert({
+                    icon: 'warning',
+                    title: 'No Note Selected',
+                    text: 'Please create or load a note first'
+                });
+            }
+
+            if (State.currentVersion) {
+                Editor.setContent({
+                    content: JSON.stringify(State.currentVersion),
+                    id: State.currentID
+                });
+            } else {
+                UI.showAlert({
+                    icon: 'info',
+                    title: 'Current Version',
+                    text: 'Already viewing the current version'
+                });
+            }
+        },
+
+        promptDeleteVersion() {
+            UI.showVersionAlert('Enter Version to delete', async (version) => {
+                const result = await API.deleteNoteVersion(State.currentID, version);
+                console.log(result);
+                Editor.setContent(result);
+            });
+        }
+    };
+</script>

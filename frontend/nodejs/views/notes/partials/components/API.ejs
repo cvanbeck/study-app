@@ -1,0 +1,119 @@
+<script>
+    // -----------------------------
+    // API Services
+    // -----------------------------
+    const API = {
+        async generateNewNote() {
+            try {
+                const response = await $.ajax({
+                    url: '/notes/generateNote',
+                    method: 'GET',
+                    dataType: 'JSON'
+                });
+                return response;
+            } catch (error) {
+                console.error('Failed to generate new note:', error);
+                throw error;
+            }
+        },
+
+        async getExistingNote(noteId) {
+            try {
+                const response = await fetch('/notes/getExistingNote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ result: noteId })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Failed to load note:', error);
+                throw error;
+            }
+        },
+
+        async updateNote(content, id) {
+            try {
+                await fetch('/notes/updateNote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content, id })
+                });
+            } catch (error) {
+                console.error('Failed to update note:', error);
+                throw error;
+            }
+        },
+
+        async generateSession(noteId) {
+            try {
+                const response = await $.ajax({
+                    url: `/notes/generateSession?id=${encodeURIComponent(noteId)}`,
+                    method: 'GET',
+                    dataType: 'text'
+                });
+                return response;
+            } catch (error) {
+                console.error('Failed to generate session:', error);
+                throw error;
+            }
+        },
+
+        async joinSession(sessionCode) {
+            try {
+                const response = await fetch('/notes/joinSession', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ result: sessionCode })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('Failed to join session:', error);
+                throw error;
+            }
+        },
+
+        async getNoteVersion(id, version) {
+            try {
+                const response = await $.ajax({
+                    url: '/notes/getNoteVersion',
+                    method: 'GET',
+                    dataType: 'JSON',
+                    data: { id, version }
+                });
+                return response;
+            } catch (error) {
+                console.error('Failed to get note version:', error);
+                throw error;
+            }
+        },
+
+        async deleteNoteVersion(id, version) {
+            try {
+                const response = await $.ajax({
+                    url: '/notes/deleteVersion',
+                    method: 'GET',
+                    dataType: 'JSON',
+                    data: { id, version }
+                });
+                return response;
+            } catch (error) {
+                console.error('Failed to delete version:', error);
+                throw error;
+            }
+        },
+
+        async createNewVersion(id) {
+            try {
+                await $.ajax({
+                    url: '/notes/newNoteVersion',
+                    method: 'GET',
+                    dataType: 'text',
+                    data: { id }
+                });
+            } catch (error) {
+                console.error('Failed to create new version:', error);
+                throw error;
+            }
+        }
+    };
+</script>
