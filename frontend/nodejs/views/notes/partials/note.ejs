@@ -233,6 +233,9 @@
                         }
                         cursors.moveCursor(message.data.id, message.data.range);
                         cursors.update();
+                    } else if (message.type === 'newVersion') { 
+                        versionControl();
+                        
                     }
 
                 });
@@ -272,27 +275,33 @@
             
         }
 
+        // Timeout function for user inactivity
         async function inactivity() {
             if (ws) {
                 // ws code
                 ws.send(sendMessage('inactivity')); // Lets server know client is inactive
             } else {
-             // direct to server code
-                $.ajax({
-                    url: '/notes/newNoteVersion',
-                    method: 'GET',
-                    dataType: 'text',
-                    data: { id: currentID }, 
-                    success: function() {
-                            
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching AJAX content:', status, error);
-                    }
-                });
+             // direct to server code for when there's no session
+             versionControl();
+
             }
         }
 
+        // Sends request for a new delta version control iteration
+        async function versionControl() {
+            $.ajax({
+                url: '/notes/newNoteVersion',
+                method: 'GET',
+                dataType: 'text',
+                data: { id: currentID }, 
+                success: function() {
+                            
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching AJAX content:', status, error);
+                }
+            });
+        }
         
 
     </script>
