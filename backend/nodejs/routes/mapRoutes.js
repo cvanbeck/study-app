@@ -56,7 +56,7 @@ export default async function setupRoutes(app, appData) {
 
           if ((hasRenderCall || returnsObject) && !app.locals.navLinks.includes(route)) {
             app.locals.navLinks.push(route);
-            console.log(`Added to navLinks: ${route}`);
+            console.log(`> Added to navLinks: ${route}`);
           }
 
           console.log(`Mapping route: ${route} -> ${controllerName}/${methodName} (object method)`);
@@ -96,7 +96,7 @@ export default async function setupRoutes(app, appData) {
 
           if ((hasRenderCall || returnsObject) && !app.locals.navLinks.includes(route)) {
             app.locals.navLinks.push(route);
-            console.log(`Added to navLinks: ${route}`);
+            console.log(`> Added to navLinks: ${route}`);
           }
 
           console.log(`> Mapping route: ${route} -> ${controllerName}/${methodName} (class method)`);
