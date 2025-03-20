@@ -7,46 +7,6 @@ import mapErrorRoutes from './mapErrorRoutes.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Generates a route path based on the controller and method name.
- *
- * @param {string} controllerName - The name of the controller.
- * @param {string} methodName - The name of the method.
- * @returns {string} The generated route.
- */
-function getRoute(controllerName, methodName) {
-  return methodName === 'index'
-    ? controllerName === 'home'
-      ? '/'
-      : `/${controllerName}`
-    : `/${controllerName}/${methodName}`;
-}
-
-/**
- * Processes the mapping of a controller method to a route and updates the application's navigation links if applicable.
- *
- * It determines if the method includes a render call or returns an object, and if so, adds the route to the app's navigation links.
- *
- * @param {object} app - The Express application instance.
- * @param {string} controllerName - The name of the controller.
- * @param {string} methodName - The name of the method.
- * @param {Function} methodFn - The controller method function.
- * @param {string} typeLabel - A label describing the type of method (e.g., "Object method" or "Class method").
- * @returns {string} The generated route path.
- */
-function processRouteMapping(app, controllerName, methodName, methodFn, typeLabel) {
-  const route = getRoute(controllerName, methodName);
-  const methodString = methodFn.toString();
-  const hasRenderCall = methodString.includes('res.render') && !methodString.includes('res.renderPartial');
-  const returnsObject = methodString.includes('return {');
-  console.log(`> Mapping route: ${route} -> ${controllerName}/${methodName} (${typeLabel})`);
-  if ((hasRenderCall || returnsObject) && !app.locals.navLinks.includes(route)) {
-    app.locals.navLinks.push(route);
-    console.log(`  > Added to navLinks: ${route}`);
-  }
-  return route;
-}
-
-/**
  * Sets up application routes by dynamically loading controller files and mapping their methods to Express routes.
  *
  * It reads the controllers directory, imports each controller, and then sets up the appropriate route handlers.
@@ -112,6 +72,58 @@ export default async function setupRoutes(app, appData) {
 }
 
 /**
+ * Checks if the provided value is a class constructor.
+ *
+ * @param {*} value - The value to check.
+ * @returns {boolean} True if the value is a class constructor; otherwise, false.
+ */
+function isControllerAClass(ControllerClass) {
+  return typeof ControllerClass === 'function' || 
+         (/^\s*class\s+/.test(ControllerClass.toString()) || 
+         /\[native code\]/.test(ControllerClass.toString()));
+}
+
+/**
+ * Processes the mapping of a controller method to a route and updates the application's navigation links if applicable.
+ *
+ * It determines if the method includes a render call or returns an object, and if so, adds the route to the app's navigation links.
+ *
+ * @param {object} app - The Express application instance.
+ * @param {string} controllerName - The name of the controller.
+ * @param {string} methodName - The name of the method.
+ * @param {Function} methodFn - The controller method function.
+ * @param {string} typeLabel - A label describing the type of method (e.g., "Object method" or "Class method").
+ * @returns {string} The generated route path.
+ */
+function processRouteMapping(app, controllerName, methodName, methodFn, typeLabel) {
+  const route = getRoute(controllerName, methodName);
+  const methodString = methodFn.toString();
+  const hasRenderCall = methodString.includes('res.render') && !methodString.includes('res.renderPartial');
+  const returnsObject = methodString.includes('return {');
+  console.log(`> Mapping route: ${route} -> ${controllerName}/${methodName} (${typeLabel})`);
+  if ((hasRenderCall || returnsObject) && !app.locals.navLinks.includes(route)) {
+    app.locals.navLinks.push(route);
+    console.log(`  > Added to navLinks: ${route}`);
+  }
+  return route;
+}
+
+/**
+ * Generates a route path based on the controller and method name.
+ *
+ * @param {string} controllerName - The name of the controller.
+ * @param {string} methodName - The name of the method.
+ * @returns {string} The generated route.
+ */
+function getRoute(controllerName, methodName) {
+  return methodName === 'index'
+    ? controllerName === 'home'
+      ? '/'
+      : `/${controllerName}`
+    : `/${controllerName}/${methodName}`;
+}
+
+/**
  * Helper function to set up an Express route handler.
  *
  * It wraps the controller method execution in an async handler, enhancing the response object with custom render methods.
@@ -164,16 +176,4 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
       next(err);
     }
   });
-}
-
-/**
- * Checks if the provided value is a class constructor.
- *
- * @param {*} value - The value to check.
- * @returns {boolean} True if the value is a class constructor; otherwise, false.
- */
-function isControllerAClass(ControllerClass) {
-  return typeof ControllerClass === 'function' || 
-         (/^\s*class\s+/.test(ControllerClass.toString()) || 
-         /\[native code\]/.test(ControllerClass.toString()));
 }
