@@ -13,6 +13,12 @@
 
 <div id="chat-output"></div>
 
+<!-- Passes the below content to the scripts variable in layout.ejs -->
+<%- contentFor('scripts') %>
+<script>
+  appendToHeading('AI Chat');
+</script>
+
 <!-- UI modification related scripts -->
 <%- include('partials/ui/chatUIMessages.ejs') %>
 <%- include('partials/ui/chatUIMarkup.ejs') %>
