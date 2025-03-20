@@ -6,6 +6,8 @@
 </head>
 
     <script>
+        let timers = {};
+        let changes = [];
 
          // Register a module to Quill
          Quill.register('modules/cursors', QuillCursors);
@@ -20,6 +22,7 @@
             }
         });
         
+        const Delta = Quill.import('delta');
         const cursors = quill.getModule('cursors');
         quill.disable();
 
@@ -32,13 +35,18 @@
 
         let ws = ''; // Empty Websocket Object
 
-        
-
         // Sends changes to the websocket server & controller
         quill.on('text-change', (delta, oldDelta, source) => {
             if(source == 'user') {
-                try {
-                    const content = JSON.stringify(quill.getContents());
+                changes.push(delta);
+                timer('inactivity', inactivity, 10000);
+                timer('delay', function() {
+                    let combinedChanges = new Delta();
+                    for(var i = 0; i < changes.length; i++) {
+                        combinedChanges = combinedChanges.compose(changes[i]);
+                    }
+                    try {
+                    const content = JSON.stringify(combinedChanges);
                     fetch('/notes/updateNote', {
                         method: 'POST',
                         headers: {
@@ -46,13 +54,17 @@
                         },
                         body: JSON.stringify({ content , id: currentID }) // Sends request to update note in db to controller
                     });
-                } catch (error) {
-                    console.error(error);
-                }
+                    changes = [];
+                    } catch (error) {
+                        console.error(error);
+                    }
 
+
+                }, 1000);
                 if(ws && ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify({ type: "sync", content: delta.ops })); // sends updated note contents to websocket server
                 }
+
             }
         });
 
@@ -185,8 +197,16 @@
         // Loads note contents into Quill editor
         function setupNote(data) {
             currentID = data.id;
+            quill.deleteText(0, quill.getLength());
             quill.setContents(JSON.parse(data.content));
             quill.enable();
+        }
+
+        // Loads note preview into editor
+        function setupPreview(data) {
+            quill.deleteText(0, quill.getLength());
+            quill.setContents(JSON.parse(data.content));
+            quill.disable();
         }
 
         // Connects to the websockets
@@ -220,6 +240,9 @@
                         }
                         cursors.moveCursor(message.data.id, message.data.range);
                         cursors.update();
+                    } else if (message.type === 'newVersion') { 
+                        versionControl();
+                        
                     }
 
                 });
@@ -247,4 +270,70 @@
                 console.error(error);
             }
         }
+
+        // Sets the client to idle if they are inactive for x amount of time
+        function timer(label, func, duration) {
+            if (timers[label]) {
+                clearTimeout(timers[label]); // Removes timer if it already exists
+            }
+
+            // Sets a new timer
+            timers[label] = setTimeout(func, duration);
+            
+        }
+
+        // Timeout function for user inactivity
+        async function inactivity() {
+            if (ws) {
+                // ws code
+                ws.send(sendMessage('inactivity')); // Lets server know client is inactive
+            } else {
+             // direct to server code for when there's no session
+             versionControl();
+
+            }
+        }
+
+        // Sends request for a new delta version control iteration
+        async function versionControl() {
+            $.ajax({
+                url: '/notes/newNoteVersion',
+                method: 'GET',
+                dataType: 'text',
+                data: { id: currentID }, 
+                success: function() {
+                            
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching AJAX content:', status, error);
+                }
+            });
+        }
+
+        $('#versionControlAlertButton').on('click', function() {
+            Swal.fire({
+                title: 'Enter Note Version',
+                input: "text",
+                showCloseButton: true,
+                width: '600px', // Customize the size
+                preConfirm: async (result) => {
+                    $.ajax({
+                        url: '/notes/getNoteVersion',
+                        method: 'GET',
+                        dataType: 'JSON',
+                        data: { id: currentID, version: result}, 
+                        success: function(result) {
+                            const currentVersion = quill.getContents();
+                            setupPreview(result);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching AJAX content:', status, error);
+                        }
+                    });
+                }
+            });
+
+        });
+        
+
     </script>
