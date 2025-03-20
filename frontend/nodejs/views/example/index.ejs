@@ -1,4 +1,4 @@
-<a href="/home/example">Click to call controller example() function</a>
+<a href="/example/example">Click to call controller example() function</a>
 
 <p>THIS IS AN ITEM QUERIED FROM THE DATABASE: [<%= dbItem.EmployeeId %>: <%= dbItem.Title %>, <%= dbItem.FirstName %> <%= dbItem.LastName %>]</p>
 
@@ -21,7 +21,7 @@
     // AJAX request function using jQuery
     $('#ajaxButton').on('click', function() {
         $.ajax({
-            url: '/home/ajaxTest',
+            url: '/example/ajaxTest',
             method: 'GET',
             dataType: 'html', // Expecting HTML content from the server
             success: function(data) {
@@ -35,7 +35,7 @@
 
     $('#ajaxSweetAlertButton').on('click', function() {
         $.ajax({
-            url: '/home/ajaxModalTest',
+            url: '/example/ajaxModalTest',
             method: 'GET',
             dataType: 'html',
             success: function(data) {
