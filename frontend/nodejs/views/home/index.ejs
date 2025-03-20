@@ -1,12 +1,53 @@
 <!-- index.ejs -->
 
-<!-- Existing content -->
-<div class="indexBox">
-    <h2>This is the homepage of <%= appName %></h2>
+<div class="indexBox p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5 text-center">
+        <h2 class="display-5 fw-bold">Welcome to <%= appName %>
+        </h2>
+        <p class="lead">Quod dolorem fuga voluptatem eveniet sapiente.</p>
+        <a href="/example" class="btn btn-primary btn-lg">Get Started</a>
+    </div>
 </div>
 
-<!-- Passes the below content to the scripts variable in layout.ejs -->
-<%- contentFor('scripts') %>
-<script>
+<div class="container my-5">
+    <h3 class="text-center mb-4">Explore Our Features</h3>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
 
-</script>
+        <!-- About Page -->
+        <div class="col">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">About Us</h5>
+                    <p class="card-text">Quod dolorem fuga voluptatem eveniet sapiente. Odio expedita dolores aut ut optio unde nobis dolores.</p>
+                    <a href="/about" class="btn btn-primary">Learn More</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chatbot -->
+        <div class="col">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">AI Chatbot</h5>
+                    <p class="card-text">Quod dolorem fuga voluptatem eveniet sapiente. Odio expedita dolores aut ut optio unde nobis dolores.</p>
+                    <a href="/chat" class="btn btn-primary">Try Chatbot</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="col">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Save Notes</h5>
+                    <p class="card-text">Quod dolorem fuga voluptatem eveniet sapiente. Odio expedita dolores aut ut optio unde nobis dolores.</p>
+                    <a href="/notes" class="btn btn-primary">Go to Notes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('scripts') %>
+    <script>
+    </script>
