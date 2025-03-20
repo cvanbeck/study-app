@@ -8,6 +8,7 @@
     <script>
         let timers = {};
         let changes = [];
+        let currentVersion; 
 
          // Register a module to Quill
          Quill.register('modules/cursors', QuillCursors);
@@ -196,7 +197,9 @@
 
         // Loads note contents into Quill editor
         function setupNote(data) {
-            currentID = data.id;
+            if(data.id && data.id.length > 0) {
+                currentID = data.id;
+            }
             quill.deleteText(0, quill.getLength());
             quill.setContents(JSON.parse(data.content));
             quill.enable();
@@ -323,7 +326,7 @@
                         dataType: 'JSON',
                         data: { id: currentID, version: result}, 
                         success: function(result) {
-                            const currentVersion = quill.getContents();
+                            currentVersion = quill.getContents();
                             setupPreview(result);
                         },
                         error: function(xhr, status, error) {
@@ -334,6 +337,39 @@
             });
 
         });
+
+        $('#currentNoteButton').on('click', function() {
+            if(currentVersion) {
+                setupNote({ content: JSON.stringify(currentVersion), id: currentID });
+            }
+        });
+
+        $('#deleteAlertButton').on('click', function() {
+            Swal.fire({
+                title: 'Enter Version to delete',
+                input: "text",
+                showCloseButton: true,
+                width: '600px', // Customize the size
+                preConfirm: async (result) => {
+                    $.ajax({
+                        url: '/notes/deleteVersion',
+                        method: 'GET',
+                        dataType: 'JSON',
+                        data: { id: currentID, version: result}, 
+                        success: function(result) {
+                            console.log(result);
+                            setupNote(result);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching AJAX content:', status, error);
+                        }
+                    });
+                }
+            });
+        });
+
+
+        
         
 
     </script>

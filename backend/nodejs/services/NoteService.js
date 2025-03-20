@@ -25,8 +25,6 @@ export default class NoteService {
         try {
             const result = await this.dbContext.query("SELECT * FROM Notes WHERE id = ?", [id]);
             // Ensure we have a valid result
-            console.log(result);
-
             if (result && result.length > 0) {
                 const row = result[0]; // Assuming 'id' is unique, we take the first result
 
@@ -78,6 +76,7 @@ export default class NoteService {
         return noteContent
     }
 
+    // Gets all deltas linked to an ID
     async getDeltas(id, maxVersion) {
         try {
             let queryString = "SELECT * FROM NoteVersionControl WHERE NoteID = ?";
@@ -107,18 +106,20 @@ export default class NoteService {
         }
     }
 
+    // Inserts a new version control delta in the DB
     async newNoteVersion(id, content) {
         if(!content) {
             content = '{"ops":[]}';
         }
         try {
-            await this.dbContext.query("INSERT INTO NoteVersionControl (NoteID, Version, Content) VALUES (?, (SELECT COUNT(*) FROM NoteVersionControl WHERE NoteID = ?), ?)", [id, id, content]);
+            await this.dbContext.query("INSERT INTO NoteVersionControl (NoteID, Version, Content) VALUES (?, COALESCE((SELECT MAX(Version) FROM NoteVersionControl WHERE NoteID = ?), 0)+1, ?)", [id, id, content]);
             console.log("New version generated");
         } catch (error) {
             console.error('Error querying Notes table:', error);
         }
     }
 
+    // Gets a note up to x version
     async getNoteVersion(id, version) {
         const deltas = await this.getDeltas(id, version);
         const note = new Note({ id: "none" });
@@ -126,5 +127,19 @@ export default class NoteService {
         note.setContent(this.buildNote(note.content, deltas));
         return note;  
     }
+
+    // Delete a version control delta from the DB
+    async deleteVersion(id, version) {
+
+        try {
+            const result = await this.dbContext.query("DELETE FROM NoteVersionControl WHERE NoteID = ? AND Version = ?", [id, version]);
+            console.log('Successfully deleted');
+            return this.getNote(id);
+        } catch (error) {
+            console.error('Error querying Notes table:', error);
+            return null;
+        }
+    }
+
 
 }
