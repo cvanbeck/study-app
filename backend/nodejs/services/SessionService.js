@@ -1,8 +1,10 @@
 import Note from '../models/Note.js';
+import NoteService from "../services/NoteService.js";
 
 export default class SessionService {
     constructor(database) {
         this.dbContext = database;
+        this.noteService = new NoteService(this.dbContext);
 
     }
 
@@ -29,9 +31,12 @@ export default class SessionService {
                 const formattedRow = Object.fromEntries(
                     Object.entries(row).map(([key, value]) => [key.toLowerCase(), value])
                 );
-                return {note: new Note(formattedRow), page: formattedRow.page}; // Return a Note object
+                const note = new Note(formattedRow)
+                const deltas = await this.noteService.getDeltas(note.id);
+                note.setContent(this.noteService.buildNote(note.content, deltas));
+                return {note: note, page: formattedRow.page}; // Return a Note object
             } else {
-                console.log(`Note with id ${id} not found`);
+                console.log(`Note with code ${code} not found`);
                 return null; // Return null if the note is not found
             }
         } catch (error) {
