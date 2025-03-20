@@ -123,4 +123,22 @@ export default class NotesController extends BaseController{
 
     }
 
+    
+    async deleteVersion(req, res) {
+        const noteID = req.query.id;
+        const version = req.query.version;
+
+        try {
+            const result = await this.noteService.deleteVersion(noteID, version);
+            if(result) {
+                res.send(result);
+            }
+        } catch (error) {
+            console.error('Error fetching note or updating pad:', error);
+            res.status(500).send("Internal server error");
+        }
+
+
+    }
+
 }
