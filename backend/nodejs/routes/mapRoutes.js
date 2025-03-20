@@ -144,11 +144,11 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
     try {
       // Enhance res.render to prepend the controller name if necessary
       const originalRender = res.render;
-      res.render = function(view, options) {
-        if (shouldPrependControllerToPath(view)) {
-          view = `${controllerName}/${view}`;
+      res.render = function(viewPath, options) {
+        if (shouldPrependControllerToPath(viewPath)) {
+          viewPath = `${controllerName}/${viewPath}`;
         }
-        return originalRender.call(res, view, options);
+        return originalRender.call(res, viewPath, options);
       };
 
       // Custom function to render pages without layout, unnecessary but i find it cleaner (bappity)
