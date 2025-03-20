@@ -64,7 +64,7 @@ wss.on('connection', (ws, req, client) => {
                 ws.session = data.session;
                 // Sends the new clients ID to all other clients in the same session
                 wss.clients.forEach((client) => {
-                    if(client !== ws && client.readyState === WebSocket.OPEN && typeof ws.session === 'string' && client.session === ws.session && client.note === ws.note) { // both note ID and session code must match
+                    if(client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session && client.note === ws.note) { // both note ID and session code must match
                         client.send(JSON.stringify({ type: 'newClient', data: ws.id }));
                     }
                 });
@@ -74,7 +74,7 @@ wss.on('connection', (ws, req, client) => {
                 break;
             case "sync": // Sync tape updates clients Quill editor view with current content. Excludes message sender
                 wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && typeof ws.session === 'string' && client.session === ws.session && client.note === ws.note) {  // only if collab session ID matches
+                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session && client.note === ws.note) {
                         client.send(JSON.stringify({ type: 'update', data: data.content }));
                     }
                 });
@@ -82,7 +82,7 @@ wss.on('connection', (ws, req, client) => {
                 break;
             case "cursorSync": // Sends new cursor movements to other clients
                 wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && typeof ws.session === 'string' && client.session === ws.session && client.note === ws.note) {
+                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session && client.note === ws.note) {
                         client.send(JSON.stringify({ type: 'cursorUpdate', data: data.data }));
                     }
                 });
@@ -90,21 +90,37 @@ wss.on('connection', (ws, req, client) => {
             case "newSession": // received when user generates a collab session
                 ws.session = data.data;
                 break;
-
             case "inactivity": // client is inactive
                 ws.idle = true;
                 const sessionClients = [...wss.clients].filter(clientFilter(ws)); // Leeps clients only part of the shared session
                 if (sessionClients.every(idleSession)) { // True if all clients in session are idle
                     ws.send(JSON.stringify({ type: 'newVersion' })); // Only sent to the most recent inactive client
-                } 
+                }
                 break;
-
+            case "disconnect":
+                console.log(`Client ${ws.id} is disconnecting`);
+                wss.clients.forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN) {
+                        client.send(JSON.stringify({
+                            type: 'clientDisconnect',
+                            data: { id: ws.id }
+                        }));
+                    }
+                });
+                break;
         }
-
     });
 
     ws.on('close', () => {
-        console.log('Client Disconnected');
+        console.log(`Client ${ws.id} connection closed`);
+        wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                    type: 'clientDisconnect',
+                    data: { id: ws.id }
+                }));
+            }
+        });
     });
 });
 

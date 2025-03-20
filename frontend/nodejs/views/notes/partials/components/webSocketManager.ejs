@@ -1,0 +1,135 @@
+<script>
+    // -----------------------------
+    // WebSocket Manager
+    // -----------------------------
+    const WebSocketManager = {
+        connect() {
+            if (!State.ws) {
+                State.ws = new WebSocket('ws://localhost:8001');
+
+                State.ws.addEventListener('open', () => {
+                    console.log("Successfully Connected");
+                    this.sendInitMessage();
+                });
+
+                State.ws.addEventListener('message', (event) => {
+                    const message = JSON.parse(event.data);
+                    this.handleMessage(message);
+                });
+
+                // Add event listeners for connection issues
+                State.ws.addEventListener('close', () => {
+                    console.log("WebSocket disconnected");
+                    // No need to call disconnect here as the connection is already closed
+                });
+
+                State.ws.addEventListener('error', (error) => {
+                    console.error("WebSocket error:", error);
+                    this.disconnect();
+                });
+            }
+        },
+
+        disconnect() {
+            if (State.ws && State.ws.readyState === WebSocket.OPEN) {
+                // Notify server about disconnection to handle cursor cleanup
+                this.sendMessage("disconnect", { id: State.ws.id });
+                State.ws.close();
+                this.cleanupAfterDisconnect();
+            } else if (State.ws) {
+                // WebSocket exists but might not be open
+                State.ws.close();
+                this.cleanupAfterDisconnect();
+            }
+            State.ws = null;
+        },
+
+        cleanupAfterDisconnect() {
+            Editor.clearOtherUserCursors();
+            // Reset session information
+            if (UI && UI.updateSessionDisplay) {
+                UI.updateSessionDisplay("N/A", false);
+            }
+        },
+
+        sendMessage(type, data) {
+            if (State.ws && State.ws.readyState === WebSocket.OPEN) {
+                State.ws.send(JSON.stringify({ type, data }));
+                return true;
+            }
+            return false;
+        },
+
+        sendInitMessage() {
+            // Use the original message format
+            State.ws.send(JSON.stringify({
+                type: "init",
+                content: State.currentID,
+                session: State.currentSession
+            }));
+        },
+
+        sendUpdate(ops) {
+            // Use the original message format
+            if (State.ws && State.ws.readyState === WebSocket.OPEN) {
+                State.ws.send(JSON.stringify({
+                    type: "sync",
+                    content: ops  // This should be the delta ops directly
+                }));
+            }
+        },
+
+        sendCursorPosition(id, range) {
+            this.sendMessage('cursorSync', { id, range });
+        },
+
+        sendInactivitySignal() {
+            if (State.ws) {
+                WebSocketManager.sendMessage('inactivity');
+            } else {
+                VersionManager.createNewVersion();
+            }
+        },
+
+        handleMessage(message) {
+            switch (message.type) {
+                case 'update':
+                    Editor.updateContentFromWS(message.data);
+                    break;
+
+                case 'sync':
+                    Editor.updateContentFromWS(message.content);
+                    break;
+
+                case 'id':
+                    State.ws.id = message.data;
+                    // Create a cursor for self
+                    Editor.createCursor(State.ws.id, 'You', 'red');
+                    break;
+
+                case 'newClient':
+                    // Create a cursor for new client
+                    Editor.createCursor(message.data, 'OtherUser', 'orange');
+                    break;
+
+                case 'clientDisconnect':
+                    // Remove cursor when client disconnects
+                    if (message.data && message.data.id) {
+                        Editor.removeCursor(message.data.id);
+                    }
+                    break;
+
+                case 'cursorUpdate':
+                    Editor.updateCursorPosition(message.data.id, message.data.range);
+                    break;
+
+                case 'newVersion':
+                    VersionManager.createNewVersion();
+                    break;
+
+                default:
+                    console.warn('Unhandled message type:', message.type);
+            }
+        }
+    };
+</script>
