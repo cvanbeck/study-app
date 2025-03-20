@@ -49,14 +49,17 @@
                                 if (jsonPart === "[DONE]") return;
                                 if (jsonPart.trim().endsWith('"}')) {
                                     try {
-                                        const parsedData = JSON.parse(jsonPart);
+                                        // Ensure the JSON is properly formatted by replacing unescaped newlines
+                                        const sanitizedJsonPart = jsonPart.replace(/\n/g, "\\n").replace(/\r/g, "\\r");
+
+                                        const parsedData = JSON.parse(sanitizedJsonPart);
                                         if (parsedData.fullContent) {
                                             lastFullContent = parsedData.fullContent;
                                             renderFullResponse(lastFullContent, container, false);
                                             updateScroll();
                                         }
                                     } catch (e) {
-                                        console.error("Error parsing streamed data:", jsonPart);
+                                        console.error("Error parsing streamed data:", e, jsonPart);
                                     }
                                 }
                             }
