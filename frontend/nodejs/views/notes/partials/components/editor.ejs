@@ -1,0 +1,110 @@
+<script>
+    // -----------------------------
+    // Editor Setup
+    // -----------------------------
+    const Editor = {
+        init() {
+            // Initialize Quill editor and modules
+            Quill.register('modules/cursors', QuillCursors);
+            this.quill = new Quill('#editor', {
+                theme: 'snow',
+                modules: {
+                    cursors: { transformOnTextChange: true }
+                }
+            });
+            this.Delta = Quill.import('delta');
+            this.cursors = this.quill.getModule('cursors');
+            this.quill.disable();
+            this.setupEventListeners();
+        },
+
+        setupEventListeners() {
+            // Listen for text changes and broadcast updates
+            this.quill.on('text-change', (delta, oldDelta, source) => {
+                if (source === 'user') {
+                    State.changes.push(delta);
+                    // Send user inactivity signal after 10s
+                    Utils.timer('inactivity', WebSocketManager.sendInactivitySignal, 10000);
+                    // Delay sending changes to the server for batching
+                    Utils.timer('delay', () => {
+                        let combinedChanges = new this.Delta();
+                        State.changes.forEach(change => {
+                            combinedChanges = combinedChanges.compose(change);
+                        });
+                        try {
+                            const content = JSON.stringify(combinedChanges);
+                            API.updateNote(content, State.currentID);
+                            State.changes = [];
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }, 1000);
+                    // Send live update via WebSocket if connected
+                    WebSocketManager.sendUpdate(delta.ops);
+                }
+            });
+
+            // Listen for cursor/selection changes and broadcast position
+            this.quill.on('selection-change', (range, oldRange, source) => {
+                if (source === 'user' && State.ws?.id) {
+                    this.cursors.moveCursor(State.ws.id, range);
+                    this.cursors.update();
+                    WebSocketManager.sendCursorPosition(State.ws.id, range);
+                }
+            });
+        },
+
+        setContent(data) {
+            if (data.id && data.id.length > 0) {
+                State.currentID = data.id;
+            }
+            this.quill.deleteText(0, this.quill.getLength());
+            this.quill.setContents(JSON.parse(data.content));
+            this.quill.enable();
+        },
+
+        setPreviewContent(data) {
+            this.quill.deleteText(0, this.quill.getLength());
+            this.quill.setContents(JSON.parse(data.content));
+            this.quill.disable();
+        },
+
+        clearOtherUserCursors() {
+            this.cursors.cursors().forEach(cursor => {
+                // Don't remove our own cursor
+                if (State.ws && cursor.id !== State.ws.id) {
+                    this.cursors.removeCursor(cursor.id);
+                }
+            });
+        },
+
+        removeCursor(id) {
+            // Only remove if it exists and isn't ours
+            if (id && (!State.ws || id !== State.ws.id)) {
+                this.cursors.removeCursor(id);
+                console.log(`Removed cursor for user ${id}`);
+            }
+        },
+
+        updateContentFromWS(delta) {
+            try {
+                this.quill.updateContents(delta);
+                this.quill.update();
+            } catch (error) {
+                console.error('Error parsing message:', error);
+            }
+        },
+
+        createCursor(id, name, color) {
+            if (!this.cursors.cursors().some(cursor => cursor.id === id)) {
+                this.cursors.createCursor(id, name, color);
+            }
+        },
+
+        updateCursorPosition(id, range) {
+            this.createCursor(id, 'OtherUser', 'orange');
+            this.cursors.moveCursor(id, range);
+            this.cursors.update();
+        }
+    };
+</script>

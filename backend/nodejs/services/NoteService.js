@@ -103,7 +103,6 @@ export default class NoteService {
             return []; // Return an empty array if there is an error
         }
     }
-    
 
     // Inserts a new version control delta in the DB
     async newNoteVersion(id, content) {
