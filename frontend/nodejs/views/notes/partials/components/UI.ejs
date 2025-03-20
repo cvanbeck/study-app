@@ -1,0 +1,86 @@
+<script>
+    // -----------------------------
+    // UI Management
+    // -----------------------------
+    const UI = {
+        init() {
+            this.setupButtonHandlers();
+            this.initializeSession();
+        },
+
+        toggleSessionButton(enable) {
+            $('#sessionButton').prop('disabled', !!State.currentSession || !enable);
+        },
+
+        toggleEditorOverlay(hide) {
+            $('#editorOverlay').toggle(!hide);
+        },
+
+        updateSessionDisplay(sessionCode, active = true) {
+            $('#sessionCode')
+                .html(sessionCode)
+                .toggleClass('bg-secondary', !active)
+                .toggleClass('bg-primary', active);
+        },
+
+        showAlert(options) {
+            return Swal.fire(options);
+        },
+
+        showVersionAlert(title, preConfirmCallback) {
+            if (!State.currentID) {
+                return this.showAlert({
+                    icon: 'warning',
+                    title: 'No Note Selected',
+                    text: 'Please create or load a note first'
+                });
+            }
+
+            return this.showAlert({
+                title,
+                input: "text",
+                showCloseButton: true,
+                width: '600px',
+                preConfirm: preConfirmCallback
+            });
+        },
+
+        promptForID(title, callback) {
+            this.showAlert({
+                title,
+                input: "text",
+                showCloseButton: true,
+                width: '600px',
+                preConfirm: async (result) => {
+                    try {
+                        await callback(result);
+                    } catch (error) {
+                        Swal.showValidationMessage(error);
+                    }
+                }
+            });
+        },
+
+        setupButtonHandlers() {
+            // Duplicate overlay buttons
+            $('#newNoteOverlayButton').on('click', () => $('#newNoteButton').click());
+            $('#loadNoteOverlayButton').on('click', () => $('#existingNoteSweetAlertButton').click());
+
+            // Primary functionality buttons
+            $('#newNoteButton').on('click', NoteManager.createNewNote);
+            $('#existingNoteSweetAlertButton').on('click', NoteManager.promptLoadExistingNote);
+            $('#sessionButton').on('click', SessionManager.createSession);
+            $('#joinButton').on('click', SessionManager.promptJoinSession);
+            $('#versionControlAlertButton').on('click', VersionManager.promptViewVersion);
+            $('#currentNoteButton').on('click', VersionManager.returnToCurrentVersion);
+            $('#deleteAlertButton').on('click', VersionManager.promptDeleteVersion);
+        },
+
+        initializeSession() {
+            if (typeof State.currentSession === 'string') {
+                SessionManager.loadSessionNote();
+                this.updateSessionDisplay(State.currentSession);
+            }
+        }
+    };
+</script>

@@ -1,0 +1,13 @@
+<script>
+    // -----------------------------
+    // Utility Functions
+    // -----------------------------
+    const Utils = {
+        timer(label, func, duration) {
+            if (State.timers[label]) {
+                clearTimeout(State.timers[label]);
+            }
+            State.timers[label] = setTimeout(func, duration);
+        }
+    };
+</script>

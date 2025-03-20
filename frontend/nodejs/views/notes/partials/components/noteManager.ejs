@@ -1,0 +1,49 @@
+<script>
+    // -----------------------------
+    // Note Management
+    // -----------------------------
+    const NoteManager = {
+        async createNewNote() {
+            WebSocketManager.disconnect();
+            try {
+                const data = await API.generateNewNote();
+
+                // Reset session info for new note
+                State.currentSession = null;
+                UI.updateSessionDisplay("N/A", false);
+
+                // Remove session parameter from URL
+                const url = new URL(window.location);
+                url.searchParams.delete('session');
+                window.history.replaceState({}, document.title, url.toString());
+
+                Editor.setContent(data);
+                UI.toggleSessionButton(true);
+                UI.toggleEditorOverlay(true);
+            } catch (error) {
+                console.error('Error creating new note:', error);
+            }
+        },
+
+        promptLoadExistingNote() {
+            UI.promptForID('Enter Note ID', async (result) => {
+                const note = await API.getExistingNote(result);
+                Editor.setContent(note);
+                UI.toggleSessionButton(true);
+                UI.toggleEditorOverlay(true);
+            });
+        },
+
+        async loadExistingNote(noteId) {
+            try {
+                const note = await API.getExistingNote(noteId);
+                Editor.setContent(note);
+                UI.toggleSessionButton(true);
+                UI.toggleEditorOverlay(true);
+            } catch (error) {
+                console.error('Error loading note:', error);
+                throw error;
+            }
+        }
+    };
+</script>
