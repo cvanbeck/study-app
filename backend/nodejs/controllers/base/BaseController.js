@@ -22,4 +22,24 @@ export default class BaseController {
             throw new Error(`${this.constructor.name} must implement an index() method.`);
         }
     }
+
+    
+    /**
+     * Binds a controller method with navigation options.
+     * @param {string} methodName - The name of the method to bind.
+     * @param {object} navOptions - Navigation options.
+     *   {
+     *      overrideShowInNavbar: boolean, // if false, the method won't show in the navbar
+     *      priority: number,         // the priority for positioning (higher number first)
+     *      customNavText: string          // the text to display
+     *   }
+     */
+    bindNavMethod(methodName, navOptions = {}) {
+        if (typeof this[methodName] !== "function") {
+            throw new Error(`${this.constructor.name} does not have a method named ${methodName}`);
+        }
+        this[methodName] = this[methodName].bind(this);
+        this[methodName].navOptions = navOptions;
+    }
+
 }
