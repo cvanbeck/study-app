@@ -2,6 +2,7 @@ import BaseController from "./base/BaseController.js";
 import Note from '../models/Note.js';
 import NoteService from "../services/NoteService.js";
 import SessionService from "../services/SessionService.js";
+import Delta from 'quill-delta';
 
 export default class NotesController extends BaseController{
     constructor(appData) {
@@ -33,7 +34,6 @@ export default class NotesController extends BaseController{
             // Fetch the note from the database
             const note = await this.noteService.getNote(id);
             if (note) {
-                
                 res.send(note);
             } else {
                 res.status(404).send("Note not found.");
@@ -96,5 +96,15 @@ export default class NotesController extends BaseController{
         return res.render("notesAI", { ...this.appData});
     }
 
+    async newNoteVersion(req, res) {
+
+        const noteID = req.query.id;
+        try {
+            await this.noteService.newNoteVersion(noteID);
+        } catch (error) {
+            console.error('Error fetching note or updating pad:', error);
+            res.status(500).send("Internal server error");
+        }
+    }
 
 }
