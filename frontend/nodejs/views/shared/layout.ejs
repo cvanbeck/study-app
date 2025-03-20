@@ -35,91 +35,106 @@
 </head>
 
 <body>
-<!-- Updated Bootstrap Navbar with dynamic dropdowns and Home first -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-  <div class="container-fluid">
-      <a class="navbar-brand" href="/"><%= appName %></a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-          aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              <% if (navLinks && navLinks.includes('/')) { %>
-                  <li class="nav-item">
-                      <a class="nav-link" href="/">Home</a>
-                  </li>
-              <% } %>
-              <% 
-                  // Group remaining routes by the first segment
-                  let groups = {};
-                  if (navLinks && navLinks.length) {
-                      navLinks.forEach(link => {
-                          if (link === '/') return; // Home already rendered
-                          let segments = link.split('/').filter(Boolean);
-                          let mainKey = '/' + segments[0];
-                          groups[mainKey] = groups[mainKey] || [];
-                          groups[mainKey].push(link);
-                      });
-                  }
-                  Object.keys(groups).forEach(function(key) {
-                      let items = groups[key];
-                      if (items.length === 1) { %>
-                          <li class="nav-item">
-                              <a class="nav-link" href="<%= key %>">
-                                  <%= key.substring(1).charAt(0).toUpperCase() + key.substring(1).slice(1) %>
-                              </a>
-                          </li>
-                      <% } else { 
-                          let hasMain = items.includes(key); %>
-                          <li class="nav-item dropdown">
-                              <a class="nav-link dropdown-toggle" href="<%= hasMain ? key : '#' %>" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                  <%= key.substring(1).charAt(0).toUpperCase() + key.substring(1).slice(1) %>
-                              </a>
-                              <ul class="dropdown-menu">
-                                  <% if (hasMain) { %>
-                                      <li><a class="dropdown-item" href="<%= key %>">Overview</a></li>
-                                  <% } %>
-                                  <% items.forEach(function(item) {
-                                      if (item === key) return;
-                                      let subLabel = item.replace(key + '/', '');
-                                  %>
-                                      <li><a class="dropdown-item" href="<%= item %>">
-                                          <%= subLabel.charAt(0).toUpperCase() + subLabel.slice(1) %>
-                                      </a></li>
-                                  <% }); %>
-                              </ul>
-                          </li>
-                      <% }
-                  });
-              %>
-          </ul>
-      </div>
-  </div>
-</nav>
-
+    <!-- Updated Bootstrap Navbar with dynamic dropdowns and Home first -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/"><%= appName %></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <% if (navLinks && navLinks.includes('/')) { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                    <% } %>
+                    <% 
+                        // Group remaining routes by the first segment
+                        let groups = {};
+                        if (navLinks && navLinks.length) {
+                            navLinks.forEach(link => {
+                                if (link === '/') return; // Home already rendered
+                                let segments = link.split('/').filter(Boolean);
+                                let mainKey = '/' + segments[0];
+                                groups[mainKey] = groups[mainKey] || [];
+                                groups[mainKey].push(link);
+                            });
+                        }
+                        Object.keys(groups).forEach(function(key) {
+                            let items = groups[key];
+                            if (items.length === 1) { %>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<%= key %>">
+                                        <%= key.substring(1).charAt(0).toUpperCase() + key.substring(1).slice(1) %>
+                                    </a>
+                                </li>
+                            <% } else { 
+                                let hasMain = items.includes(key); %>
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="<%= hasMain ? key : '#' %>" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <%= key.substring(1).charAt(0).toUpperCase() + key.substring(1).slice(1) %>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <% if (hasMain) { %>
+                                            <li><a class="dropdown-item" href="<%= key %>">Overview</a></li>
+                                        <% } %>
+                                        <% items.forEach(function(item) {
+                                            if (item === key) return;
+                                            let subLabel = item.replace(key + '/', '');
+                                        %>
+                                            <li><a class="dropdown-item" href="<%= item %>">
+                                                <%= subLabel.charAt(0).toUpperCase() + subLabel.slice(1) %>
+                                            </a></li>
+                                        <% }); %>
+                                    </ul>
+                                </li>
+                            <% }
+                        });
+                    %>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
     <!-- Main page content -->
     <div class="container mt-4 pb-4">
         <%- body %>
     </div>
 
+    <!-- 
+    -  Scripts that run on every page
+    -  > appendToHeading(): Allows adding any text to the document <title> 
+    -->
+    <script>
+
+        /*
+        * Can be ran from any .html page that is including this layout.
+        * Allows updating the <title> of the current webpage to add any custom text on the end.
+        */
+        function appendToHeading(heading) {
+            document.title = `${document.title} | ${heading}`;
+        }
+
+    </script>
+
     <!-- Optional page-specific scripts -->
     <% if (typeof scripts !=='undefined' ) { %>
         <%- scripts %>
-            <% } %>
+    <% } %>
 
-                <!-- Script to highlight active nav-link -->
-                <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                        var currentPath = window.location.pathname;
-                        document.querySelectorAll('.navbar-nav a').forEach(link => {
-                            if (link.getAttribute('href') === currentPath) {
-                                link.classList.add('active');
-                            }
-                        });
-                    });
-                </script>
+    <!-- Script to highlight active nav-link -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var currentPath = window.location.pathname;
+            document.querySelectorAll('.navbar-nav a').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
