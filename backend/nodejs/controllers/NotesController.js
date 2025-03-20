@@ -3,12 +3,15 @@ import Note from '../models/Note.js';
 import NoteService from "../services/NoteService.js";
 import SessionService from "../services/SessionService.js";
 import Delta from 'quill-delta';
+import NavOptions from "../models/NavOptions.js";
 
-export default class NotesController extends BaseController{
+export default class NotesController extends BaseController {
     constructor(appData) {
         super(appData);
         this.noteService = new NoteService(appData.db);
         this.sessionService = new SessionService(appData.db);
+
+        this.bindNavMethod("notesAI", new NavOptions({ overrideShowInNavbar: true, priority: 0, customNavText: "Notes With AI" }));
     }
 
     async index(req, res) {
