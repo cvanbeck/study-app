@@ -98,13 +98,17 @@ function isControllerAClass(ControllerClass) {
 function processRouteMapping(app, controllerName, methodName, methodFn, typeLabel) {
   const route = getRoute(controllerName, methodName);
   const methodString = methodFn.toString();
-  const hasRenderCall = methodString.includes('res.render') && !methodString.includes('res.renderPartial');
-  const returnsObject = methodString.includes('return {');
+
+  // Regex to check for res.render return calls in the method (excluding res.renderPartial)
+  const shouldAddToNav = /res\.render(?!Partial)|return\s+{/.test(methodString);
+
   console.log(`> Mapping route: ${route} -> ${controllerName}/${methodName} (${typeLabel})`);
-  if ((hasRenderCall || returnsObject) && !app.locals.navLinks.includes(route)) {
+
+  if (shouldAddToNav && !app.locals.navLinks.includes(route)) {
     app.locals.navLinks.push(route);
     console.log(`  > Added to navLinks: ${route}`);
   }
+
   return route;
 }
 
