@@ -19,7 +19,7 @@ export default class NotesController extends BaseController{
     // Generates a note item and calls storeNote in notesservice 
     async generateNote(req, res) {
         const note = new Note({
-            
+
         });
         this.noteService.storeNote(note);
         console.log(note.id);
