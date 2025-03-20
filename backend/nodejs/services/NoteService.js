@@ -80,11 +80,11 @@ export default class NoteService {
     async getDeltas(id, maxVersion) {
         try {
             let queryString = "SELECT * FROM NoteVersionControl WHERE NoteID = ?";
-            if(maxVersion) {
+            if (maxVersion) {
                 queryString = queryString.concat(" AND Version <= ?");
             }
             const result = await this.dbContext.query(queryString, [id, maxVersion]);
-
+    
             if (result && result.length > 0) {
                 const deltas = result.map(row => {
                     // Convert all keys to lowercase
@@ -96,15 +96,14 @@ export default class NoteService {
                 return deltas;
             } else {
                 console.log(`Note with id ${id} not found`);
-                return null; // Return null if the note is not found
+                return [];  // Return an empty array if the note is not found
             }
-
-            
         } catch (error) {
             console.error('Error querying Notes table:', error);
-            return null; // Return null if there is an error
+            return []; // Return an empty array if there is an error
         }
     }
+    
 
     // Inserts a new version control delta in the DB
     async newNoteVersion(id, content) {
