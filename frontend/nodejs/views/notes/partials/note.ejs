@@ -1,375 +1,411 @@
-    <!-- Reequired script & stylesheet for Quill UI -->
-<head>
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script> 
-    <script src="https://cdn.jsdelivr.net/npm/quill-cursors@4.0.4/dist/quill-cursors.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
-</head>
+<script>
+    let timers = {};
+    let changes = [];
+    let currentVersion;
+    let currentID = null;
 
-    <script>
-        let timers = {};
-        let changes = [];
-        let currentVersion; 
+    // Register a module to Quill
+    Quill.register('modules/cursors', QuillCursors);
 
-         // Register a module to Quill
-         Quill.register('modules/cursors', QuillCursors);
-
-        // Quill object for API calls
-        const quill = new Quill('#editor', {
-            theme: 'snow',
-            modules: {
-                cursors: {
-                    transformOnTextChange: true,
-                },
-            }
-        });
-        
-        const Delta = Quill.import('delta');
-        const cursors = quill.getModule('cursors');
-        quill.disable();
-
-        let currentSession = new URLSearchParams(window.location.search).get('session'); // gets sessionCode from url parameters
-
-        if(typeof currentSession === 'string') {
-            getSessionNote();
-            $('#sessionCode').html(currentSession); // appends to HTML
+    // Quill object for API calls
+    const quill = new Quill('#editor', {
+        theme: 'snow',
+        modules: {
+            cursors: {
+                transformOnTextChange: true,
+            },
         }
+    });
 
-        let ws = ''; // Empty Websocket Object
+    const Delta = Quill.import('delta');
+    const cursors = quill.getModule('cursors');
+    quill.disable();
 
-        // Sends changes to the websocket server & controller
-        quill.on('text-change', (delta, oldDelta, source) => {
-            if(source == 'user') {
-                changes.push(delta);
-                timer('inactivity', inactivity, 10000);
-                timer('delay', function() {
-                    let combinedChanges = new Delta();
-                    for(var i = 0; i < changes.length; i++) {
-                        combinedChanges = combinedChanges.compose(changes[i]);
-                    }
-                    try {
+    let currentSession = new URLSearchParams(window.location.search).get('session'); // gets sessionCode from url parameters
+
+    if (typeof currentSession === 'string') {
+        getSessionNote();
+        $('#sessionCode').html(currentSession); // appends to HTML
+    }
+
+    let ws = ''; // Empty Websocket Object
+
+    // Enable "Create Collab Session" button only when a note is loaded
+    function toggleSessionButton(enable) {
+        $('#sessionButton').prop('disabled', !enable);
+    }
+
+    // Hide the overlay when a note is active
+    function toggleEditorOverlay(hide) {
+        if (hide) {
+            $('#editorOverlay').hide();
+        } else {
+            $('#editorOverlay').show();
+        }
+    }
+
+    // Sends changes to the websocket server & controller
+    quill.on('text-change', (delta, oldDelta, source) => {
+        if (source == 'user') {
+            changes.push(delta);
+            timer('inactivity', inactivity, 10000);
+            timer('delay', function () {
+                let combinedChanges = new Delta();
+                for (var i = 0; i < changes.length; i++) {
+                    combinedChanges = combinedChanges.compose(changes[i]);
+                }
+                try {
                     const content = JSON.stringify(combinedChanges);
                     fetch('/notes/updateNote', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ content , id: currentID }) // Sends request to update note in db to controller
+                        body: JSON.stringify({ content, id: currentID }) // Sends request to update note in db to controller
                     });
                     changes = [];
-                    } catch (error) {
-                        console.error(error);
-                    }
-
-
-                }, 1000);
-                if(ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: "sync", content: delta.ops })); // sends updated note contents to websocket server
+                } catch (error) {
+                    console.error(error);
                 }
+            }, 1000);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "sync", content: delta.ops })); // sends updated note contents to websocket server
+            }
+        }
+    });
 
+    // Updates view with other users cursor movements
+    quill.on('selection-change', (range, oldRange, source) => {
+        if (source == 'user') {
+            cursors.moveCursor(ws.id, range);
+            cursors.update();
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(sendMessage('cursorSync', { id: ws.id, range: range }));
+            }
+        }
+    })
+
+    //BUTTONS
+
+    // Duplicate button actions for overlay buttons
+    $('#newNoteOverlayButton').on('click', function () {
+        $('#newNoteButton').click();
+    });
+
+    $('#loadNoteOverlayButton').on('click', function () {
+        $('#existingNoteSweetAlertButton').click();
+    });
+
+    // Generates a collab session code and stores in DB
+    $('#sessionButton').on('click', function () {
+        if (typeof currentSession !== 'string') { // Creates session if a session doesn't already exist
+            $.ajax({
+                url: `/notes/generateSession?id=${encodeURIComponent(currentID)}`,
+                method: 'GET',
+                dataType: 'text',
+                success: function (data) {
+                    $('#sessionCode').html(data);
+                    $('#sessionCode').removeClass('bg-secondary').addClass('bg-primary');
+                    currentSession = data; // Stores session Code
+                    window.history.pushState("", "", window.location.pathname + `?session=${data}`);
+                    connectWebSocket();
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(sendMessage('newSession', data)); // Sends to wss
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching AJAX content:', status, error);
+                }
+            });
+        }
+    });
+
+    // Helper function for sending messages to the websocket server
+    function sendMessage(messagetype, messagedata) {
+        return JSON.stringify({ type: messagetype, data: messagedata });
+    }
+
+    // Generates a new note and places note AJAX onto view
+    $('#newNoteButton').on('click', function () {
+        $.ajax({
+            url: '/notes/generateNote',
+            method: 'GET',
+            dataType: 'JSON',
+            success: function (data) {
+                setupNote(data);
+                toggleSessionButton(true);
+                toggleEditorOverlay(true);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error fetching AJAX content:', status, error);
             }
         });
+    });
 
-        // Updates view with other users cursor movements
-        quill.on('selection-change', (range, oldRange, source) => {
-            if(source == 'user') {
-                cursors.moveCursor(ws.id, range);
-                cursors.update();
-
-                if(ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(sendMessage('cursorSync', { id: ws.id, range: range }));
+    // Triggers a popup form for inputting a note ID
+    $('#existingNoteSweetAlertButton').on('click', function () {
+        Swal.fire({
+            title: 'Enter Note ID',
+            input: "text",
+            showCloseButton: true,
+            width: '600px', // Customize the size
+            preConfirm: async (result) => {
+                try {
+                    await fetch('/notes/getExistingNote', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ result })
+                    }).then(response => response.json()).then(note => {
+                        setupNote(note);
+                        toggleSessionButton(true);
+                        toggleEditorOverlay(true);
+                    });
+                } catch (error) {
+                    Swal.showValidationMessage(error);
                 }
             }
-        })
+        });
+    });
 
-        //BUTTONS
-
-        // Generates a collab session code and stores in DB
-        $('#sessionButton').on('click', function() {
-            if(typeof currentSession !== 'string') { // Creates session if a session doesn't already exist
-                $.ajax({
-                    url: `/notes/generateSession?id=${encodeURIComponent(currentID)}`,
-                    method: 'GET',
-                    dataType: 'text',
-                    success: function(data) {
-                        $('#sessionCode').html(data);
-                        currentSession = data; // Stores session Code
-                        window.history.pushState("", "", window.location.pathname+`?session=${data}`);
-                        connectWebSocket();
-                        if(ws && ws.readyState === WebSocket.OPEN) {
-                            ws.send(sendMessage('newSession', data)); // Sends to wss
+    // Enters a collaborative session on successful code input
+    $('#joinButton').on('click', function () {
+        Swal.fire({
+            title: 'Enter Session Code',
+            input: "text",
+            showCloseButton: true,
+            width: '600px',
+            preConfirm: async (result) => {
+                try {
+                    await fetch('/notes/joinSession', { // Call for fetching note from DB
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ result })
+                    }).then(response => response.json()).then(data => { // Result is converted to JSON
+                        if (data.page !== window.location.pathname) { // Checks if the current page is the same as page stored in db
+                            window.location.assign(data.page + `?session=${result}`); // Redirects to the correct page for the session type
+                        } else {
+                            setupNote(data.note);
+                            window.history.pushState("", "", window.location.pathname + `?session=${result}`); // Applies the session code onto the URL & adds page onto browser history
+                            currentSession = result;
+                            $('#sessionCode').html(currentSession);
+                            $('#sessionCode').removeClass('bg-secondary').addClass('bg-primary');
+                            connectWebSocket();
+                            toggleSessionButton(true);
+                            toggleEditorOverlay(true);
                         }
-                        
+                    });
+                } catch (error) {
+                    Swal.showValidationMessage(error);
+                }
+            }
+        });
+    });
+
+    // Loads note contents into Quill editor
+    function setupNote(data) {
+        if (data.id && data.id.length > 0) {
+            currentID = data.id;
+        }
+        quill.deleteText(0, quill.getLength());
+        quill.setContents(JSON.parse(data.content));
+        quill.enable();
+    }
+
+    // Loads note preview into editor
+    function setupPreview(data) {
+        quill.deleteText(0, quill.getLength());
+        quill.setContents(JSON.parse(data.content));
+        quill.disable();
+    }
+
+    // Connects to the websockets
+    function connectWebSocket() {
+        if (!ws) {
+            ws = new WebSocket('ws://localhost:8001'); // Websocket Object
+
+            ws.addEventListener('open', () => {
+                console.log("Successfully Connected");
+                ws.send(JSON.stringify({ type: "init", content: currentID, session: currentSession })); // Sends note ID to websocket server on first connection
+            });
+
+            // Updates view based on message type recieved from wss
+            ws.addEventListener('message', (event) => {
+                const message = JSON.parse(event.data);
+                if (message.type === 'update') { // updates note with contents from another ws client
+                    try {
+                        quill.updateContents(message.data);  // Sync editor view with other websocket connections
+                        quill.update();
+                    } catch (error) {
+                        console.error('Error parsing message:', error);
+                    }
+                } else if (message.type === 'id') {
+                    ws.id = message.data; // stores the ID defined by the wss
+                    const cursor = cursors.createCursor(ws.id, 'You', 'red'); // creates this users cursor
+                } else if (message.type === 'newClient') { // Adds a new cursor when new ws client connects
+                    cursors.createCursor(message.data, 'OtherUser', 'orange');
+                } else if (message.type === 'cursorUpdate') { // Updates page from cursor movements from other ws clients
+                    if (!cursors.cursors().some(cursor => cursor.id === message.data.id)) { // Adds cursor if the client doesnt exist in the cursor list
+                        cursors.createCursor(message.data.id, 'OtherUser', 'orange');
+                    }
+                    cursors.moveCursor(message.data.id, message.data.range);
+                    cursors.update();
+                } else if (message.type === 'newVersion') {
+                    versionControl();
+                }
+            });
+        }
+    }
+
+    async function getSessionNote() {
+        try {
+            await fetch('/notes/joinSession', { // Call for fetching note from DB
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ result: currentSession })
+            }).then(response => response.json()).then(data => { // Result is converted to string
+                if (data.page !== window.location.pathname) {
+                    window.location.assign(data.page + `?session=${currentSession}`);
+                } else {
+                    setupNote(data.note);
+                    connectWebSocket();
+                }
+
+                // Ensure these are always executed
+                toggleSessionButton(true);
+                toggleEditorOverlay(true);
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // Sets the client to idle if they are inactive for x amount of time
+    function timer(label, func, duration) {
+        if (timers[label]) {
+            clearTimeout(timers[label]); // Removes timer if it already exists
+        }
+        // Sets a new timer
+        timers[label] = setTimeout(func, duration);
+    }
+
+    // Timeout function for user inactivity
+    async function inactivity() {
+        if (ws) {
+            // ws code
+            ws.send(sendMessage('inactivity')); // Lets server know client is inactive
+        } else {
+            // direct to server code for when there's no session
+            versionControl();
+        }
+    }
+
+    // Sends request for a new delta version control iteration
+    async function versionControl() {
+        $.ajax({
+            url: '/notes/newNoteVersion',
+            method: 'GET',
+            dataType: 'text',
+            data: { id: currentID },
+            success: function () {
+                // Success handling
+            },
+            error: function (xhr, status, error) {
+                console.error('Error fetching AJAX content:', status, error);
+            }
+        });
+    }
+
+    $('#versionControlAlertButton').on('click', function () {
+        if (!currentID) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Note Selected',
+                text: 'Please create or load a note first'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Enter Note Version',
+            input: "text",
+            showCloseButton: true,
+            width: '600px', // Customize the size
+            preConfirm: async (result) => {
+                $.ajax({
+                    url: '/notes/getNoteVersion',
+                    method: 'GET',
+                    dataType: 'JSON',
+                    data: { id: currentID, version: result },
+                    success: function (result) {
+                        currentVersion = quill.getContents();
+                        setupPreview(result);
                     },
-                    error: function(xhr, status, error) {
+                    error: function (xhr, status, error) {
                         console.error('Error fetching AJAX content:', status, error);
                     }
                 });
-                
             }
         });
+    });
 
-        // Helper function for sending messages to the websocket server
-        function sendMessage(messagetype, messagedata) {
-
-            return JSON.stringify({ type: messagetype, data: messagedata });
-
-        }
-
-        // Generates a new note and places note AJAX onto view
-        $('#newNoteButton').on('click', function() {
-            $.ajax({
-                url: '/notes/generateNote',
-                method: 'GET',
-                dataType: 'JSON', 
-                success: function(data) {
-                    setupNote(data);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching AJAX content:', status, error);
-                }
-            });
-        });
-
-        // Triggers a popup form for inputting a note ID
-        $('#existingNoteSweetAlertButton').on('click', function() {
+    $('#currentNoteButton').on('click', function () {
+        if (!currentID) {
             Swal.fire({
-                title: 'Enter Note ID',
-                input: "text",
-                showCloseButton: true,
-                width: '600px', // Customize the size
-                preConfirm: async (result) => {
-                    try {
-                        await fetch('/notes/getExistingNote', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ result })
-                        }).then(response => response.json()).then(note =>{
-                            setupNote(note);
-                        });
-                    } catch (error) {
-                        Swal.showValidationMessage(
-                        error
-                        );
-                    }
-                }
+                icon: 'warning',
+                title: 'No Note Selected',
+                text: 'Please create or load a note first'
             });
+            return;
+        }
 
-        });
-
-        // Enters a collaborative session on successful code input
-        $('#joinButton').on('click', function() {
+        if (currentVersion) {
+            setupNote({ content: JSON.stringify(currentVersion), id: currentID });
+        } else {
             Swal.fire({
-                title: 'Enter Session Code',
-                input: "text",
-                showCloseButton: true,
-                width: '600px',
-                preConfirm: async (result) => {
-                    try {
-                        await fetch('/notes/joinSession', { // Call for fetching note from DB
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ result })
-                        }).then(response => response.json()).then(data =>{ // Result is converted to JSON
-                            if(data.page !== window.location.pathname) { // Checks if the current page is the same as page stored in db
-                                window.location.assign(data.page + `?session=${result}`); // Redirects to the correct page for the session type
-
-                            } else {
-                                setupNote(data.note);
-                                window.history.pushState("", "", window.location.pathname+`?session=${result}`); // Applies the session code onto the URL & adds page onto browser history
-                                currentSession = result;
-                                $('#sessionCode').html(currentSession);
-                                connectWebSocket();
-                            }
-                        });
-                    } catch (error) {
-                        Swal.showValidationMessage(
-                        error
-                        );
-                    }
-                }
+                icon: 'info',
+                title: 'Current Version',
+                text: 'Already viewing the current version'
             });
+        }
+    });
 
-        });
-
-        // Loads note contents into Quill editor
-        function setupNote(data) {
-            if(data.id && data.id.length > 0) {
-                currentID = data.id;
-            }
-            quill.deleteText(0, quill.getLength());
-            quill.setContents(JSON.parse(data.content));
-            quill.enable();
+    $('#deleteAlertButton').on('click', function () {
+        if (!currentID) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Note Selected',
+                text: 'Please create or load a note first'
+            });
+            return;
         }
 
-        // Loads note preview into editor
-        function setupPreview(data) {
-            quill.deleteText(0, quill.getLength());
-            quill.setContents(JSON.parse(data.content));
-            quill.disable();
-        }
-
-        // Connects to the websockets
-        function connectWebSocket() {
-            if(!ws) {
-                ws = new WebSocket('ws://localhost:8001'); // Websocket Object
-
-                ws.addEventListener('open', () => {
-                    console.log("Successfully Connected");
-                    ws.send(JSON.stringify({type: "init", content: currentID, session: currentSession})); // Sends note ID to websocket server on first connection
-                });
-
-                // Updates view based on message type recieved from wss
-                ws.addEventListener('message', (event) => {
-                    const message = JSON.parse(event.data);
-                    if (message.type === 'update') { // updates note with contents from another ws client
-                        try {
-                            quill.updateContents(message.data);  // Sync editor view with other websocket connections
-                            quill.update();
-                        } catch (error){
-                            console.error('Error parsing message:', error);
-                        }
-                    } else if (message.type === 'id') {  
-                        ws.id = message.data; // stores the ID defined by the wss
-                        const cursor = cursors.createCursor(ws.id, 'You', 'red'); // creates this users cursor
-                    } else if (message.type === 'newClient') { // Adds a new cursor when new ws client connects
-                        cursors.createCursor(message.data, 'OtherUser', 'orange');
-                    } else if (message.type === 'cursorUpdate') { // Updates page from cursor movements from other ws clients
-                        if (!cursors.cursors().some(cursor => cursor.id === message.data.id)) { // Adds cursor if the client doesnt exist in the cursor list
-                            cursors.createCursor(message.data.id, 'OtherUser', 'orange');
-                        }
-                        cursors.moveCursor(message.data.id, message.data.range);
-                        cursors.update();
-                    } else if (message.type === 'newVersion') { 
-                        versionControl();
-                        
-                    }
-
-                });
-            }
-        }
-
-        async function getSessionNote() {
-            try {
-                await fetch('/notes/joinSession', { // Call for fetching note from DB
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
+        Swal.fire({
+            title: 'Enter Version to delete',
+            input: "text",
+            showCloseButton: true,
+            width: '600px', // Customize the size
+            preConfirm: async (result) => {
+                $.ajax({
+                    url: '/notes/deleteVersion',
+                    method: 'GET',
+                    dataType: 'JSON',
+                    data: { id: currentID, version: result },
+                    success: function (result) {
+                        console.log(result);
+                        setupNote(result);
                     },
-                    body: JSON.stringify({ result: currentSession })
-                }).then(response => response.json()).then(data =>{ // Result is converted to string
-
-                    if(data.page !== window.location.pathname) {
-                        window.location.assign(data.page + `?session=${currentSession}`);
-                    } else {
-                        setupNote(data.note);
-                        connectWebSocket();
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching AJAX content:', status, error);
                     }
                 });
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        // Sets the client to idle if they are inactive for x amount of time
-        function timer(label, func, duration) {
-            if (timers[label]) {
-                clearTimeout(timers[label]); // Removes timer if it already exists
-            }
-
-            // Sets a new timer
-            timers[label] = setTimeout(func, duration);
-            
-        }
-
-        // Timeout function for user inactivity
-        async function inactivity() {
-            if (ws) {
-                // ws code
-                ws.send(sendMessage('inactivity')); // Lets server know client is inactive
-            } else {
-             // direct to server code for when there's no session
-             versionControl();
-
-            }
-        }
-
-        // Sends request for a new delta version control iteration
-        async function versionControl() {
-            $.ajax({
-                url: '/notes/newNoteVersion',
-                method: 'GET',
-                dataType: 'text',
-                data: { id: currentID }, 
-                success: function() {
-                            
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error fetching AJAX content:', status, error);
-                }
-            });
-        }
-
-        $('#versionControlAlertButton').on('click', function() {
-            Swal.fire({
-                title: 'Enter Note Version',
-                input: "text",
-                showCloseButton: true,
-                width: '600px', // Customize the size
-                preConfirm: async (result) => {
-                    $.ajax({
-                        url: '/notes/getNoteVersion',
-                        method: 'GET',
-                        dataType: 'JSON',
-                        data: { id: currentID, version: result}, 
-                        success: function(result) {
-                            currentVersion = quill.getContents();
-                            setupPreview(result);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error fetching AJAX content:', status, error);
-                        }
-                    });
-                }
-            });
-
-        });
-
-        $('#currentNoteButton').on('click', function() {
-            if(currentVersion) {
-                setupNote({ content: JSON.stringify(currentVersion), id: currentID });
             }
         });
-
-        $('#deleteAlertButton').on('click', function() {
-            Swal.fire({
-                title: 'Enter Version to delete',
-                input: "text",
-                showCloseButton: true,
-                width: '600px', // Customize the size
-                preConfirm: async (result) => {
-                    $.ajax({
-                        url: '/notes/deleteVersion',
-                        method: 'GET',
-                        dataType: 'JSON',
-                        data: { id: currentID, version: result}, 
-                        success: function(result) {
-                            console.log(result);
-                            setupNote(result);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error fetching AJAX content:', status, error);
-                        }
-                    });
-                }
-            });
-        });
-
-
-        
-        
-
-    </script>
+    });
+</script>
