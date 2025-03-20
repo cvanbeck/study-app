@@ -1,0 +1,32 @@
+<% if (homeLink) { %>
+    <li class="nav-item">
+        <a class="nav-link" href="<%= homeLink.route %>"><%= homeLink.navText %></a>
+    </li>
+<% } %>
+
+<% Object.entries(groupedLinks).forEach(([base, items]) => {
+    if (items.length === 1) { %>
+        <li class="nav-item">
+            <a class="nav-link" href="<%= items[0].route %>"><%= items[0].navText %></a>
+        </li>
+    <% } else { 
+        const main = items.find(item => item.route === base);
+        const title = main ? main.navText : base.slice(1).replace(/^\w/, c => c.toUpperCase()); %>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="<%= main ? base : '#' %>" data-bs-toggle="dropdown">
+                <%= title %>
+            </a>
+            <ul class="dropdown-menu">
+                <% let firstItem = true; %>
+                <% items.forEach(item => { %>
+                    <li>
+                        <a class="dropdown-item" href="<%= item.route %>">
+                            <%= firstItem ? "Index" : item.navText %>
+                        </a>
+                    </li>
+                    <% firstItem = false; %>
+                <% }); %>
+            </ul>
+        </li>
+    <% }
+}); %>

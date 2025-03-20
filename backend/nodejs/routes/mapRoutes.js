@@ -104,17 +104,40 @@ function processRouteMapping(app, controllerName, methodName, methodFn, typeLabe
   const route = getRoute(controllerName, methodName);
   const methodString = methodFn.toString();
 
+  const navOptions = methodFn.navOptions || {};
+  const showInNavbar = navOptions.overrideShowInNavbar !== false;
+  const navText = navOptions.customNavText ||
+                  (methodName === 'index'
+                    ? controllerName === 'home' ? 'Home' : capitalizeFirstLetter(controllerName)
+                    : methodName);
+  const priority = navOptions.priority || 0;
+  
   // Regex to check for res.render return calls in the method (excluding res.renderPartial)
-  const shouldAddToNav = /res\.render(?!Partial)|return\s+{/.test(methodString);
+  const isViewRoute = /res\.render(?!Partial)|return\s+{/.test(methodString);
+  
+  // Logic for whether the item should show in the navbar. Can be overriden by the MethodOptions if bound.
+  const forceAdd = navOptions.overrideShowInNavbar === true;
+  const shouldAddToNav = (isViewRoute || forceAdd) && showInNavbar;
 
   console.log(`> Mapping route: ${route} -> ${controllerName}/${methodName} (${typeLabel})`);
 
-  if (shouldAddToNav && !app.locals.navLinks.includes(route)) {
-    app.locals.navLinks.push(route);
-    console.log(`  > Added to navLinks: ${route}`);
+  if (shouldAddToNav) {
+    if (!app.locals.navLinks.some(link => link.route === route)) {
+      app.locals.navLinks.push({ route, navText, priority });
+      console.log(`  > Added to navLinks: ${route} with text "${navText}" and [PRIORITY ${priority}]`);
+    }
   }
 
   return route;
+}
+
+/**
+ * Returns the passed in string with the first letter capitalized.
+ * @param {*} string The text to modify.
+ * @returns The passed text with the first letter capitalized.
+ */
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 /**

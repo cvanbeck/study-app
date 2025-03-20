@@ -1,5 +1,6 @@
 import BaseController from "./base/BaseController.js";
 import ExampleItem from "../models/exampleItem.js";
+import NavOptions from "../models/NavOptions.js";
 
 export default class ExampleController extends BaseController {
     // REQUIRED FOR ALL CONTROLLERS
@@ -8,6 +9,9 @@ export default class ExampleController extends BaseController {
         
         // Access the database context from the shared appData object
         this.db = appData.db; // OPTIONAL
+
+        // Bind the index method with extended navigation options
+        this.bindNavMethod("example", new NavOptions({ overrideShowInNavbar: true, priority: 0, customNavText: "Custom Text Item" }));
     }
 
     // REQUIRED FOR ALL CONTROLLERS
@@ -63,5 +67,4 @@ export default class ExampleController extends BaseController {
         // Render the partial view
         return res.renderPartial("partials/ajaxTest", { ...this.appData, message: "This content is loaded in a Bootbox modal!", item });
     }
-
 }
