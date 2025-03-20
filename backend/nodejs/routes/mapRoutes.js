@@ -150,7 +150,7 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
       // Enhance res.render to prepend the controller name if necessary
       const originalRender = res.render;
       res.render = function(viewPath, options) {
-        if (shouldPrependControllerToPath(viewPath)) {
+        if (shouldPrependControllerToPath(viewPath, controllerName)) {
           viewPath = `${controllerName}/${viewPath}`;
         }
         return originalRender.call(res, viewPath, options);
@@ -185,8 +185,9 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
  * the controller name is prepended to ensure the correct subfolder is used.
  *
  * @param {string} viewPath - The view path provided in res.render.
+ * @param {string} controllerName - The name of the controller.
  * @returns {boolean} True if the controller name should be prepended, false otherwise.
  */
-function shouldPrependControllerToPath(viewPath) {
+function shouldPrependControllerToPath(viewPath, controllerName) {
   return !/^\/|:|errors\//.test(viewPath) && !viewPath.startsWith(`${controllerName}/`);
 }
