@@ -142,36 +142,22 @@ function getRoute(controllerName, methodName) {
 function setupRouteHandler(router, route, controllerName, methodName, methodFn, appData) {
   router.all(route, async (req, res, next) => {
     try {
-      // Create a wrapper for res.render that automatically adds the controller folder to the view path
+      // Enhance res.render to prepend the controller name if necessary
       const originalRender = res.render;
       res.render = function(view, options) {
-        // Only prepend the controller name if the view doesn't already specify a complete path
-        if (!view.startsWith('/') && !view.includes(':') && !view.startsWith('errors/')) {
-          // If view doesn't include a slash, assume it's directly in the controller folder
-          if (!view.includes('/')) {
-            view = `${controllerName}/${view}`;
-          }
-          // If the view already has slashes but doesn't start with the controller name,
-          // prepend the controller name to ensure we're looking in the right subfolder 
-          else if (!view.startsWith(`${controllerName}/`)) {
-            view = `${controllerName}/${view}`;
-          }
-          // Otherwise, the view already specifies a path within the controller directory
+        if (shouldPrependControllerToPath(view)) {
+          view = `${controllerName}/${view}`;
         }
-        
-        // Call the original render with the potentially modified view path
         return originalRender.call(res, view, options);
       };
 
-      res.renderPartial = function(view, options) {
-        options = { ...options, layout: false };
-        return res.render(view, options);
-      };
+      // Custom function to render pages without layout, unnecessary but i find it cleaner (bappity)
+      res.renderPartial = (view, options) => res.render(view, { ...options, layout: false });
 
       // Call the controller method
       const data = await methodFn(req, res);
 
-      // If the method returns data and hasn't ended the response, render the default view
+      // Auto-render view if method returns data, response isn't sent, and it's a GET request
       if (data && !res.headersSent && req.method === 'GET') {
         res.render(`${methodName}.ejs`, { ...appData, ...data });
       }
@@ -180,4 +166,22 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
       next(err);
     }
   });
+}
+
+/**
+ * Determines whether the controller name should be prepended to the view path.
+ *
+ * The regex `/^\/|:|errors\//` checks if:
+ * - The view path starts with `/` (absolute path).
+ * - The view path contains `:` (absolute path).
+ * - The view path starts with `errors/` (global error templates path).
+ *
+ * If none of these conditions are met and the view doesn't already start with the controller name,
+ * the controller name is prepended to ensure the correct subfolder is used.
+ *
+ * @param {string} viewPath - The view path provided in res.render.
+ * @returns {boolean} True if the controller name should be prepended, false otherwise.
+ */
+function shouldPrependControllerToPath(viewPath) {
+  return !/^\/|:|errors\//.test(viewPath) && !viewPath.startsWith(`${controllerName}/`);
 }
