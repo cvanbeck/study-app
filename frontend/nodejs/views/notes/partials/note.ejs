@@ -202,6 +202,13 @@
             quill.enable();
         }
 
+        // Loads note preview into editor
+        function setupPreview(data) {
+            quill.deleteText(0, quill.getLength());
+            quill.setContents(JSON.parse(data.content));
+            quill.disable();
+        }
+
         // Connects to the websockets
         function connectWebSocket() {
             if(!ws) {
@@ -302,6 +309,31 @@
                 }
             });
         }
+
+        $('#versionControlAlertButton').on('click', function() {
+            Swal.fire({
+                title: 'Enter Note Version',
+                input: "text",
+                showCloseButton: true,
+                width: '600px', // Customize the size
+                preConfirm: async (result) => {
+                    $.ajax({
+                        url: '/notes/getNoteVersion',
+                        method: 'GET',
+                        dataType: 'JSON',
+                        data: { id: currentID, version: result}, 
+                        success: function(result) {
+                            const currentVersion = quill.getContents();
+                            setupPreview(result);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error fetching AJAX content:', status, error);
+                        }
+                    });
+                }
+            });
+
+        });
         
 
     </script>
