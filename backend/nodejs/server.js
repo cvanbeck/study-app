@@ -93,8 +93,10 @@ wss.on('connection', (ws, req, client) => {
 
             case "inactivity": // client is inactive
                 ws.idle = true;
-                const sessionClients = [...wss.clients].filter(clientFilter(ws)); // keeps clients only part of the shared session
-                console.log(sessionClients.every(idleSession)); // returns true if all clients in session are idle
+                const sessionClients = [...wss.clients].filter(clientFilter(ws)); // Leeps clients only part of the shared session
+                if (sessionClients.every(idleSession)) { // True if all clients in session are idle
+                    ws.send(JSON.stringify({ type: 'newVersion' })); // Only sent to the most recent inactive client
+                } 
                 break;
 
         }
