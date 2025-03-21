@@ -78,8 +78,10 @@
 
         initializeSession() {
             if (typeof State.currentSession === 'string') {
-                SessionManager.loadSessionNote();
+                SessionManager.loadSessionNote(); // Session code takes precedence over note ID
                 this.updateSessionDisplay(State.currentSession);
+            } else if (typeof State.currentID === 'string') {
+                NoteManager.loadExistingNote(State.currentID);
             }
         }
     };
