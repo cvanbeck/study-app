@@ -18,6 +18,4 @@ export default class VersionControlDelta {
     getNoteID() {
         return this.noteID;
     }
-
-
 }

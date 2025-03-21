@@ -16,6 +16,4 @@ export default class Note {
     getID() {
         return this.id;
     }
-
-
 }
