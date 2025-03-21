@@ -138,8 +138,5 @@ export default class NotesController extends BaseController {
             console.error('Error fetching note or updating pad:', error);
             res.status(500).send("Internal server error");
         }
-
-
     }
-
 }
