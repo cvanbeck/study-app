@@ -2,7 +2,6 @@ import BaseController from "./base/BaseController.js";
 import Note from '../models/Note.js';
 import NoteService from "../services/NoteService.js";
 import SessionService from "../services/SessionService.js";
-import Delta from 'quill-delta';
 import NavOptions from "../models/NavOptions.js";
 
 export default class NotesController extends BaseController {
