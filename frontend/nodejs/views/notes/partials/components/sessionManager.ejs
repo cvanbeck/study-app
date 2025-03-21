@@ -13,7 +13,7 @@
                     State.currentSession = sessionCode;
 
                     // Update URL with session parameter
-                    window.history.pushState("", "", window.location.pathname + `?session=${sessionCode}`);
+                    window.history.pushState("", "", window.location.pathname + `?id=${State.currentID}` + `&session=${sessionCode}`);
 
                     WebSocketManager.connect();
                     WebSocketManager.sendMessage('newSession', sessionCode);
@@ -35,12 +35,12 @@
                 const data = await API.joinSession(sessionCode);
 
                 if (data.page !== window.location.pathname) {
-                    window.location.assign(data.page + `?session=${sessionCode}`);
+                    window.location.assign(data.page + `?id=${data.note.id}` + `&session=${sessionCode}`);
                 } else {
                     Editor.setContent(data.note);
 
                     // Update URL and session state
-                    window.history.pushState("", "", window.location.pathname + `?session=${sessionCode}`);
+                    window.history.pushState("", "", window.location.pathname + `?id=${data.note.id}` + `&session=${sessionCode}`);
                     State.currentSession = sessionCode;
                     UI.updateSessionDisplay(sessionCode, true);
 
@@ -59,7 +59,7 @@
                 const data = await API.joinSession(State.currentSession);
 
                 if (data.page !== window.location.pathname) {
-                    window.location.assign(data.page + `?session=${State.currentSession}`);
+                    window.location.assign(data.page + `?id=${data.note.id}` + `&session=${State.currentSession}`);
                 } else {
                     Editor.setContent(data.note);
                     WebSocketManager.connect();
