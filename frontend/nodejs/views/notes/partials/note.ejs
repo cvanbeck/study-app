@@ -6,7 +6,7 @@
         timers: {},
         changes: [],
         currentVersion: null,
-        currentID: null,
+        currentID: new URLSearchParams(window.location.search).get('id'),
         currentSession: new URLSearchParams(window.location.search).get('session'),
         ws: null
     };

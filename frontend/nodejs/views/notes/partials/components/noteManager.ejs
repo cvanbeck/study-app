@@ -16,6 +16,8 @@
                 const url = new URL(window.location);
                 url.searchParams.delete('session');
                 window.history.replaceState({}, document.title, url.toString());
+                
+                window.history.pushState("", "", window.location.pathname + `?id=${data.id}`);
 
                 Editor.setContent(data);
                 UI.toggleSessionButton(true);
@@ -28,6 +30,7 @@
         promptLoadExistingNote() {
             UI.promptForID('Enter Note ID', async (result) => {
                 const note = await API.getExistingNote(result);
+                window.history.pushState("", "", window.location.pathname + `?id=${note.id}`);
                 Editor.setContent(note);
                 UI.toggleSessionButton(true);
                 UI.toggleEditorOverlay(true);
@@ -37,6 +40,7 @@
         async loadExistingNote(noteId) {
             try {
                 const note = await API.getExistingNote(noteId);
+                window.history.pushState("", "", window.location.pathname + `?id=${note.id}`);
                 Editor.setContent(note);
                 UI.toggleSessionButton(true);
                 UI.toggleEditorOverlay(true);
