@@ -125,7 +125,7 @@ export default class NotesController extends BaseController {
 
     }
 
-    
+    // Calls the service to remove VersionControlDelta from the db
     async deleteVersion(req, res) {
         const noteID = req.query.id;
         const version = req.query.version;
