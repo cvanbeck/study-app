@@ -38,22 +38,6 @@
             WebSocketManager.disconnect();
             await originalCreateNewNote.call(this);
         };
-        
-        // Update session button click to disconnect first
-        $('#sessionButton').off('click').on('click', function() {
-            if (typeof State.currentSession !== 'string') {
-                WebSocketManager.disconnect();
-                SessionManager.createSession();
-            }
-        });
-        
-        // Update join button to disconnect first
-        $('#joinButton').off('click').on('click', function() {
-            UI.promptForID('Enter Session Code', async (sessionCode) => {
-                WebSocketManager.disconnect();
-                await SessionManager.joinSession(sessionCode);
-            });
-        });
     }
 
     // Start the application when DOM is ready
