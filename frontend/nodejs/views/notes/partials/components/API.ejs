@@ -65,7 +65,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ result: sessionCode })
                 });
-                return await response.json();
+                if (response.status === 200) {
+                    return await response.json();
+                } else if (response.status === 404) {
+                    throw 'Session not found';
+                } else {
+                    throw 'Error joining session. Please try again later.'
+                }
             } catch (error) {
                 console.error('Failed to join session:', error);
                 throw error;
