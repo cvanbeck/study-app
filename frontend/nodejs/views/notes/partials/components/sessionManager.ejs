@@ -25,8 +25,12 @@
 
         promptJoinSession() {
             UI.promptForID('Enter Session Code', async (sessionCode) => {
-                WebSocketManager.disconnect();
-                await SessionManager.joinSession(sessionCode);
+                if (typeof sessionCode === 'string' && sessionCode.length === 7) {
+                    WebSocketManager.disconnect();
+                    await SessionManager.joinSession(sessionCode);
+                } else {
+                    throw 'Invalid Code';
+                }
             });
         },
 
