@@ -17,6 +17,7 @@ export default class ChatController extends BaseController {
             // Read prompt and mode from the POST body
             const prompt = req.body.prompt;
             const mode = req.body.mode || "default";
+            const destination = req.body.destination || "chat";
 
             if (!prompt) {
                 return res.status(400).json({ error: "Prompt is required" });
