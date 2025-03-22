@@ -16,6 +16,9 @@
                     window.history.pushState("", "", window.location.pathname + `?id=${State.currentID}` + `&session=${sessionCode}`);
 
                     WebSocketManager.connect();
+
+                    UI.toggleSessionButton(true);
+
                     WebSocketManager.sendMessage('newSession', sessionCode);
                 } catch (error) {
                     console.error('Error creating session:', error);
