@@ -80,13 +80,14 @@ export default class NotesController extends BaseController {
         try {
             // Fetch the note from the database
             const result = await this.sessionService.getNote(code);
-            if (result) {
+
+            if (result !== null) {
                 res.send(result);
             } else {
-                res.status(404).send("Note not found.");
+                res.status(404).send("Session not found.");
             }
         } catch (error) {
-            console.error('Error fetching note or updating pad:', error);
+            console.error('Error fetching note:', error);
             res.status(500).send("Internal server error");
         }
 
