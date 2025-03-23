@@ -80,6 +80,23 @@
             } catch (error) {
                 console.error('Error loading session note:', error);
             }
+        },
+
+        async endSession() {
+            try {
+                await API.endSession(State.currentID, State.currentSession);
+                WebSocketManager.endSession();
+                SessionManager.cleanupAfterSessionEnd();
+            } catch (error) {
+                console.error('Error ending session:', error);
+                throw error;
+            }
+        },
+
+        cleanupAfterSessionEnd() {
+            WebSocketManager.disconnect();
+            State.currentSession = null;
+            window.history.pushState("", "", window.location.pathname + `?id=${State.currentID}`);
         }
     };
 </script>

@@ -78,6 +78,20 @@
             }
         },
 
+        async endSession(id, code) {
+            try {
+                const response = await $.ajax({
+                    url: '/notes/deleteSessionCode',
+                    method: 'GET',
+                    dataType: 'text',
+                    data: { id, code }
+                });
+            } catch (error) {
+                console.error('Failed to delete session:', error);
+                throw error;
+            }
+        },
+
         async getNoteVersion(id, version) {
             try {
                 const response = await $.ajax({
