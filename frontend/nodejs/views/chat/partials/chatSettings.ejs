@@ -16,6 +16,9 @@
             <label>
                 <input type="radio" name="mode" value="flashcards"> Generate Flashcards
             </label>
+            <label>
+                <input type="radio" name="mode" value="quizmaster"> Quizmaster
+            </label>
         </div>
         <!-- New Thoughts Default Segment -->
         <div class="segment-group">
@@ -25,6 +28,16 @@
             </label>
             <label>
                 <input type="radio" name="thoughtsDefault" value="closed"> Closed
+            </label>
+        </div>
+        <!-- Output Destination -->
+        <div class="segment-group">
+            <span class="segment-group-heading">Send AI output to:</span>
+            <label>
+                <input type="radio" name="destination" value="chat" checked> Chat Window
+            </label>
+            <label>
+                <input type="radio" name="destination" value="note"> Notes Editor
             </label>
         </div>
     </div>
@@ -54,10 +67,20 @@
     });
 
     //Handle mode selection
-    $('#settings-dropdown input[type="radio"]').on('change', function () {
+    $('#settings-dropdown input[type="radio"][name="mode"]').on('change', function () {
         const selectedMode = $(this).val();
         $('#response-mode').val(selectedMode);
 
         $("#prompt").attr("placeholder", `Message the AI (${$('input[name="mode"]:checked').closest("label").text().trim()})`);
+        if (selectedMode === "quizmaster") {
+            $("#quizmaster-help").show();
+        } else {
+            $("#quizmaster-help").hide();
+        }
     });
+
+    $('#settings-dropdown input[type="radio"][name="destination"]').on('change', function() {
+        const selectedDestination = $(this).val();
+        $('#output-destination').val(selectedDestination);
+    ]);
 </script>
