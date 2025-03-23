@@ -96,6 +96,13 @@
             });
         },
 
+        showSessionEndAlert() {
+            return this.showAlert({
+                    icon: 'warning',
+                    title: 'Collaborative Session has ended',
+                });
+        },
+
         setupButtonHandlers() {
             // Duplicate overlay buttons
             $('#newNoteOverlayButton').on('click', () => $('#newNoteButton').click());
@@ -127,6 +134,17 @@
                     );
                 } else {
                     SessionManager.createSession();
+                }
+            });
+
+            $('#endSessionButton').on('click', () => {
+                // Show confirm box only if URL has 'session' parameter
+                if (this.hasUrlParameter('session')) {
+                    this.showConfirmAlert(
+                        'Are you sure you want to end the Collab Session?',
+                        'Your current session will be lost',
+                        SessionManager.endSession
+                    );
                 }
             });
             $('#joinButton').on('click', SessionManager.promptJoinSession);

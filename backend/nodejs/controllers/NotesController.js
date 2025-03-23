@@ -93,6 +93,21 @@ export default class NotesController extends BaseController {
 
     }
 
+    async deleteSessionCode(req, res) {
+        const noteID = req.query.id;
+        const code = req.query.code;
+        
+        try {
+            const result = await this.sessionService.deleteCode(code, noteID);
+            if(result) {
+                res.send(result);
+            }
+        } catch (error) {
+            console.error('Error deleting code:', error);
+            res.status(500).send("Internal server error");
+        }
+    }
+
     // Renders the Notes with AI page
     async notesAI (req, res) {
         return res.render("notesAI", { ...this.appData});

@@ -52,6 +52,12 @@
             }
         },
 
+        endSession() {
+            if (State.ws && State.ws.readyState === WebSocket.OPEN) {
+                this.sendMessage("endSession");
+            }
+        },
+
         sendMessage(type, data) {
             if (State.ws && State.ws.readyState === WebSocket.OPEN) {
                 State.ws.send(JSON.stringify({ type, data }));
@@ -125,6 +131,11 @@
 
                 case 'newVersion':
                     VersionManager.createNewVersion();
+                    break;
+
+                case 'sessionClosed':
+                    UI.showSessionEndAlert();
+                    SessionManager.cleanupAfterSessionEnd();
                     break;
 
                 default:
