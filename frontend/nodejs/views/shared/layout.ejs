@@ -54,6 +54,19 @@
     -  > appendToHeading(): Allows adding any text to the document <title> 
     -->
     <script>
+        $(function () {
+            $(document).on('mouseenter', '[data-toggle="tooltip"]', function() {
+                var placement = $(this).data('placement');
+                // Initialize tooltip with the placement option if defined
+                $(this).tooltip({
+                    placement: placement || 'top'  // Default to 'top' if no placement is specified
+                }).tooltip('show');
+            });
+
+            $(document).on('shown.bs.tooltip', '[data-toggle="tooltip"]', function () {
+                $(this).tooltip();
+            });
+        })
 
         /*
         * Can be ran from any .html page that is including this layout.
