@@ -21,7 +21,7 @@ export default class SessionService {
     // Retrieves a note from the DB based on session code linked to Note ID
     async getNote(code) {
         try {
-            const result = await this.dbContext.query("SELECT id, name, content, page FROM SessionCodes JOIN Notes on SessionCodes.NoteID = Notes.id WHERE code = ?", [code]);
+            const result = await this.dbContext.query("SELECT id, name, content, page FROM SessionCodes JOIN Notes on SessionCodes.NoteID = Notes.id WHERE Code = ?", [code]);
             // Ensure we have a valid result
             if (result && result.length > 0) {
                 const row = result[0]; // Assuming 'id' is unique, we take the first result
@@ -41,6 +41,17 @@ export default class SessionService {
         } catch (error) {
             console.error('Error querying SessionCodes table:', error);
             return null; // Return null if there is an error
+        }
+    }
+
+    async deleteCode(code, id) { 
+        try {
+            const result = await this.dbContext.query("DELETE FROM SessionCodes WHERE Code = ? AND NoteID = ?", [code, id]);
+            
+            console.log("Sucessfully deleted");
+            return code;
+        } catch (error) {
+            console.error('Error querying SessionCodes table:', error);
         }
     }
 

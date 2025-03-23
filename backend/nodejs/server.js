@@ -108,6 +108,14 @@ wss.on('connection', (ws, req, client) => {
                     }
                 });
                 break;
+            case "endSession":
+                console.log(`Session ${ws.session} is ending`);
+                wss.clients.forEach((client) => {
+                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session && client.note === ws.note) {
+                        client.send(JSON.stringify({ type: 'sessionClosed' }));
+                    }
+                });
+
         }
     });
 
