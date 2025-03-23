@@ -8,8 +8,43 @@
             this.initializeSession();
         },
 
-        toggleSessionButton(enable) {
-            $('#sessionButton').prop('disabled', !!State.currentSession || !enable);
+        showConfirmAlert(title, text, confirmCallback) {
+            return this.showAlert({
+                title,
+                text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'No',
+            }).then(result => {
+                if (result.isConfirmed) {
+                    confirmCallback();
+                }
+            });
+        },
+
+        showVersionAlert(title, preConfirmCallback) {
+            if (!State.currentID) {
+                return this.showAlert({
+                    icon: 'warning',
+                    title: 'No Note Selected',
+                    text: 'Please create or load a note first'
+                });
+            }
+
+            return this.showAlert({
+                title,
+                input: "text",
+                showCloseButton: true,
+                width: '600px',
+                preConfirm: preConfirmCallback
+            });
+        },
+
+        // Check if the URL contains specific parameters
+        hasUrlParameter(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.has(param);
         },
 
         toggleEditorOverlay(hide) {
@@ -67,9 +102,33 @@
             $('#loadNoteOverlayButton').on('click', () => $('#existingNoteSweetAlertButton').click());
 
             // Primary functionality buttons
-            $('#newNoteButton').on('click', NoteManager.createNewNote);
+            $('#newNoteButton').on('click', () => {
+                // Show confirm box only if URL has 'id' parameter
+                if (this.hasUrlParameter('id')) {
+                    this.showConfirmAlert(
+                        'Are you sure you want to start a new note?',
+                        'Make sure to save your note ID first',
+                        NoteManager.createNewNote
+                    );
+                } else {
+                    NoteManager.createNewNote();
+                }
+            });
             $('#existingNoteSweetAlertButton').on('click', NoteManager.promptLoadExistingNote);
-            $('#sessionButton').on('click', SessionManager.createSession);
+            
+            // Create Collab Session button confirmation
+            $('#sessionButton').on('click', () => {
+                // Show confirm box only if URL has 'session' parameter
+                if (this.hasUrlParameter('session')) {
+                    this.showConfirmAlert(
+                        'Are you sure you want to start a new Collab Session?',
+                        'Your current session will be lost',
+                        SessionManager.createSession
+                    );
+                } else {
+                    SessionManager.createSession();
+                }
+            });
             $('#joinButton').on('click', SessionManager.promptJoinSession);
             $('#versionControlAlertButton').on('click', VersionManager.promptViewVersion);
             $('#currentNoteButton').on('click', VersionManager.returnToCurrentVersion);

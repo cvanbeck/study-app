@@ -17,7 +17,6 @@
 
                     WebSocketManager.connect();
 
-                    UI.toggleSessionButton(true);
 
                     WebSocketManager.sendMessage('newSession', sessionCode);
                 } catch (error) {
@@ -52,7 +51,7 @@
                     UI.updateSessionDisplay(sessionCode, true);
 
                     WebSocketManager.connect();
-                    UI.toggleSessionButton(true);
+                    //UI.toggleSessionButton(true);
                     UI.toggleEditorOverlay(true);
                 }
             } catch (error) {
@@ -76,7 +75,7 @@
                     window.history.pushState("", "", window.location.pathname + `?id=${data.note.id}` + `&session=${State.currentSession}`);
                 }
 
-                UI.toggleSessionButton(true);
+                //UI.toggleSessionButton(true);
                 UI.toggleEditorOverlay(true);
             } catch (error) {
                 console.error('Error loading session note:', error);
