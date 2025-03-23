@@ -14,8 +14,7 @@ export default class SessionService {
             const result = await this.dbContext.query("INSERT INTO SessionCodes VALUES (?, ?, ?)", [code, page, id]);
             console.log("Sucessfully stored");
         } catch (error) {
-            console.error('Error querying Notes table:', error);
-
+            console.error('Error querying SessionCodes table:', error);
         }
     }
 
@@ -40,12 +39,9 @@ export default class SessionService {
                 return null; // Return null if the note is not found
             }
         } catch (error) {
-            console.error('Error querying Notes table:', error);
+            console.error('Error querying SessionCodes table:', error);
             return null; // Return null if there is an error
         }
     }
-
-
-
 
 }
