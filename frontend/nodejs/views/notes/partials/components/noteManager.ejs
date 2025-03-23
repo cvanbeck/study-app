@@ -20,7 +20,6 @@
                 window.history.pushState("", "", window.location.pathname + `?id=${data.id}`);
 
                 Editor.setContent(data);
-                UI.toggleSessionButton(true);
                 UI.toggleEditorOverlay(true);
             } catch (error) {
                 console.error('Error creating new note:', error);
@@ -32,7 +31,6 @@
                 const note = await API.getExistingNote(result);
                 window.history.pushState("", "", window.location.pathname + `?id=${note.id}`);
                 Editor.setContent(note);
-                UI.toggleSessionButton(true);
                 UI.toggleEditorOverlay(true);
             });
         },
@@ -42,7 +40,6 @@
                 const note = await API.getExistingNote(noteId);
                 window.history.pushState("", "", window.location.pathname + `?id=${note.id}`);
                 Editor.setContent(note);
-                UI.toggleSessionButton(true);
                 UI.toggleEditorOverlay(true);
             } catch (error) {
                 console.error('Error loading note:', error);
