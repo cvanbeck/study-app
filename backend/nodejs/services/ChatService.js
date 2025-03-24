@@ -114,7 +114,7 @@ export default class ChatService {
                         assistantMessage = parsedData.fullContent;
                         
                         if (mode == "quizmaster" && this.quizInProgress) {
-                            this.processQuizQuestion(assistantMessage);
+                            this.processQuizResponse(assistantMessage);
                         }
                     }
                 } catch (e) {
