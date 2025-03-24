@@ -149,9 +149,9 @@
             if (typingIndex !== -1) {
                 editor.deleteText(typingIndex, 'AI is typing...'.length);
                 if (isFinal) {
-                    editor.insertText(typingIndex, `AI: ${content}\n\n`);
+                    editor.insertText(typingIndex, `AI: ${visibleContent}\n\n`);
                 } else {
-                    editor.insertText(typingIndex, `AI: ${content}\n`);
+                    editor.insertText(typingIndex, `AI: ${visibleContent}\n`);
                 }
 
                 if (window.socket && typeof window.socket.emit === 'function') {
