@@ -31,7 +31,7 @@
                 updateScroll(300);
             }    
             else if (destination === 'note'){
-                const editor=Quill.find(document.query selector('#editor'));
+                const editor=Quill.find(document.querySelector('#editor'));
                 if (editor) {
                     const endIndex = editor.getLength();
                     editor.insertText(endIndex, `You: ${prompt}\n`);
@@ -39,9 +39,9 @@
                     if (window.socket && typeof window.socket.emit === 'function'){
                         const delta = editor.getContents();
                         window.socket.emit('text-change', delta);
-                    )
-                )
-            )
+                    }
+                }
+            }
             var lastFullContent = '';
             var receivedLength = 0;
             const container = destination === 'chat' ? document.querySelector(`#${messageId} .ai-content`) : null;
@@ -74,7 +74,7 @@
 
                                             let displayContent = lastFullContent
                                             if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
-                                                displpayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                                                displayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
                                             }
                                             if (destination === 'chat'){
                                                 renderFullResponse(displayContent, container, false);
@@ -93,7 +93,7 @@
                     xhr.addEventListener('loadend', function () {
                         let displayContent = lastFullContent;
                         if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
-                            displpayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                            displayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
                         }
                         if (destination === 'chat'){
                             renderFullResponse(displayContent, container, true);
@@ -114,11 +114,11 @@
                             const typingIndex = text.lastIndexOf('AI is typing...');
                             if (typingIndex !== -1) {
                                 editor.deleteText(typingIndex, 'AI is typing...'.length);
-                                editor.insertText(typingIndex, AI: Error occurred while fetching response');
+                                editor.insertText(typingIndex, 'AI: Error occurred while fetching response');
 
                                 if (window.socket && typeof window.socket.emit === 'function') {
                                     const delta = editor.getContents();
-                                    window.socket.emit('text change', delta);
+                                    window.socket.emit('text-change', delta);
                                 }
                             }
                         }
