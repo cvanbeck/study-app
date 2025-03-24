@@ -18,7 +18,13 @@
 
     // Render the full AI response into the container
     function renderFullResponse(fullRawContent, container, isFinal = false) {
+        const $container = $(container);
+        if ($container.length ===0) {
+            console.error('Container not found for AI response.');
+            return;
+        }
         const processedContent = processAIContent(fullRawContent);
+        $container.empty();
         // Retrieve the current default from settings.
         const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
         if (typeof window.persistedThoughtsState === 'undefined') {
@@ -41,7 +47,7 @@
             innerDiv.className = 'markdown-content';
             innerDiv.innerHTML = processMathContent(processedContent.thoughts);
             detailsElement.appendChild(innerDiv);
-            container.appendChild(detailsElement);
+            container.append(detailsElement);
 
             detailsElement.addEventListener('toggle', function () {
                 window.persistedThoughtsState = detailsElement.open;
