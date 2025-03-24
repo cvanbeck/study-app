@@ -11,33 +11,42 @@
         </div>
     </div>
 
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <div class="d-grid gap-2 d-md-flex">
-                <button id="newNoteButton" class="btn btn-primary">New Note</button>
-                <button id="existingNoteSweetAlertButton" class="btn btn-outline-primary">Load Note</button>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <div id="joinWrapper">
-                    <button id="joinButton" class="btn btn-success">Join Collab Session</button>
-                </div>
-                <div id="sessionWrapper">
-                    <button id="sessionButton" class="btn btn-outline-success">Create Collab Session</button>
-                    <button id="endSessionButton" class="btn btn-sm btn-outline-danger ms-2">End Session</button>
-                </div>
-            </div>
-        </div>
+<!-- Row 1 -->
+<div class="row">
+    <!-- Left side: New Note, Load Note -->
+    <div class="col-12 col-md-6">
+      <div class="d-flex flex-column flex-md-row gap-2">
+        <button id="newNoteButton" class="btn btn-primary flex-fill flex-md-grow-0">New Note</button>
+        <button id="loadNoteButton" class="btn btn-outline-primary flex-fill flex-md-grow-0">Load Note</button>
+      </div>
     </div>
-
-    <div class="version-controls d-flex justify-content-between">
-        <div>
-            <button id="versionControlAlertButton" class="btn btn-sm btn-outline-secondary">View Version</button>
-            <button id="currentNoteButton" class="btn btn-sm btn-outline-secondary ms-2">Return to Current</button>
-            <button id="deleteAlertButton" class="btn btn-sm btn-outline-danger ms-2">Delete Version</button>
-        </div>
+    <!-- Right side: Join Collab Session, Create Collab Session -->
+    <div class="col-12 col-md-6">
+      <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+        <button id="joinButton" class="btn btn-success flex-fill flex-md-grow-0">Join Collab Session</button>
+        <button id="sessionButton" class="btn btn-outline-success flex-fill flex-md-grow-0">Create Collab Session</button>
+      </div>
     </div>
+  </div>
+  
+  <!-- Row 2 -->
+  <div class="row mt-3">
+    <!-- Left side: Version control buttons -->
+    <div class="col-12 col-md-6">
+      <div class="d-flex flex-column flex-md-row gap-2">
+        <button id="versionControlAlertButton" class="btn btn-sm btn-outline-secondary flex-fill flex-md-grow-0">View Version</button>
+        <button id="currentNoteButton" class="btn btn-sm btn-outline-secondary flex-fill flex-md-grow-0">Return to Current</button>
+        <button id="deleteAlertButton" class="btn btn-sm btn-outline-danger flex-fill flex-md-grow-0">Delete Version</button>
+      </div>
+    </div>
+    <!-- Right side: End Session button -->
+    <div class="col-12 col-md-6">
+      <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+        <button id="endSessionButton" class="btn btn-sm btn-outline-danger flex-fill flex-md-grow-0">End Session</button>
+      </div>
+    </div>
+  </div>
+  
 
     <!-- Editor Container -->
     <div class="quill-container editor-overlay mt-3">
