@@ -24,6 +24,18 @@
                 <button type="submit">Send</button>
             </form>
 
+        <div id="quizmaster-help" style="display: none; margin-top: 10px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
+            <h4 style="margin-top: 0;">Quizmaster Mode</h4>
+            <p>When Quizmaster mode is active and output is set to "Notes Editor", the AI will post quiz questions directly to the shared notes.</p>
+            <ul style="margin-bottom: 0;">
+                <li><strong>Start a quiz:</strong> Type "start quiz [topic]" </li>
+                <li><strong>Answer questions:</strong> Type your answer in the note (prefix your answer with your name and colon) </li>
+                <li><strong>Next question</strong> Type "next question" or "next question [topic]" </li>
+                <li><strong>End quiz:</strong> Type "end quiz" to finish. </li>
+            </ul>
+            <p style="margin-bottom: 0;"><em>Tip: Make sure to set output to the "Notes Editor" for the best quiz experience!</em></p>
+        </div>
+
             <div id="chat-output"></div>
             <%- include('../chat/partials/ui/chatUIMessages.ejs') %>
             <%- include('../chat/partials/ui/chatUIMarkup.ejs') %>
