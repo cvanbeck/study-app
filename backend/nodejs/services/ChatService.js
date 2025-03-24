@@ -35,7 +35,8 @@ export default class ChatService {
 
         try {
             const response = await axios.post(
-                "https://ai.api.parsonlabs.com/v1/chat/completions",
+                // "https://ai.api.parsonlabs.com/v1/chat/completions",
+                "http://localhost:11434/v1/chat/completions",
                 {
                     model: "deepseek-r1:1.5b",
                     messages: this.conversationHistory, // IMPORTANT! the entire history must be pushed here, not just one single message.
