@@ -17,8 +17,9 @@
             const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
             let container=null;
             let messageId='';
+
             if(destination === 'chat'){
-                const messageId = 'ai-response-' + Date.now();
+                messageId = 'ai-response-' + Date.now();
                 $('#chat-output').append(`
                     <div class="chat-message user-message">
                         <div class="chatboxHeader"><span>You (${modeText}):</span></div>
@@ -31,8 +32,7 @@
                 `);
                 updateScroll(300);
                 container = document.querySelector(`#${messageId} .ai-content`);
-            }    
-            else if (destination === 'note'){
+            } else if (destination === 'note'){
                 const editor=Quill.find(document.querySelector('#editor'));
                 if (editor) {
                     const endIndex = editor.getLength();
@@ -46,7 +46,6 @@
             }
             var lastFullContent = '';
             var receivedLength = 0;
-            const container = destination === 'chat' ? document.querySelector(`#${messageId} .ai-content`) : null;
 
             $.ajax({
                 url: '/chat/getChatResponse',
