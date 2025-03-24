@@ -146,18 +146,21 @@
             const text = editor.getText();
             const typingIndex = text.lastIndexOf('AI is typing...');
 
-            if (typingIndex !== -1) {
+            if (typingIndex === -1) {
+                typingIndex=editor.getLength();
+            } else {
                 editor.deleteText(typingIndex, 'AI is typing...'.length);
-                if (isFinal) {
-                    editor.insertText(typingIndex, `AI: ${visibleContent}\n\n`);
-                } else {
-                    editor.insertText(typingIndex, `AI: ${visibleContent}\n`);
-                }
+            }
+            if (isFinal) {
+                editor.insertText(typingIndex, `AI: ${visibleContent}\n\n`);
+            } else {
+                editor.insertText(typingIndex, `AI: ${visibleContent}\n`);
+            }
 
-                if (window.socket && typeof window.socket.emit === 'function') {
-                    const delta = editor.getContents();
-                    window.socket.emit('text change', delta);
-                }
+            if (window.socket && typeof window.socket.emit === 'function') {
+                const delta = editor.getContents();
+                window.socket.emit('text change', delta);
+                
             }
         }
 
