@@ -9,33 +9,49 @@
             const prompt = $('#prompt').val();
             const chatMode = $('input[name="mode"]:checked').val();
             const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
+            const destination = $('input[name="destination"]:checked').val() || 'chat';
 
             $('#prompt').val("");
             adjustTextareaHeight($('#prompt')[0]);
 
             const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
-            const messageId = 'ai-response-' + Date.now();
-            $('#chat-output').append(`
-                <div class="chat-message user-message">
-                    <div class="chatboxHeader"><span>You (${modeText}):</span></div>
-                    <pre>${escapeHTML(prompt)}</pre>
-                </div>
-                <div id="${messageId}" class="chat-message ai-response">
-                    <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
-                    <div class="ai-content"></div>
-                </div>
-            `);
-            updateScroll(300);
-            const container = document.querySelector(`#${messageId} .ai-content`);
 
+            if(destination === 'chat'){
+                const messageId = 'ai-response-' + Date.now();
+                $('#chat-output').append(`
+                    <div class="chat-message user-message">
+                        <div class="chatboxHeader"><span>You (${modeText}):</span></div>
+                        <pre>${escapeHTML(prompt)}</pre>
+                    </div>
+                    <div id="${messageId}" class="chat-message ai-response">
+                        <div class="chatboxHeader"><span>AI (${modeText}):</span></div>
+                        <div class="ai-content"></div>
+                    </div>
+                `);
+                updateScroll(300);
+            }    
+            else if (destination === 'note'){
+                const editor=Quill.find(document.query selector('#editor'));
+                if (editor) {
+                    const endIndex = editor.getLength();
+                    editor.insertText(endIndex, `You: ${prompt}\n`);
+                    editor.insertText(editor.getLength(), `AI is typing...\n`);
+                    if (window.socket && typeof window.socket.emit === 'function'){
+                        const delta = editor.getContents();
+                        window.socket.emit('text-change', delta);
+                    )
+                )
+            )
             var lastFullContent = '';
             var receivedLength = 0;
+            const container = destination === 'chat' ? document.querySelector(`#${messageId} .ai-content`) : null;
 
             $.ajax({
                 url: '/chat/getChatResponse',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ prompt: prompt, mode: chatMode }),
+                data: JSON.stringify({ prompt: prompt, mode: chatMode, destination: destination
+                }),
                 xhr: function () {
                     var xhr = new window.XMLHttpRequest();
                     xhr.responseType = 'text';
@@ -55,8 +71,17 @@
                                         const parsedData = JSON.parse(sanitizedJsonPart);
                                         if (parsedData.fullContent) {
                                             lastFullContent = parsedData.fullContent;
-                                            renderFullResponse(lastFullContent, container, false);
-                                            updateScroll();
+
+                                            let displayContent = lastFullContent
+                                            if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
+                                                displpayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                                            }
+                                            if (destination === 'chat'){
+                                                renderFullResponse(displayContent, container, false);
+                                                updateScroll();
+                                            } else if (destination === 'note') {
+                                                updateNoteWithAIResponse(displayContent);
+                                            }
                                         }
                                     } catch (e) {
                                         console.error("Error parsing streamed data:", e, jsonPart);
@@ -66,16 +91,63 @@
                         });
                     });
                     xhr.addEventListener('loadend', function () {
-                        renderFullResponse(lastFullContent, container, true);
+                        let displayContent = lastFullContent;
+                        if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
+                            displpayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                        }
+                        if (destination === 'chat'){
+                            renderFullResponse(displayContent, container, true);
+                        } else if (destination === 'note') {
+                            updateNoteWithAIResponse(displayContent, true);
+                        }
                     });
                     return xhr;
                 },
                 error: function (err) {
                     alert('An error occurred while streaming the response.');
                     console.error(err);
+
+                    if (destination === 'note') {
+                        const editor = Quill.find(document.querySelector('#editor'));
+                        if (editor) {
+                            const text = editor.getText();
+                            const typingIndex = text.lastIndexOf('AI is typing...');
+                            if (typingIndex !== -1) {
+                                editor.deleteText(typingIndex, 'AI is typing...'.length);
+                                editor.insertText(typingIndex, AI: Error occurred while fetching response');
+
+                                if (window.socket && typeof window.socket.emit === 'function') {
+                                    const delta = editor.getContents();
+                                    window.socket.emit('text change', delta);
+                                }
+                            }
+                        }
+                    }
                 }
             });
         });
+
+        function updateNoteWithAIResponse(content, isFinal=false) {
+            const editor = Quill.find(document.querySelector('#editor'));
+            if (!editor) return;
+
+            const text = editor.getText();
+            const typingIndex = text.lastIndexOf('AI is typing...');
+
+            if (typingIndex !== -1) {
+                editor.deleteText(typingIndex, 'AI is typing...'.length);
+                if (isFinal) {
+                    editor.insertText(typingIndex, `AI: ${content}\n\n`);
+                } else {
+                    editor.insertText(typingIndex, `AI: ${content}\n`);
+                }
+
+                if (window.socket && typeof window.socket.emit === 'function') {
+                    const delta = editor.getContents();
+                    window.socket.emit('text change', delta);
+                }
+            }
+        }
 
         // Adjust textarea height on keydown and input events
         $('#prompt').on('keydown', function (e) {
