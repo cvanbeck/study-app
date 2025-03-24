@@ -32,21 +32,23 @@ export default class AccountController extends BaseController {
     // POST /account/loginPost – handles login requests
     async loginPost(req, res) {
         const { username, password } = req.body;
+        const returnUrl = req.query.ReturnUrl || '/';
+
         try {
             const db = await this.dbContext.dbPromise;
             const user = await db.get("SELECT * FROM Users WHERE UserName = ?", [username]);
-
             if (!user) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
-
             // NOTE: Comparing plain text passwords for demo purposes.
             if (user.PasswordHash !== password) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
-
             req.session.user = user;
-            return res.json({ success: true });
+            return res.json({ 
+                success: true, 
+                returnUrl: decodeURIComponent(returnUrl) 
+            });
         } catch (err) {
             console.error("Login error:", err);
             return res.status(500).json({ error: "Server error" });
