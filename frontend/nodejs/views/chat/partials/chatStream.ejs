@@ -129,9 +129,17 @@
         });
 
         function updateNoteWithAIResponse(content, isFinal=false) {
+            console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
-            const visibleContent = processedContent.visible;
+            console.log("procAI: ", processedContent);
 
+            let visibleContent = processedContent.visible.trim();
+            if(!visibleContent && processedContent.thoughts.trim()){
+                visibleContent = processedContent.thoughts.trim();
+            }
+            if (!visibleContent){
+                visibleContent="";
+            }
             const editor = Quill.find(document.querySelector('#editor'));
             if (!editor) return;
 
