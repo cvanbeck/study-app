@@ -7,6 +7,7 @@ export default class ChatService {
         this.quizInProgress = false;
         this.currentQuestion = null;
         this.correctAnswer = null;
+        this.lastAnsweredBy = null;
     }
 
     clearHistory() {
@@ -14,6 +15,7 @@ export default class ChatService {
         this.quizInProgress = false;
         this.currentQuestion = null;
         this.correctAnswer = null;
+        this.lastAnsweredBy = null;
     }
 
     async getChatResponse(prompt, mode) {
@@ -22,6 +24,8 @@ export default class ChatService {
         }
 
         let formattedPrompt;
+        let isQuizAnswer = false;
+        
         switch (mode) {
             case "steps":
                 formattedPrompt = `Explain in a step by step format: ${prompt}`;
@@ -35,31 +39,52 @@ export default class ChatService {
             case "quizmaster":
                 if (prompt.toLowerCase().includes("start quiz")){
                     const topic = prompt.replace(/start quiz/i, "").trim();
-                    formattedPrompt = `Generate a quiz question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: [your question here]" followed by "CORRECT ANSWER: [correct answer]". The correct answer should be hidden from users and only used to validate responses.`;
+                    formattedPrompt = `You are a friendly quiz host. Generate a single university-level quiz question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: [your question here]" followed by "CORRECT ANSWER: [correct answer]". The correct answer should be hidden from users and only used to validate responses.`;
                     this.quizInProgress = true;
                 } else if (this.quizInProgress && prompt.toLowerCase().includes("next question")){
                     const topic = prompt.replace(/next question/i, "").trim();
                     formattedPrompt = `Generate another quiz question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: [your question here]" followed by "CORRECT ANSWER: [correct answer]". The correct answer should be hidden from users and only used to validate responses.`;
-                } else if (this.quizInProgress){
-                    const userAnswer = prompt.trim();
-                    const username=prompt.split(':')[0].trim();
-                    if (this.correctAnswer && this.isCorrectAnswer(userAnswer, this.correctAnswer)){
-                        formattedPrompt = `RESPONSE: Correct, ${username} gets 1 exp! The answer was: ${this.correctAnswer}`;
-                        this.currentQuestion = null;
-                        this.correctAnswer = null;
-                    } else {
-                        formattedPrompt = `RESPONSE: Sorry, that's not correct. Try again!`;
+                } else if (this.quizInProgress && this.currentQuestion && this.correctAnswer){
+                    isQuizAnswer = true;
+                    let username = "";
+                    let userAnswer = prompt;
+                    const colonIndex = prompt.indexOf(':');
+                    if (colonIndex >0) {
+                        username = prompt.substring(0, colonIndex).trim();
+                        userAnswer = prompt.substring(colonIndex+1).trim();
                     }
+                    if (this.isCorrectAnswer(userAnswer, this.correctAnswer)) {
+                        if (this.lastAnsweredBy){
+                            formattedPrompt = `That's correct, ${username}! But ${this.lastAnsweredBy} already answered this question correctly. The answer is ${this.correctAnswer}. Type "next question" for another question.`;
+                        } else {
+                            formattedPrompt = `Correct, ${username} gets 1 exp! The answer was ${this.correctAnswer}. Type "next question" for another question.`;
+                            this.lastAnsweredBy = username;
+                        }
+                    } else {
+                        formattedPrompt = `Sorry ${username}, that's not correct. Try again!`;
+                    }
+                }
+                else if (this.quizInProgress && prompt.toLowerCase().includes("end quiz")){
+                    formattedPrompt = `The quiz has ended. Thanks for playing!`;
+                    this.quizInProgress = false
+                    this.currentQuestion = null;
+                    this.correctAnswer = null;
+                    this.lastAnsweredBy = null;
                 } else {
                     formattedPrompt = prompt;
-                } break;
+                    if (this.quizInProgress) {
+                        formattedPrompt = `I'm in quizmode right now. Type "start quiz [topic]" to start a new quiz, "next question" for another question, or "end quiz" to finish.`;
+                    }
+                }
+                break
             default:
                 formattedPrompt = prompt;
         }
-
-        // Add user input to conversation history
-        this.conversationHistory.push({ role: "user", content: formattedPrompt });
-
+        
+        if(!isQuizAnswer) {
+            // Add user input to conversation history
+            this.conversationHistory.push({ role: "user", content: formattedPrompt });
+        }
         try {
             const response = await axios.post(
                 "https://ai.api.parsonlabs.com/v1/chat/completions",
@@ -100,13 +125,14 @@ export default class ChatService {
             // Stores the full assistant message in the conversation history array when stream ends
             jsonStreamService.on("end", () => {
                 if (assistantMessage) {
-                    cleanedMessage = assistantMessage.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+                    const cleanedMessage = assistantMessage.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
-                    if (mode == "quizmaster" && this.quizInProgress && cleanedMessage.includes("QUIZ QUESTION:")){
-                        const visibleQuestion = cleanedMessage.split("QUIZ QUESTION:")[1].split("CORRECT ANSWER:")[0].trim();
-                        this.conversationHistory.push({ role: "assistant", content: "QUIZ QUESTION: " + visibleQuestion });
-                    } else {
+                    if(!isQuizAnswer){
                         this.conversationHistory.push({ role: "assistant", content: cleanedMessage });
+                    }
+                    if (mode == "quizmaster" && cleanedMessage.includes("QUIZ QUESTION:")){
+                        this.lastAnsweredBy = null;
+                    }
                 }
             });
 
@@ -125,11 +151,22 @@ export default class ChatService {
             if (questionMatch && questionMatch[1] && answerMatch && answerMatch[1]){
                 this.currentQuestion = questionMatch[1].trim();
                 this.correctAnswer = answerMatch[1].trim();
+                this.lastAnsweredBy = null;
             }
         }
     }
 
     isCorrectAnswer(userAnswer, correctAnswer){
-        return userAnswer.toLowerCase().includes(correctAnswer.toLowerCase()) || correctAnswer.toLowerCase().includes(userAnswer.toLowerCase());
+        if (!userAnswer || !correctAnswer) return false
+
+        const normalUserAnswer = userAnswer.toLowerCase().trim();
+        const normalCorrectAnswer = correctAnswer.toLowerCase().trim();
+
+        if (normalUserAnswer === normalCorrectAnswer) {
+            return true;
+        }
+        if (normalUserAnswer.includes(normalCorrectAnswer) || normalCorrectAnswer.includes(normalUserAnswer)){
+            return true;
+        }
     }
 }
