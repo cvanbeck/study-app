@@ -9,6 +9,7 @@ export default class AccountController extends BaseController {
         
         this.dbContext = appData.db;
 
+        this.bindNavMethod("login", new NavOptions({ overrideShowInNavbar: true, priority: 0, customNavText: "Login" }));
         this.bindNavMethod("register", new NavOptions({ overrideShowInNavbar: true, priority: 0, customNavText: "Register" }));
     }
 
@@ -169,5 +170,19 @@ export default class AccountController extends BaseController {
             console.error("Edit account error:", err);
             return res.status(500).json({ error: "Server error" });
         }
+    }
+
+    // GET /account/logout – handles user logout
+    async logout(req, res) {
+        // Destroy the session
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Logout error:', err);
+                return res.status(500).json({ error: "Could not log out" });
+            }
+            
+            // Redirect to home page or login page after logout
+            res.redirect('/account/login');
+        });
     }
 }
