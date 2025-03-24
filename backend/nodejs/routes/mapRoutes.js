@@ -6,6 +6,35 @@ import mapErrorRoutes from './mapErrorRoutes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+async function handleAuthentication(router) {
+    // Authentication middleware to check login status
+    router.use(async (req, res, next) => {
+      // Skip authentication for account controller routes
+      const isAccountRoute = req.path.startsWith('/account/');
+      
+      // Check if user is logged in
+      const isAuthenticated = req.session && req.session.user;
+      
+      // Skip authentication for account routes or if route is already public
+      if (isAccountRoute) {
+        return next();
+      }
+  
+      if (!isAuthenticated) {
+        // Ensure we don't create an endless redirect loop
+        // Remove any existing account/ prefixes from the current path
+        let cleanPath = req.originalUrl.replace(/^\/account\//, '/');
+        
+        // Construct the return URL
+        const returnUrl = encodeURIComponent(cleanPath);
+        
+        return res.redirect(`/account/login?ReturnUrl=${returnUrl}`);
+      }
+  
+      next();
+    });
+}
+
 /**
  * Sets up application routes by dynamically loading controller files and mapping their methods to Express routes.
  *
@@ -20,6 +49,8 @@ export default async function setupRoutes(app, appData) {
   const router = express.Router();
   const controllersDir = join(__dirname, '..', 'controllers');
   app.locals.navLinks = []; // Store dynamic routes for navbar
+
+  handleAuthentication(router);
 
   try {
     const files = await readdir(controllersDir);
