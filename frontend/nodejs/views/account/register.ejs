@@ -27,7 +27,7 @@
         $("#registerForm").submit(function (e) {
             e.preventDefault();
             $.ajax({
-                url: "/account/register",
+                url: "/account/registerPost",
                 method: "POST",
                 data: $(this).serialize(),
                 success: function (response) {
