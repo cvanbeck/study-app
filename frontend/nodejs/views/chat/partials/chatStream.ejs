@@ -15,6 +15,7 @@
             adjustTextareaHeight($('#prompt')[0]);
 
             const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
+            let container=null;
             let messageId='';
             if(destination === 'chat'){
                 const messageId = 'ai-response-' + Date.now();
@@ -29,6 +30,7 @@
                     </div>
                 `);
                 updateScroll(300);
+                container = document.querySelector(`#${messageId} .ai-content`);
             }    
             else if (destination === 'note'){
                 const editor=Quill.find(document.querySelector('#editor'));
