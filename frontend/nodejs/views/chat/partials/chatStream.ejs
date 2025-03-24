@@ -15,7 +15,7 @@
             adjustTextareaHeight($('#prompt')[0]);
 
             const modeText = $('input[name="mode"]:checked').closest("label").text().trim();
-
+            let messageId='';
             if(destination === 'chat'){
                 const messageId = 'ai-response-' + Date.now();
                 $('#chat-output').append(`
