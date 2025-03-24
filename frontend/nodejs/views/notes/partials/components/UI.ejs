@@ -130,7 +130,10 @@
                     this.showConfirmAlert(
                         'Are you sure you want to start a new Collab Session?',
                         'Your current session will be lost',
-                        SessionManager.createSession
+                       async function(){
+                            await SessionManager.endSession();
+                            await SessionManager.createSession();
+                        }
                     );
                 } else {
                     SessionManager.createSession();
