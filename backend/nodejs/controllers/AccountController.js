@@ -1,6 +1,7 @@
 import NavOptions from "../models/NavOptions.js";
 import BaseController from "./base/BaseController.js";
 import crypto from "crypto";
+import bcrypt from "bcrypt";
 
 export default class AccountController extends BaseController {
     constructor(appData) {
@@ -40,11 +41,15 @@ export default class AccountController extends BaseController {
             if (!user) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
-            // NOTE: Comparing plain text passwords for demo purposes.
-            if (user.PasswordHash !== password) {
+
+            // Compare provided password with stored hash
+            const isPasswordValid = await bcrypt.compare(password, user.PasswordHash);
+            if (!isPasswordValid) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
+
             req.session.user = user;
+
             return res.json({ 
                 success: true, 
                 returnUrl: decodeURIComponent(returnUrl) 
@@ -59,12 +64,20 @@ export default class AccountController extends BaseController {
     async registerPost(req, res) {
         const { username, email, password, confirmPassword } = req.body;
 
+        // Debug logging
+        console.log('Registration attempt:', { username, email });
+
         // Validate required fields
         if (!username || !password || !confirmPassword) {
-            return res.status(400).json({ error: "Username and password are required." });
+            console.log('Validation failed: Missing fields');
+            return res.status(400).json({ 
+                error: "Username and password are required.",
+                debug: { username, email, passwordProvided: !!password, confirmPasswordProvided: !!confirmPassword }
+            });
         }
 
         if (password !== confirmPassword) {
+            console.log('Validation failed: Passwords do not match');
             return res.status(400).json({ error: "Passwords do not match" });
         }
 
@@ -74,8 +87,13 @@ export default class AccountController extends BaseController {
             // Check if username already exists
             const existingUser = await db.get("SELECT * FROM Users WHERE UserName = ?", [username]);
             if (existingUser) {
+                console.log('Registration failed: Username already exists');
                 return res.status(400).json({ error: "Username already exists" });
             }
+
+            // Hash the password with bcrypt
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
 
             // Create a new user record
             const userId = crypto.randomBytes(16).toString("hex");
@@ -94,14 +112,22 @@ export default class AccountController extends BaseController {
                     username.toUpperCase(),
                     email || null,
                     email ? email.toUpperCase() : null,
-                    password // In production, use a hashed password
+                    hashedPassword
                 ]
             );
 
-            return res.json({ success: true });
+            console.log('Registration successful for user:', username);
+            return res.json({ 
+                success: true,
+                message: "Registration successful",
+                userId: userId
+            });
         } catch (err) {
             console.error("Registration error:", err);
-            return res.status(500).json({ error: "Server error" });
+            return res.status(500).json({ 
+                error: "Server error", 
+                details: err.message 
+            });
         }
     }
 
