@@ -211,7 +211,15 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
         if (shouldPrependControllerToPath(viewPath, controllerName)) {
           viewPath = `${controllerName}/${viewPath}`;
         }
-        return originalRender.call(res, viewPath, options);
+        
+        // Add user to the rendering context
+        const renderOptions = {
+          ...appData,
+          user: req.session.user || null,
+          ...(options || {})
+        };
+
+        return originalRender.call(res, viewPath, renderOptions);
       };
 
       // Custom function to render pages without layout, unnecessary but i find it cleaner (bappity)
@@ -222,7 +230,11 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
 
       // Auto-render view if method returns data, response isn't sent, and it's a GET request
       if (data && !res.headersSent && req.method === 'GET') {
-        res.render(`${methodName}.ejs`, { ...appData, ...data });
+        res.render(`${methodName}.ejs`, { 
+          ...appData, 
+          user: req.session.user || null,
+          ...data 
+        });
       }
     } catch (err) {
       // Pass the error to Express error handler
