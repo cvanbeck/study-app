@@ -129,6 +129,9 @@
         });
 
         function updateNoteWithAIResponse(content, isFinal=false) {
+            const processedContent = processedAIContent(content);
+            const visibleContent = processedContent.visible;
+
             const editor = Quill.find(document.querySelector('#editor'));
             if (!editor) return;
 
