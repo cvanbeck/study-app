@@ -26,6 +26,7 @@ const appData = {
     appName: "Study App", 
     db: new SQLiteDbContext(connectionString), // Include the db in the appData object
     environment: process.env.NODE_ENV,
+    useAuthentication: true,
 };
 
 const app = express();
