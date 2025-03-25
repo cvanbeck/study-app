@@ -30,3 +30,12 @@
         </li>
     <% }
 }); %>
+
+<% // Render any navLinks that are not part of a group (this applies when groupedLinks is empty) %>
+<% if (navLinks && Object.keys(groupedLinks).length === 0) { 
+    navLinks.forEach(link => { %>
+        <li class="nav-item">
+            <a class="nav-link" href="<%= link.route %>"><%= link.navText %></a>
+        </li>
+<%  });
+} %>

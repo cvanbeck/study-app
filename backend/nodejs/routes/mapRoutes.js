@@ -6,6 +6,39 @@ import mapErrorRoutes from './mapErrorRoutes.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+async function handleAuthentication(router) {
+  // Authentication middleware to check login status
+  router.use(async (req, res, next) => {
+    // Skip authentication for specific account routes
+    const publicAccountRoutes = ['/account/login', '/account/register'];
+    const isPublicAccountRoute = publicAccountRoutes.includes(req.path);
+
+    // Skip authentication for account routes or if route is already public
+    if (isPublicAccountRoute || req.method === 'POST') {
+      return next();
+    }
+
+    // Check if the route is part of the account controller
+    const isAccountRoute = req.path.startsWith('/account');
+
+    // Check if user is logged in
+    const isAuthenticated = req.session && req.session.user;
+
+    if (!isAuthenticated && !isAccountRoute) {
+      // Ensure we don't create an endless redirect loop
+      // Remove any existing account/ prefixes from the current path
+      let cleanPath = req.originalUrl.replace(/^\/account\//, '/');
+
+      // Construct the return URL
+      const returnUrl = encodeURIComponent(cleanPath);
+
+      return res.redirect(`/account/login?ReturnUrl=${returnUrl}`);
+    }
+
+    next();
+  });
+}
+
 /**
  * Sets up application routes by dynamically loading controller files and mapping their methods to Express routes.
  *
@@ -20,6 +53,8 @@ export default async function setupRoutes(app, appData) {
   const router = express.Router();
   const controllersDir = join(__dirname, '..', 'controllers');
   app.locals.navLinks = []; // Store dynamic routes for navbar
+
+  handleAuthentication(router);
 
   try {
     const files = await readdir(controllersDir);
@@ -64,7 +99,7 @@ export default async function setupRoutes(app, appData) {
 
     // MUST BE CALLED AFTER defining all routes
     mapErrorRoutes(app, appData);
-    
+
   } catch (err) {
     console.error('Error setting up routes:', err);
     throw err;
@@ -83,9 +118,9 @@ export default async function setupRoutes(app, appData) {
  * @returns {boolean} True if the value is a class constructor; otherwise, false.
  */
 function isControllerAClass(ControllerClass) {
-  return typeof ControllerClass === 'function' || 
-         (/^\s*class\s+/.test(ControllerClass.toString()) || 
-         /\[native code\]/.test(ControllerClass.toString()));
+  return typeof ControllerClass === 'function' ||
+    (/^\s*class\s+/.test(ControllerClass.toString()) ||
+      /\[native code\]/.test(ControllerClass.toString()));
 }
 
 /**
@@ -107,14 +142,14 @@ function processRouteMapping(app, controllerName, methodName, methodFn, typeLabe
   const navOptions = methodFn.navOptions || {};
   const showInNavbar = navOptions.overrideShowInNavbar !== false;
   const navText = navOptions.customNavText ||
-                  (methodName === 'index'
-                    ? controllerName === 'home' ? 'Home' : capitalizeFirstLetter(controllerName)
-                    : methodName);
+    (methodName === 'index'
+      ? controllerName === 'home' ? 'Home' : capitalizeFirstLetter(controllerName)
+      : methodName);
   const priority = navOptions.priority || 0;
-  
+
   // Regex to check for res.render return calls in the method (excluding res.renderPartial)
   const isViewRoute = /res\.render(?!Partial)|return\s+{/.test(methodString);
-  
+
   // Logic for whether the item should show in the navbar. Can be overriden by the MethodOptions if bound.
   const forceAdd = navOptions.overrideShowInNavbar === true;
   const shouldAddToNav = (isViewRoute || forceAdd) && showInNavbar;
@@ -172,11 +207,19 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
     try {
       // Enhance res.render to prepend the controller name if necessary
       const originalRender = res.render;
-      res.render = function(viewPath, options) {
+      res.render = function (viewPath, options) {
         if (shouldPrependControllerToPath(viewPath, controllerName)) {
           viewPath = `${controllerName}/${viewPath}`;
         }
-        return originalRender.call(res, viewPath, options);
+        
+        // Add user to the rendering context
+        const renderOptions = {
+          ...appData,
+          user: req.session.user || null,
+          ...(options || {})
+        };
+
+        return originalRender.call(res, viewPath, renderOptions);
       };
 
       // Custom function to render pages without layout, unnecessary but i find it cleaner (bappity)
@@ -187,7 +230,11 @@ function setupRouteHandler(router, route, controllerName, methodName, methodFn, 
 
       // Auto-render view if method returns data, response isn't sent, and it's a GET request
       if (data && !res.headersSent && req.method === 'GET') {
-        res.render(`${methodName}.ejs`, { ...appData, ...data });
+        res.render(`${methodName}.ejs`, { 
+          ...appData, 
+          user: req.session.user || null,
+          ...data 
+        });
       }
     } catch (err) {
       // Pass the error to Express error handler

@@ -1,26 +1,62 @@
 <%
-// Pre-calculate navigation items
-const sortedNavLinks = (navLinks || []).sort((a, b) => b.priority - a.priority);
+    // Ensure navLinks is defined
+    navLinks = navLinks || [];
 
-const homeLink = sortedNavLinks.find(link => link.route === '/');
+    // Separate account-related links from others
+    const accountLinks = navLinks.filter(link => link.route.startsWith('/account'));
+    const otherLinks = navLinks.filter(link => !link.route.startsWith('/account'));
 
-const groupedLinks = sortedNavLinks.reduce((acc, link) => {
-    if (link.route === '/') return acc; // Home handled separately
-    const base = `/${link.route.split('/').filter(Boolean)[0] || ''}`;
-    acc[base] = [...(acc[base] || []), link];
-    return acc;
-}, {});
+    // Sort links by priority descending
+    const sortedOtherLinks = otherLinks.sort((a, b) => b.priority - a.priority);
+    const sortedAccountLinks = accountLinks.sort((a, b) => b.priority - a.priority);
+
+    // Find home link from the other links
+    const homeLink = sortedOtherLinks.find(link => link.route === '/');
+
+    // Group remaining other links (ignoring the home link)
+    const groupedLinks = sortedOtherLinks.reduce((acc, link) => {
+        if (link.route === '/') return acc; // Home handled separately
+        const base = `/${link.route.split('/').filter(Boolean)[0] || ''}`;
+        acc[base] = [...(acc[base] || []), link];
+        return acc;
+    }, {});
+
+    // Separate login/register links from other account links
+    const loginRegisterLinks = sortedAccountLinks.filter(link =>
+        link.route === '/account/login' || link.route === '/account/register'
+    );
+    const otherAccountLinks = sortedAccountLinks.filter(link =>
+        link.route !== '/account/login' && link.route !== '/account/register'
+    );
 %>
-
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/"><%= appName %></a>
+        <a class="navbar-brand" href="/">
+            <%= appName %>
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarContent">
+            <!-- Left side navigation -->
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <%- include('navitems', { navLinks: sortedNavLinks, homeLink, groupedLinks }) %>
+                <%- include('navitems', { navLinks: sortedOtherLinks, homeLink: homeLink, groupedLinks: groupedLinks }) %>
+            </ul>
+
+            <!-- Right side account navigation -->
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <!-- Show account links when logged in -->
+                    <%- include('navitems', { navLinks: otherAccountLinks, homeLink: null, groupedLinks: {} }) %>
+
+                    <!-- Logout button -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/account/logout">Logout</a>
+                    </li>
+                <% } else { %>
+                    <!-- Show login and register links when logged out -->
+                    <%- include('navitems', { navLinks: loginRegisterLinks, homeLink: null, groupedLinks: {} }) %>
+                <% } %>
             </ul>
         </div>
     </div>
