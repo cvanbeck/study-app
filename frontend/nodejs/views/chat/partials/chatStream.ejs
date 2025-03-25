@@ -80,7 +80,7 @@
 
                                             let displayContent = lastFullContent
                                             if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
-                                                displayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                                                displayContent = 'QUIZ QUESTION:' + processAIContent(displayContent).visible.trim().split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
                                             }
                                             if (destination === 'chat'){
                                                 renderFullResponse(displayContent, container, false);
@@ -102,7 +102,7 @@
                         }
                         let displayContent = lastFullContent;
                         if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
-                            displayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                            displayContent = 'QUIZ QUESTION:' + processAIContent(displayContent).visible.trim().split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
                         }
                         if (destination === 'chat'){
                             renderFullResponse(displayContent, container, true);
@@ -143,12 +143,6 @@
             console.log("procAI: ", processedContent);
 
             let visibleContent = processedContent.visible.trim();
-            if(!visibleContent && processedContent.thoughts.trim()){
-                visibleContent = processedContent.thoughts.trim();
-            }
-            if (!visibleContent){
-                visibleContent="";
-            }
             const editorElement = document.querySelector('#editor')
             const editor = Quill.find(editorElement);
             if (!editor) return;
