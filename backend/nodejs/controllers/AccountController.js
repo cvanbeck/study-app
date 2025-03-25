@@ -61,7 +61,7 @@ export default class AccountController extends BaseController {
         }
     }
 
-    // POST /account/register – handles new user registrations
+    // POST /account/registerPost – handles new user registrations
     async registerPost(req, res) {
         const { username, email, password, confirmPassword } = req.body;
 
@@ -132,45 +132,53 @@ export default class AccountController extends BaseController {
         }
     }
 
-    // POST /account/edit – handles account updates (e.g., updating password)
+    // POST /account/editPost – handles account updates (e.g., updating password)
     async editPost(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: "Unauthorized" });
         }
-
+    
         const { password, newPassword, confirmNewPassword } = req.body;
-
+    
         if (!password || !newPassword || !confirmNewPassword) {
             return res.status(400).json({ error: "All fields are required." });
         }
-
+    
         if (newPassword !== confirmNewPassword) {
             return res.status(400).json({ error: "New passwords do not match" });
         }
-
+    
         try {
             const db = await this.dbContext.dbPromise;
             // Get current user details
             const user = await db.get("SELECT * FROM Users WHERE Id = ?", [req.session.user.Id]);
+    
             if (!user) {
                 return res.status(404).json({ error: "User not found" });
             }
-
-            if (user.PasswordHash !== password) {
+    
+            // Compare current password with stored hash
+            const isPasswordValid = await bcrypt.compare(password, user.PasswordHash);
+            if (!isPasswordValid) {
                 return res.status(401).json({ error: "Current password is incorrect" });
             }
-
+    
+            // Hash the new password before storing
+            const saltRounds = 10;
+            const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+    
             // Update password
-            await db.run("UPDATE Users SET PasswordHash = ? WHERE Id = ?", [newPassword, user.Id]);
-            // Optionally update the session user details
-            req.session.user.PasswordHash = newPassword;
-
+            await db.run("UPDATE Users SET PasswordHash = ? WHERE Id = ?", [hashedNewPassword, user.Id]);
+    
+            // Update session user details
+            req.session.user.PasswordHash = hashedNewPassword;
+    
             return res.json({ success: true });
         } catch (err) {
             console.error("Edit account error:", err);
             return res.status(500).json({ error: "Server error" });
         }
-    }
+    }    
 
     // GET /account/logout – handles user logout
     async logout(req, res) {
