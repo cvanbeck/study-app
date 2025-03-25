@@ -54,7 +54,8 @@ export default async function setupRoutes(app, appData) {
   const controllersDir = join(__dirname, '..', 'controllers');
   app.locals.navLinks = []; // Store dynamic routes for navbar
 
-  handleAuthentication(router);
+  if (appData.useAuthentication)
+    handleAuthentication(router);
 
   try {
     const files = await readdir(controllersDir);
