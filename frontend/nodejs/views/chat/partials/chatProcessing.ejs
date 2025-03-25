@@ -1,11 +1,9 @@
 <script>
     // Process AI content, separating <think> tags from visible content
     function processAIContent(content) {
-        const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
         const visibleContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-        const thoughts = thoughtMatches
-            .map(match=> match.replace(/<\/?think>/g, "").trim())
-            .join("\n");
+        const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
+        const thoughts = thoughtMatches.map(match=> match.replace(/<\/?think>/g, "").trim()).join("\n");
         return {
             thoughts: thoughts,
             visible: visibleContent
