@@ -140,7 +140,8 @@
             if (!visibleContent){
                 visibleContent="";
             }
-            const editor = Quill.find(document.querySelector('#editor'));
+            const editorElement = document.querySelector('#editor')
+            const editor = Quill.find(editorElement);
             if (!editor) return;
 
             const text = editor.getText();
@@ -159,7 +160,7 @@
 
             if (window.socket && typeof window.socket.emit === 'function') {
                 const delta = editor.getContents();
-                window.socket.emit('text change', delta);
+                window.socket.emit('text-change', delta);
                 
             }
         }
