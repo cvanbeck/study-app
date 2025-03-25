@@ -37,7 +37,9 @@
                 if (editor) {
                     const endIndex = editor.getLength();
                     editor.insertText(endIndex, `You: ${prompt}\n`);
-                    editor.insertText(editor.getLength(), `AI is typing...\n`);
+                    const aiIndex = editor.getLength();
+                    editor.insertText(aiIndex, `AI: \n`);
+                    window.aiResponseIndex = aiIndex;
                     if (window.socket && typeof window.socket.emit === 'function'){
                         const delta = editor.getContents();
                         window.socket.emit('text-change', delta);
@@ -143,21 +145,15 @@
             const editorElement = document.querySelector('#editor')
             const editor = Quill.find(editorElement);
             if (!editor) return;
-
-            const text = editor.getText();
-            let typingIndex = text.lastIndexOf('AI is typing...');
-
-            if (typingIndex === -1) {
-                typingIndex=editor.getLength();
+            if (typeof window.aiResponseIndex !== 'undefined'){
+                const aiIndex = window.aiResponseIndex;
+                const currentLength = editor.getLength();
+                editor.deleteText(aiIndex, currentLnegth - aiIndex);
+                editor.insertText(aiIndex, `AI: ${visibleContent}\n`);
             } else {
-                editor.deleteText(typingIndex, 'AI is typing...'.length);
+                const currentLength = editor.getLength();
+                editor.insertText(currentLength, `AI: ${visibleContent}\n`);
             }
-            if (isFinal) {
-                editor.insertText(typingIndex, `AI: ${visibleContent}\n\n`);
-            } else {
-                editor.insertText(typingIndex, `AI: ${visibleContent}\n`);
-            }
-
             if (window.socket && typeof window.socket.emit === 'function') {
                 const delta = editor.getContents();
                 window.socket.emit('text-change', delta);
