@@ -145,7 +145,7 @@
             if (!editor) return;
 
             const text = editor.getText();
-            const typingIndex = text.lastIndexOf('AI is typing...');
+            let typingIndex = text.lastIndexOf('AI is typing...');
 
             if (typingIndex === -1) {
                 typingIndex=editor.getLength();
