@@ -59,6 +59,9 @@
                     var xhr = new window.XMLHttpRequest();
                     xhr.responseType = 'text';
                     xhr.addEventListener('progress', function () {
+                        if (chatMode === 'quizmaster' && destination === 'note') {
+                            return;
+                        }
                         const chunk = xhr.responseText.substring(receivedLength);
                         receivedLength = xhr.responseText.length;
                         const lines = chunk.split('\n');
@@ -131,9 +134,7 @@
         });
 
         function updateNoteWithAIResponse(content, isFinal=false) {
-            console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
-            console.log("procAI: ", processedContent);
 
             let visibleContent = processedContent.visible.trim();
             if(!visibleContent && processedContent.thoughts.trim()){
