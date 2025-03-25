@@ -97,6 +97,9 @@
                         });
                     });
                     xhr.addEventListener('loadend', function () {
+                        if (chatMode === 'quizmaster' && !lastFullContent) {
+                            lastFullContent = this.response.Text;
+                        }
                         let displayContent = lastFullContent;
                         if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
                             displayContent = 'QUIZ QUESTION:' + displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
@@ -106,6 +109,7 @@
                         } else if (destination === 'note') {
                             updateNoteWithAIResponse(displayContent, true);
                         }
+                        console.log("final displaycontent:", displayContent);
                     });
                     return xhr;
                 },
