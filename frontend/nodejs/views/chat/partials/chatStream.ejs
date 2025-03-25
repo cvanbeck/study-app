@@ -134,7 +134,9 @@
         });
 
         function updateNoteWithAIResponse(content, isFinal=false) {
+            console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
+            console.log("procAI: ", processedContent);
 
             let visibleContent = processedContent.visible.trim();
             if(!visibleContent && processedContent.thoughts.trim()){
