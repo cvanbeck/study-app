@@ -98,7 +98,7 @@
                     });
                     xhr.addEventListener('loadend', function () {
                         if (chatMode === 'quizmaster' && !lastFullContent) {
-                            lastFullContent = this.response.Text;
+                            lastFullContent = this.responseText;
                         }
                         let displayContent = lastFullContent;
                         if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
