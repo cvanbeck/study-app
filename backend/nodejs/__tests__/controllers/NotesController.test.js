@@ -3,7 +3,10 @@ import NotesController from '../../controllers/NotesController.js';
 import Note from '../../models/Note.js';
 import NoteService from '../../services/NoteService.js';
 
-// Mock the NoteService module
+// Mock console.error to suppress output during tests
+console.error = jest.fn();
+
+// Mock the NoteService module to isolate controller tests
 jest.mock('../../services/NoteService.js');
 
 describe('NotesController', () => {
@@ -14,43 +17,53 @@ describe('NotesController', () => {
     let mockReq;
     let mockRes;
 
+    /**
+     * Setup test environment before each test.
+     * This includes clearing all mocks, setting up mock dependencies,
+     * and initializing the controller with these mocks.
+     */
     beforeEach(() => {
-        // Clear all mocks
+        // Clear all mocks before each test to ensure clean state
         jest.clearAllMocks();
 
-        // Mock the database context
+        // Mock database context with a query that returns a default note
         mockDbContext = {
             query: jest.fn().mockResolvedValue([{ id: 'test-id', name: '', content: '{"ops":[]}' }])
         };
 
-        // Create a real NoteService instance with mock DB
+        // Initialize NoteService with mocked database
         mockNoteService = new NoteService(mockDbContext);
 
-        // Mock the NoteService methods
+        // Mock core NoteService methods
+        // storeNote: Simulates saving a note and returns the same note
         mockNoteService.storeNote = jest.fn().mockImplementation(async (note) => {
             return note;
         });
 
+        // getNote: Simulates retrieving a note with test content
         mockNoteService.getNote = jest.fn().mockImplementation(async (id) => {
             return new Note({ id, content: 'Test content' });
         });
 
+        // updateNote: Simulates updating a note with new data
         mockNoteService.updateNote = jest.fn().mockImplementation(async (id, data) => {
             return new Note({ id, ...data });
         });
 
+        // Mock session service for authentication checks
         mockSessionService = {
-            validateSession: jest.fn().mockResolvedValue(true)
+            validateSession: jest.fn().mockResolvedValue(true)  // Default to authenticated state
         };
 
-        // Create controller with mocked services
+        // Initialize controller with all mocked dependencies
         controller = new NotesController({
             db: mockDbContext,
             noteService: mockNoteService,
             sessionService: mockSessionService
         });
 
-        // Mock request and response objects
+        // Setup mock request and response objects for Express.js
+        // Mock request object with a session and body
         mockReq = {
             session: {
                 user: { id: 'test-user-id' }
@@ -58,10 +71,12 @@ describe('NotesController', () => {
             body: {}
         };
 
+        // Mock response object with send, status, render, and json methods
         mockRes = {
             send: jest.fn(),
             status: jest.fn().mockReturnThis(),
-            render: jest.fn()
+            render: jest.fn(),
+            json: jest.fn()
         };
     });
 
