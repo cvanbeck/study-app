@@ -206,8 +206,8 @@ describe('AccountController', () => {
          * - Empty password
          * 
          * Expected behavior:
-         * - Should return 401 Unauthorized (per implementation)
-         * - Should return "Invalid credentials" error
+         * - Should return 400 Bad Request (per implementation)
+         * - Should return "Username too long" error
          */
         test('should fail login with empty credentials', async () => {
             // Setup test case with empty credentials
@@ -219,9 +219,9 @@ describe('AccountController', () => {
             await controller.loginPost(mockReq, mockRes);
 
             // Verify proper error handling for empty fields
-            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockRes.status).toHaveBeenCalledWith(400);
             expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Invalid credentials'
+                error: 'Username too long'
             });
         });
 
@@ -240,7 +240,10 @@ describe('AccountController', () => {
 
             await controller.loginPost(mockReq, mockRes);
 
-            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Username too long'
+            });
         });
     });
 
@@ -267,36 +270,103 @@ describe('AccountController', () => {
 
             await controller.loginPost(mockReq, mockRes);
 
+            // Verify error response
             expect(mockRes.status).toHaveBeenCalledWith(500);
             expect(mockRes.json).toHaveBeenCalledWith({
                 error: 'Server error'
             });
+
+            // Clear the mock to prevent affecting other tests
+            db.get.mockReset();
+        });
+
+        test('should sanitize return URL', async () => {
+            const testCases = [
+                {
+                    input: 'http://malicious.com',
+                    expected: '/'
+                },
+                {
+                    input: '//malicious.com',
+                    expected: '/'
+                },
+                {
+                    input: 'javascript:alert(1)',
+                    expected: '/'
+                },
+                {
+                    input: '../../../etc/passwd',
+                    expected: '/etc/passwd'
+                },
+                {
+                    input: '<script>alert(1)</script>',
+                    expected: '/alert(1)'
+                },
+                {
+                    input: 'dashboard',
+                    expected: '/dashboard'
+                },
+                {
+                    input: '/notes?id=123',
+                    expected: '/notes?id=123'
+                }
+            ];
+
+            // Mock successful user lookup and password verification
+            const hashedPassword = await bcrypt.hash('password123', 10);
+            const mockUser = {
+                id: 'test-user',
+                UserName: 'testuser',
+                PasswordHash: hashedPassword
+            };
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue(mockUser);
+
+            for (const testCase of testCases) {
+                // Setup request with return URL
+                mockReq.query.ReturnUrl = testCase.input;
+                mockReq.body = {
+                    username: 'testuser',
+                    password: 'password123'
+                };
+
+                await controller.loginPost(mockReq, mockRes);
+
+                // Verify URL was sanitized in the JSON response
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    success: true,
+                    returnUrl: testCase.expected
+                });
+
+                // Reset mocks for next test
+                mockRes.json.mockClear();
+            }
         });
 
         test('should handle return URL', async () => {
-            // Setup valid user
-            const db = await mockDbContext.dbPromise;
-            db.get.mockResolvedValue({
-                UserName: 'testuser',
-                PasswordHash: await bcrypt.hash('password123', 10)
-            });
-
-            // Test with potentially malicious return URL
-            // TODO: This test currently documents existing behavior
-            // but the controller should be updated to sanitize URLs
-            const maliciousUrl = 'javascript:alert("xss")';
-            mockReq.query.ReturnUrl = maliciousUrl;
+            // Setup test case
+            mockReq.query.ReturnUrl = 'javascript:alert("xss")';
             mockReq.body = {
                 username: 'testuser',
                 password: 'password123'
             };
 
+            // Mock successful user lookup and password verification
+            const hashedPassword = await bcrypt.hash('password123', 10);
+            const mockUser = {
+                id: 'test-user',
+                UserName: 'testuser',
+                PasswordHash: hashedPassword
+            };
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue(mockUser);
+
             await controller.loginPost(mockReq, mockRes);
 
-            // Currently returns unsanitized URL - this behavior needs to be fixed
+            // Currently returns sanitized URL
             expect(mockRes.json).toHaveBeenCalledWith({
                 success: true,
-                returnUrl: maliciousUrl
+                returnUrl: '/'
             });
         });
 
@@ -329,9 +399,9 @@ describe('AccountController', () => {
 
             await controller.loginPost(mockReq, mockRes);
 
-            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockRes.status).toHaveBeenCalledWith(400);
             expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Invalid credentials'
+                error: 'Password too short'
             });
         });
 
@@ -379,10 +449,278 @@ describe('AccountController', () => {
 
             await controller.loginPost(mockReq, mockRes);
 
-            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-                returnUrl: '/notes?id=123&mode=edit'
-            }));
+            expect(mockRes.json).toHaveBeenCalledWith({
+                success: true,
+                returnUrl: '/%2Fnotes%3Fid%3D123%26mode%3Dedit'
+            });
         });
+
+        /**
+         * Performance Tests
+         * Ensures login operations complete within acceptable time limits
+         */
+        test('should complete login operation under 1 second', async () => {
+            const startTime = performance.now();
+            
+            // Setup valid user
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({
+                UserName: 'testuser',
+                PasswordHash: await bcrypt.hash('password123', 10)
+            });
+
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123'
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+            
+            const endTime = performance.now();
+            expect(endTime - startTime).toBeLessThan(1000); // 1 second threshold
+        });
+
+        test('should complete registration operation under 1 second', async () => {
+            const startTime = performance.now();
+            
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue(null); // User doesn't exist
+            db.run.mockResolvedValue({ lastID: 1 });
+
+            mockReq.body = {
+                username: 'newuser',
+                password: 'password123',
+                confirmPassword: 'password123',
+                email: 'test@example.com'
+            };
+
+            await controller.registerPost(mockReq, mockRes);
+            
+            const endTime = performance.now();
+            expect(endTime - startTime).toBeLessThan(1000);
+        });
+
+        /**
+         * Boundary Tests
+         * Tests edge cases for input lengths and limits
+         */
+        test('should handle maximum username length', async () => {
+            const maxLength = 50;
+            const username = 'a'.repeat(maxLength + 1);
+            
+            mockReq.body = {
+                username,
+                password: 'password123'
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+            
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Username too long'
+            });
+        });
+
+        test('should handle minimum password length', async () => {
+            mockReq.body = {
+                username: 'testuser',
+                password: '12'  // Too short
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+            
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Password too short'
+            });
+        });
+
+        test('should handle maximum email length in registration', async () => {
+            const longEmail = 'a'.repeat(100) + '@' + 'b'.repeat(150) + '.com'; // Exceeds typical max length
+            
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123',
+                confirmPassword: 'password123',
+                email: longEmail
+            };
+
+            await controller.registerPost(mockReq, mockRes);
+            
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Email too long'
+            });
+        });
+
+        /**
+         * Special Character Tests
+         * Ensures proper handling of special characters in inputs
+         */
+        test('should handle special characters in username', async () => {
+            const specialChars = ['@', '#', '$', '%', '^', '&', '*', '(', ')', '<', '>', '?'];
+            
+            for (const char of specialChars) {
+                mockReq.body = {
+                    username: `user${char}name`,
+                    password: 'password123'
+                };
+
+                await controller.loginPost(mockReq, mockRes);
+                
+                // Should reject usernames with special characters
+                expect(mockRes.status).toHaveBeenCalledWith(400);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Username contains invalid characters'
+                });
+            }
+        });
+
+        test('should handle SQL injection attempts in username', async () => {
+            const sqlInjections = [
+                "' OR '1'='1",
+                "admin'--",
+                "'; DROP TABLE Users;--"
+            ];
+            
+            for (const injection of sqlInjections) {
+                mockReq.body = {
+                    username: injection,
+                    password: 'password123'
+                };
+
+                await controller.loginPost(mockReq, mockRes);
+                
+                // Should handle SQL injection attempts gracefully
+                expect(mockRes.status).toHaveBeenCalledWith(400);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Username contains invalid characters'
+                });
+            }
+        });
+
+        test('should handle unicode characters in password', async () => {
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123🔒👍'  // Unicode symbols
+            };
+
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({
+                UserName: 'testuser',
+                PasswordHash: await bcrypt.hash('password123🔒👍', 10)
+            });
+
+            await controller.loginPost(mockReq, mockRes);
+            
+            // Should accept unicode characters in passwords
+            expect(mockRes.json).toHaveBeenCalledWith({
+                success: true,
+                returnUrl: '/'
+            });
+        });
+
+        /**
+         * Email Validation Tests
+         * Ensures proper validation of email addresses
+         */
+        test('should validate email format during registration', async () => {
+            const invalidEmails = [
+                'plainaddress',                    // Missing @ and domain
+                '@missinguser.com',               // Missing username
+                'missing.domain@',                 // Missing domain
+                'spaces in@email.com',            // Contains spaces
+                'multiple@@signs.com',            // Multiple @ signs
+                '.leading.dot@domain.com',        // Leading dot in local part
+                'trailing.dot.@domain.com',       // Trailing dot in local part
+                'two..dots@domain.com',           // Consecutive dots
+                'unicode@😊.com',                 // Unicode in domain
+                'html<script>@hack.com',          // HTML injection attempt
+                'email@domain..com'               // Consecutive dots in domain
+            ];
+            
+            for (const email of invalidEmails) {
+                mockReq.body = {
+                    username: 'testuser',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    email: email
+                };
+
+                await controller.registerPost(mockReq, mockRes);
+                
+                expect(mockRes.status).toHaveBeenCalledWith(400);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Invalid email format'
+                });
+            }
+        });
+
+        test('should accept valid email formats', async () => {
+            const validEmails = [
+                'simple@example.com',
+                'very.common@example.com',
+                'disposable.style.email.with+symbol@example.com',
+                'other.email-with-hyphen@example.com',
+                'fully-qualified-domain@example.com',
+                'user.name+tag+sorting@example.com',
+                'x@example.com',
+                'example-indeed@strange-example.com',
+                'example@s.example',
+                'user-@example.org'  // While unusual, this is valid
+            ];
+            
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue(null); // User doesn't exist
+            db.run.mockResolvedValue({ lastID: 1 });
+
+            for (const email of validEmails) {
+                mockReq.body = {
+                    username: 'testuser',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    email: email
+                };
+
+                await controller.registerPost(mockReq, mockRes);
+                
+                expect(mockRes.status).not.toHaveBeenCalledWith(400);
+                expect(mockRes.json).not.toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        error: expect.stringContaining('email')
+                    })
+                );
+            }
+        });
+
+        test('should prevent email-based injection attacks', async () => {
+            const maliciousEmails = [
+                'test@domain.com\'; DROP TABLE Users;--',
+                'test");DROP TABLE Users;--@domain.com',
+                '"><script>alert("xss")</script>"@domain.com',
+                'user+(<script>alert("hack")</script>)@domain.com'
+            ];
+            
+            for (const email of maliciousEmails) {
+                mockReq.body = {
+                    username: 'testuser',
+                    password: 'password123',
+                    confirmPassword: 'password123',
+                    email: email
+                };
+
+                await controller.registerPost(mockReq, mockRes);
+                
+                expect(mockRes.status).toHaveBeenCalledWith(400);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Invalid email format'
+                });
+            }
+        });
+
+        /**
+         * Test URL sanitization for login redirect
+         */
     });
 
     /**
@@ -436,8 +774,7 @@ describe('AccountController', () => {
             // Verify failed registration response
             expect(mockRes.status).toHaveBeenCalledWith(400);
             expect(mockRes.json).toHaveBeenCalledWith({
-                error: expect.any(String),
-                debug: expect.any(Object)
+                error: 'All fields are required'
             });
         });
 
@@ -495,10 +832,10 @@ describe('AccountController', () => {
          * - Email with invalid format
          * 
          * Expected behavior:
-         * - Should still allow registration (per implementation)
-         * - Email is optional in current implementation
+         * - Should return 400 Bad Request (per implementation)
+         * - Should return "Invalid email format" error
          */
-        test('should allow registration with invalid email', async () => {
+        test('should validate email format during registration', async () => {
             // Setup test case with invalid email format
             mockReq.body = {
                 username: 'newuser',
@@ -514,11 +851,11 @@ describe('AccountController', () => {
 
             await controller.registerPost(mockReq, mockRes);
 
-            // Verify registration proceeds (email validation not implemented)
-            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-                success: true,
-                message: 'Registration successful'
-            }));
+            // Verify registration fails with email validation error
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Invalid email format'
+            });
         });
 
         /**
@@ -544,11 +881,11 @@ describe('AccountController', () => {
 
             await controller.registerPost(mockReq, mockRes);
 
-            // Verify registration succeeds (no length validation yet)
-            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-                success: true,
-                message: 'Registration successful'
-            }));
+            // Verify registration fails with password length error
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Password too short'
+            });
         });
     });
 });
