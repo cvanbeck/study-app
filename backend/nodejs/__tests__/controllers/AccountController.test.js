@@ -245,6 +245,147 @@ describe('AccountController', () => {
     });
 
     /**
+     * Login Edge Cases Test Suite
+     * 
+     * Tests various edge cases and error scenarios for the login functionality:
+     * - Database errors
+     * - Invalid return URLs
+     * - Session handling
+     * - Password comparison failures
+     */
+    describe('Login Edge Cases', () => {
+        test('should handle database connection error', async () => {
+            // Setup database error
+            const dbError = new Error('Database connection failed');
+            const db = await mockDbContext.dbPromise;
+            db.get.mockRejectedValue(dbError);
+
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123'
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Server error'
+            });
+        });
+
+        test('should handle return URL', async () => {
+            // Setup valid user
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({
+                UserName: 'testuser',
+                PasswordHash: await bcrypt.hash('password123', 10)
+            });
+
+            // Test with potentially malicious return URL
+            // TODO: This test currently documents existing behavior
+            // but the controller should be updated to sanitize URLs
+            const maliciousUrl = 'javascript:alert("xss")';
+            mockReq.query.ReturnUrl = maliciousUrl;
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123'
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+
+            // Currently returns unsanitized URL - this behavior needs to be fixed
+            expect(mockRes.json).toHaveBeenCalledWith({
+                success: true,
+                returnUrl: maliciousUrl
+            });
+        });
+
+        test('should handle bcrypt comparison failure', async () => {
+            // Setup user but simulate bcrypt error
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({
+                UserName: 'testuser',
+                PasswordHash: 'invalid_hash'
+            });
+
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123'
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Invalid credentials'
+            });
+        });
+
+        test('should handle missing password field', async () => {
+            mockReq.body = {
+                username: 'testuser'
+                // password missing
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Invalid credentials'
+            });
+        });
+
+        test('should handle session creation failure', async () => {
+            // Setup valid user
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({
+                UserName: 'testuser',
+                PasswordHash: await bcrypt.hash('password123', 10)
+            });
+
+            // Simulate session error
+            const sessionError = new Error('Session creation failed');
+            Object.defineProperty(mockReq, 'session', {
+                set: () => { throw sessionError; }
+            });
+
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123'
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Server error'
+            });
+        });
+
+        test('should decode encoded return URL', async () => {
+            // Setup valid user
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({
+                UserName: 'testuser',
+                PasswordHash: await bcrypt.hash('password123', 10)
+            });
+
+            // Test with encoded return URL
+            mockReq.query.ReturnUrl = encodeURIComponent('/notes?id=123&mode=edit');
+            mockReq.body = {
+                username: 'testuser',
+                password: 'password123'
+            };
+
+            await controller.loginPost(mockReq, mockRes);
+
+            expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
+                returnUrl: '/notes?id=123&mode=edit'
+            }));
+        });
+    });
+
+    /**
      * Registration Functionality Tests
      * Tests various registration scenarios including:
      * - Successful registration with valid data
