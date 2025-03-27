@@ -100,15 +100,16 @@
                         if (chatMode === 'quizmaster' && !lastFullContent) {
                             lastFullContent = this.responseText;
                         }
-                        let displayContent = processAIContent(lastFullContent).visible.trim();
+                        const processed = processAIContent(lastFullContent);
+                        let displayContent = processed.visible.trim();
                         displayContent = displayContent.replace(/\\+"$/, "").trim();
                         if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
-                            displayContent = 'QUIZ QUESTION:' + processAIContent(displayContent).visible.trim().split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                            displayContent = displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
                         }
                         if (destination === 'chat'){
                             renderFullResponse(displayContent, container, true);
                         } else if (destination === 'note') {
-                            updateNoteWithAIResponse(displayContent, true);
+                            updateNoteWithAIResponse(displayContent, true, chatMode);
                         }
                         console.log("final displaycontent:", displayContent);
                     });
@@ -138,28 +139,26 @@
             });
         });
         let previousOutput = "";
-        function updateNoteWithAIResponse(content, isFinal=false) {
+        function updateNoteWithAIResponse(content, isFinal=false, chatMode) {
             console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
             console.log("procAI: ", processedContent);
 
-            let newOutput = processedContent.visible.trim();
-            //let visibleContent = processedContent.visible.trim();
+            let visibleContent = processedContent.visible.trim();
+            if (visibleContent.startsWith('"') && visibleContent.endsWith('"')) {
+                visibleContent = visibleContent.substring(1, visibleContent.length -1).trim();
+            }
             const editorElement = document.querySelector('#editor')
             const editor = Quill.find(editorElement);
             if (!editor) return;
-            let newChunk = "";
-            if (newOutput.startsWith(previousOutput)){
-                newChunk = newOutput.substring(previousOutput.length);
-            }else{
-                previousOutput="";
-                newChunk = newOutput
-            }
-            previousOutput = newOutput;
+
             if (typeof window.aiResponseIndex !== 'undefined'){
-                editor.insertText(editor.getLength(), newChunk);
+                const aiIndex = window.aiResponseIndex;
+                const currentLength = editor.getLength();
+                editor.deleteText(aiIndex, currentLength - aiIndex);
             } else {
-                    editor.insertText(editor.getLength(), `AI: ${newOutput}\n`);
+                const currentLength = editor.getLength();
+                editor.insertText(currentLength, `AI: ${visibleContent}\n`);
             }
             if (window.socket && typeof window.socket.emit === 'function') {
                 const delta = editor.getContents();
