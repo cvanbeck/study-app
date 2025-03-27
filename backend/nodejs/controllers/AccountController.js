@@ -33,46 +33,54 @@ export default class AccountController extends BaseController {
 
     // POST /account/loginPost – handles login requests
     async loginPost(req, res) {
-        const { username, password } = req.body;
+        const username = req.body.username;
+        const password = req.body.password;
         let returnUrl = req.query.ReturnUrl || '/';
 
-        // Input validation
+        // Constants for validation
         const MAX_USERNAME_LENGTH = 50;
         const MIN_PASSWORD_LENGTH = 6;
-        const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/; // Only alphanumeric, underscore, and hyphen
+        const MAX_EMAIL_LENGTH = 254;
+        const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        // Validate username
-        if (!username || username.length > MAX_USERNAME_LENGTH) {
-            return res.status(400).json({ error: 'Username too long' });
+        if (!username || !password) {
+            return res.status(400).json({ error: "Missing credentials" });
         }
 
-        if (!USERNAME_REGEX.test(username)) {
-            return res.status(400).json({ error: 'Username contains invalid characters' });
-        }
-
-        // Check for SQL injection patterns
-        const SQL_INJECTION_PATTERNS = [
-            "'",
-            "--",
-            ";",
-            "/*",
-            "*/",
-            "xp_",
-            "SELECT",
-            "DROP",
-            "INSERT",
-            "DELETE",
-            "UPDATE"
-        ];
-
-        if (SQL_INJECTION_PATTERNS.some(pattern => 
-            username.toUpperCase().includes(pattern))) {
-            return res.status(400).json({ error: 'Invalid username format' });
-        }
-
-        // Validate password
-        if (!password || password.length < MIN_PASSWORD_LENGTH) {
+        // Validate password length
+        if (password.length < MIN_PASSWORD_LENGTH) {
             return res.status(400).json({ error: 'Password too short' });
+        }
+
+        // First check if input looks like an email
+        const isEmail = username.includes('@');
+        
+        if (isEmail) {
+            // Validate email format and length
+            if (!EMAIL_REGEX.test(username)) {
+                return res.status(400).json({ error: 'Invalid email format' });
+            }
+            if (username.length > MAX_EMAIL_LENGTH) {
+                return res.status(400).json({ error: 'Email too long' });
+            }
+        } else {
+            // Only validate username format if it's not an email
+            if (username.length > MAX_USERNAME_LENGTH) {
+                return res.status(400).json({ error: 'Username too long' });
+            }
+            if (!USERNAME_REGEX.test(username)) {
+                return res.status(400).json({ error: 'Username contains invalid characters' });
+            }
+            // SQL injection check only for username format
+            const SQL_INJECTION_PATTERNS = [
+                "'", "--", ";", "/*", "*/", "xp_",
+                "SELECT", "DROP", "INSERT", "DELETE", "UPDATE"
+            ];
+            if (SQL_INJECTION_PATTERNS.some(pattern => 
+                username.toUpperCase().includes(pattern))) {
+                return res.status(400).json({ error: 'Invalid format' });
+            }
         }
 
         // Sanitize return URL
@@ -102,7 +110,12 @@ export default class AccountController extends BaseController {
 
         try {
             const db = await this.dbContext.dbPromise;
-            const user = await db.get("SELECT * FROM Users WHERE UserName = ?", [username]);
+            // Check for user by either username or email (case-insensitive)
+            const user = await db.get(
+                "SELECT * FROM Users WHERE LOWER(UserName) = LOWER(?) OR LOWER(Email) = LOWER(?)", 
+                [username, username]
+            );
+            
             if (!user) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
@@ -127,23 +140,31 @@ export default class AccountController extends BaseController {
 
     // POST /account/registerPost – handles new user registrations
     async registerPost(req, res) {
+        console.log("Registration attempt:", { username: req.body.username, email: req.body.email });
+
         const { username, email, password, confirmPassword } = req.body;
 
-        // Debug logging
-        console.log('Registration attempt:', { username, email });
+        // Validate required fields
+        if (!username || !email || !password || !confirmPassword) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Validate email format
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!EMAIL_REGEX.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        // Validate email length
+        const MAX_EMAIL_LENGTH = 254;
+        if (email.length > MAX_EMAIL_LENGTH) {
+            return res.status(400).json({ error: "Email too long" });
+        }
 
         // Constants for validation
         const MAX_USERNAME_LENGTH = 50;
         const MIN_PASSWORD_LENGTH = 6;
-        const MAX_EMAIL_LENGTH = 254; // RFC 5321
         const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
-        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-        // Validate required fields
-        if (!username || !email || !password || !confirmPassword) {
-            console.log('Validation failed: Missing fields');
-            return res.status(400).json({ error: 'All fields are required' });
-        }
 
         // Validate username
         if (username.length > MAX_USERNAME_LENGTH) {
@@ -152,15 +173,6 @@ export default class AccountController extends BaseController {
 
         if (!USERNAME_REGEX.test(username)) {
             return res.status(400).json({ error: 'Username contains invalid characters' });
-        }
-
-        // Validate email
-        if (email.length > MAX_EMAIL_LENGTH) {
-            return res.status(400).json({ error: 'Email too long' });
-        }
-
-        if (!EMAIL_REGEX.test(email)) {
-            return res.status(400).json({ error: 'Invalid email format' });
         }
 
         // Validate password

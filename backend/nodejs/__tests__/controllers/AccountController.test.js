@@ -120,50 +120,86 @@ describe('AccountController', () => {
             const mockUser = { 
                 id: 'test-user', 
                 UserName: 'testuser',
+                Email: 'test@example.com',
                 PasswordHash: hashedPassword
             };
 
-            // Simulate login attempt
-            mockReq.body = {
-                username: 'testuser',
-                password: 'password123'
-            };
+            // Test cases for different login methods
+            const loginTests = [
+                { username: 'testuser', description: 'username' },
+                { username: 'TESTUSER', description: 'uppercase username' },
+                { username: 'test@example.com', description: 'email' },
+                { username: 'TEST@EXAMPLE.COM', description: 'uppercase email' }
+            ];
 
-            // Mock successful user lookup
-            const db = await mockDbContext.dbPromise;
-            db.get.mockResolvedValue(mockUser);
+            for (const test of loginTests) {
+                // Simulate login attempt
+                mockReq.body = {
+                    username: test.username,
+                    password: 'password123'
+                };
 
-            await controller.loginPost(mockReq, mockRes);
+                // Mock successful user lookup
+                const db = await mockDbContext.dbPromise;
+                db.get.mockResolvedValue(mockUser);
 
-            // Verify session and response
-            expect(mockReq.session.user).toEqual(mockUser);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                success: true,
-                returnUrl: '/'
-            });
+                await controller.loginPost(mockReq, mockRes);
+
+                // Verify database query
+                expect(db.get).toHaveBeenCalledWith(
+                    "SELECT * FROM Users WHERE LOWER(UserName) = LOWER(?) OR LOWER(Email) = LOWER(?)",
+                    [test.username, test.username]
+                );
+
+                // Verify session and response
+                expect(mockReq.session.user).toEqual(mockUser);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    success: true,
+                    returnUrl: '/'
+                });
+
+                // Clear mocks for next iteration
+                jest.clearAllMocks();
+            }
         });
 
         /**
-         * Test failed login with invalid username
+         * Test failed login with invalid username or email
          */
-        test('should fail login with invalid username', async () => {
-            // Simulate login attempt with non-existent username
-            mockReq.body = {
-                username: 'nonexistent',
-                password: 'password123'
-            };
+        test('should fail login with invalid username or email', async () => {
+            const invalidInputs = [
+                { username: 'nonexistent', description: 'non-existent username' },
+                { username: 'fake@email.com', description: 'non-existent email' }
+            ];
 
-            // Mock failed user lookup
-            const db = await mockDbContext.dbPromise;
-            db.get.mockResolvedValue(null);
+            for (const input of invalidInputs) {
+                // Simulate login attempt
+                mockReq.body = {
+                    username: input.username,
+                    password: 'password123'
+                };
 
-            await controller.loginPost(mockReq, mockRes);
+                // Mock failed user lookup
+                const db = await mockDbContext.dbPromise;
+                db.get.mockResolvedValue(null);
 
-            // Verify failed login response
-            expect(mockRes.status).toHaveBeenCalledWith(401);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Invalid credentials'
-            });
+                await controller.loginPost(mockReq, mockRes);
+
+                // Verify database query
+                expect(db.get).toHaveBeenCalledWith(
+                    "SELECT * FROM Users WHERE LOWER(UserName) = LOWER(?) OR LOWER(Email) = LOWER(?)",
+                    [input.username, input.username]
+                );
+
+                // Verify failed login response
+                expect(mockRes.status).toHaveBeenCalledWith(401);
+                expect(mockRes.json).toHaveBeenCalledWith({
+                    error: 'Invalid credentials'
+                });
+
+                // Clear mocks for next iteration
+                jest.clearAllMocks();
+            }
         });
 
         /**
@@ -207,10 +243,10 @@ describe('AccountController', () => {
          * 
          * Expected behavior:
          * - Should return 400 Bad Request (per implementation)
-         * - Should return "Username too long" error
+         * - Should return "Missing credentials" error
          */
         test('should fail login with empty credentials', async () => {
-            // Setup test case with empty credentials
+            // Simulate login attempt with empty fields
             mockReq.body = {
                 username: '',
                 password: ''
@@ -221,7 +257,7 @@ describe('AccountController', () => {
             // Verify proper error handling for empty fields
             expect(mockRes.status).toHaveBeenCalledWith(400);
             expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Username too long'
+                error: 'Missing credentials'
             });
         });
 
@@ -401,7 +437,7 @@ describe('AccountController', () => {
 
             expect(mockRes.status).toHaveBeenCalledWith(400);
             expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Password too short'
+                error: 'Missing credentials'
             });
         });
 
@@ -536,13 +572,13 @@ describe('AccountController', () => {
         });
 
         test('should handle maximum email length in registration', async () => {
-            const longEmail = 'a'.repeat(100) + '@' + 'b'.repeat(150) + '.com'; // Exceeds typical max length
-            
+            // Create a valid email that exceeds maximum length (254 chars)
+            const longEmail = 'a'.repeat(246) + '@test.com'; // 246 + 9 = 255 chars
             mockReq.body = {
                 username: 'testuser',
+                email: longEmail,
                 password: 'password123',
-                confirmPassword: 'password123',
-                email: longEmail
+                confirmPassword: 'password123'
             };
 
             await controller.registerPost(mockReq, mockRes);
@@ -562,17 +598,21 @@ describe('AccountController', () => {
             
             for (const char of specialChars) {
                 mockReq.body = {
-                    username: `user${char}name`,
-                    password: 'password123'
+                    username: `test${char}user`,
+                    email: 'valid@email.com',
+                    password: 'password123',
+                    confirmPassword: 'password123'
                 };
 
-                await controller.loginPost(mockReq, mockRes);
-                
+                await controller.registerPost(mockReq, mockRes);
+
                 // Should reject usernames with special characters
                 expect(mockRes.status).toHaveBeenCalledWith(400);
                 expect(mockRes.json).toHaveBeenCalledWith({
                     error: 'Username contains invalid characters'
                 });
+
+                jest.clearAllMocks();
             }
         });
 
@@ -763,10 +803,12 @@ describe('AccountController', () => {
          * Test failed registration with missing fields
          */
         test('should fail registration with missing fields', async () => {
-            // Simulate incomplete registration form
+            // Attempt registration with missing fields
             mockReq.body = {
-                username: 'newuser',
-                // Missing password and confirmPassword
+                username: '',
+                email: '',
+                password: '',
+                confirmPassword: ''
             };
 
             await controller.registerPost(mockReq, mockRes);
@@ -774,7 +816,7 @@ describe('AccountController', () => {
             // Verify failed registration response
             expect(mockRes.status).toHaveBeenCalledWith(400);
             expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'All fields are required'
+                error: 'Missing required fields'
             });
         });
 
