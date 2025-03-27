@@ -48,6 +48,7 @@
             }
             var lastFullContent = '';
             var receivedLength = 0;
+            var finalUpdateDone = false;
 
             $.ajax({
                 url: '/chat/getChatResponse',
@@ -94,6 +95,8 @@
                         });
                     });
                     xhr.addEventListener('loadend', function () {
+                        if (finalUpdateDone) return;
+                        finalUpdateDone = true;    
                         if (chatMode === 'quizmaster' && !lastFullContent) {
                             lastFullContent = this.responseText;
                         }
