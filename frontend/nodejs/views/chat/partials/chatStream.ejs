@@ -79,9 +79,6 @@
                                             lastFullContent = parsedData.fullContent;
 
                                             let displayContent = lastFullContent
-                                            if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
-                                                displayContent = 'QUIZ QUESTION:' + processAIContent(displayContent).visible.trim().split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
-                                            }
                                             if (destination === 'chat'){
                                                 renderFullResponse(displayContent, container, false);
                                                 updateScroll();
