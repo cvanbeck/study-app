@@ -156,6 +156,7 @@
                 const aiIndex = window.aiResponseIndex;
                 const currentLength = editor.getLength();
                 editor.deleteText(aiIndex, currentLength - aiIndex);
+                editor.insertText(aiIndex, `AI: ${visibleContent}\n`);
             } else {
                 const currentLength = editor.getLength();
                 editor.insertText(currentLength, `AI: ${visibleContent}\n`);
