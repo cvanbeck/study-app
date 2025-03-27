@@ -137,24 +137,29 @@
                 }
             });
         });
-
+        let previousOutput = "";
         function updateNoteWithAIResponse(content, isFinal=false) {
             console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
             console.log("procAI: ", processedContent);
 
-            let visibleContent = processedContent.visible.trim();
+            let newOutput = processedContent.visible.trim();
+            //let visibleContent = processedContent.visible.trim();
             const editorElement = document.querySelector('#editor')
             const editor = Quill.find(editorElement);
             if (!editor) return;
+            let newChunk = "";
+            if (newOutput.startsWith(previousOutput)){
+                newChunk = newOutput.substring(previousOutput.length);
+            }else{
+                previousOutput="";
+                newChunk = newOutput
+            }
+            previousOutput = newOutput;
             if (typeof window.aiResponseIndex !== 'undefined'){
-                const aiIndex = window.aiResponseIndex;
-                const currentLength = editor.getLength();
-                editor.deleteText(aiIndex, currentLength - aiIndex);
-                editor.insertText(aiIndex, `AI: ${visibleContent}\n`);
+                editor.insertText(editor.getLength(), newChunk);
             } else {
-                const currentLength = editor.getLength();
-                editor.insertText(currentLength, `AI: ${visibleContent}\n`);
+                    editor.insertText(editor.getLength(), `AI: ${newOutput}\n`);
             }
             if (window.socket && typeof window.socket.emit === 'function') {
                 const delta = editor.getContents();
