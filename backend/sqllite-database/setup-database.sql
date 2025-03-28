@@ -61,11 +61,11 @@ CREATE TABLE RolePermissions (
     PermissionId TEXT NOT NULL,
     PRIMARY KEY (RoleId, PermissionId),
     FOREIGN KEY (RoleId) REFERENCES Roles(Id) ON DELETE CASCADE,
-    FOREIGN KEY (PermissionId) REFERENCES UserPermissions(Id) ON DELETE CASCADE
+    FOREIGN KEY (PermissionId) REFERENCES Permissions(Id) ON DELETE CASCADE
 );
 
--- UserPermissions definition
-CREATE TABLE UserPermissions (
+-- Permissions definition
+CREATE TABLE Permissions (
     Id TEXT PRIMARY KEY, 
     Name TEXT UNIQUE NOT NULL,
     Description TEXT
