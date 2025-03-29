@@ -12,6 +12,7 @@
     "email": "placeholder@placeholder.com"
   },
   "scripts": {
+    "setup-db": "node init-db.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
   },
