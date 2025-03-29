@@ -106,7 +106,7 @@
         setupButtonHandlers() {
             // Duplicate overlay buttons
             $('#newNoteOverlayButton').on('click', () => $('#newNoteButton').click());
-            $('#loadNoteOverlayButton').on('click', () => $('#existingNoteSweetAlertButton').click());
+            $('#loadNoteOverlayButton').on('click', () => $('#loadNoteButton').click());
 
             // Primary functionality buttons
             $('#newNoteButton').on('click', () => {
@@ -121,7 +121,7 @@
                     NoteManager.createNewNote();
                 }
             });
-            $('#existingNoteSweetAlertButton').on('click', NoteManager.promptLoadExistingNote);
+            $('#loadNoteButton').on('click', NoteManager.promptLoadExistingNote);
             
             // Create Collab Session button confirmation
             $('#sessionButton').on('click', () => {
