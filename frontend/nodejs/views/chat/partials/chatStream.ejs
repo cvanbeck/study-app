@@ -78,7 +78,6 @@
                                         const parsedData = JSON.parse(sanitizedJsonPart);
                                         if (parsedData.fullContent) {
                                             lastFullContent += parsedData.fullContent;
-                                            } 
                                         }
                                     } catch (e) {
                                         console.error("Error parsing streamed data:", e, jsonPart);
@@ -143,7 +142,6 @@
                 }
             });
         });
-        let previousOutput = "";
         function updateNoteWithAIResponse(content, isFinal=false, chatMode) {
             console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
