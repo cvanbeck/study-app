@@ -39,11 +39,11 @@ export default class ChatService {
             case "quizmaster":
                 if (prompt.toLowerCase().includes("start quiz")){
                     const topic = prompt.replace(/start quiz/i, "").trim();
-                    formattedPrompt = `You are a friendly quiz host. Generate a single university-level quiz question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: [your question here]" followed by "CORRECT ANSWER: [correct answer]". The correct answer should be hidden from users and only used to validate responses.`;
+                    formattedPrompt = `Generate a single question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: " followed by a question, followed by "CORRECT ANSWER: " and then the correct answer.`;
                     this.quizInProgress = true;
                 } else if (this.quizInProgress && prompt.toLowerCase().includes("next question")){
                     const topic = prompt.replace(/next question/i, "").trim();
-                    formattedPrompt = `Generate another quiz question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: [your question here]" followed by "CORRECT ANSWER: [correct answer]". The correct answer should be hidden from users and only used to validate responses.`;
+                    formattedPrompt = `Generate another question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: " followed by a question, followed by "CORRECT ANSWER: " and then the correct answer.`;
                 } else if (this.quizInProgress && this.currentQuestion && this.correctAnswer){
                     isQuizAnswer = true;
                     let username = "";
