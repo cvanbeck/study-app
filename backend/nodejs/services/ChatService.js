@@ -165,5 +165,6 @@ export default class ChatService {
         if (normalUserAnswer.includes(normalCorrectAnswer) || normalCorrectAnswer.includes(normalUserAnswer)){
             return true;
         }
+        return false
     }
 }
