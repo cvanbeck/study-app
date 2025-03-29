@@ -1,3 +1,8 @@
+<script type="module">
+    window.quizCorrectAnswer = null;
+    window.lastQuizQuestion = null;
+</script>
+
 <script>
     $(document).ready(function () {
         // Set the placeholder based on the selected chat mode
@@ -45,6 +50,29 @@
                         window.socket.emit('text-change', delta);
                     }
                 }
+            }
+            if(chatMode === "quizmaster" && window.quizCorrectAnswer = null){
+                let username = ""
+                let userAnswer = prompt;
+                const colonIndex = prompt.indexOf(':');
+                if(colonIndex>0){
+                    username=prompt.substring(0, colonIndex).trim();
+                    userAnswer=prompt.substring(colonIndex+1).trim();
+                }
+                if(isAnswerCorrect(userAnswer, window.quizCorrectAnswer)){
+                    let msg = "";
+                    if(window.lastQuizAnsweredBy){
+                        msg = `That's correct, ${username}! But ${window.lastQuizAnsweredBy} already answered this question correctly. The answer is ${window.quizCorrectAnswer}. Type "next question" for another question.`;
+                    } else {
+                        msg = `Correct, ${username} gets 1 exp! The answer was ${window.quizCorrectAnswer}. Type "next question" for another question.`;
+                        window.lastQuizAnsweredBy = username;
+                    }
+                    appendSystemMessage(msg, container);
+                }else{
+                    let msg = `Sorry ${username}, that's not correct. Try again!`;
+                    appendSystemMessage(msg, container);
+                }
+                return;
             }
             var lastFullContent = '';
             var receivedLength = 0;
@@ -109,6 +137,7 @@
                             if (match && match[1]){
                                 displayContent = match[1].trim();
                             }
+                            const answerMatch = displayContent.match(/Correct Answer:\s*(.*?)(?:$)/i);
                         }
                         if (!displayContent){
                             console.log("Empty");
@@ -146,6 +175,15 @@
                 }
             });
         });
+        function appendSystemMessage(message, container){
+            if (!container) return;
+            const div = document.createElement("div");
+            div.className = "chat-message system-message";
+            div.innerText= message;
+            container.innerHTML = "";
+            container.appendChild(div);
+            updateScroll();
+        }
         function updateNoteWithAIResponse(content, isFinal=false, chatMode) {
             console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
@@ -187,5 +225,9 @@
             adjustTextareaHeight(this);
         });
         adjustTextareaHeight($('#prompt')[0]);
+        function isAnswerCorrect(userAnswer, correctAnswer){
+            if(!userAnswer||!correctAnswer) return false
+            return userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+        }
     });
 </script>
