@@ -132,3 +132,6 @@ dist
 
 # sqllite database files
 *.db
+
+# identifies whether the db first run script has occurred.
+db_initialized.txt
