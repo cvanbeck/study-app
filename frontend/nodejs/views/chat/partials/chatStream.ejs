@@ -60,7 +60,7 @@
                     var xhr = new window.XMLHttpRequest();
                     xhr.responseType = 'text';
                     xhr.addEventListener('progress', function () {
-                        if (chatMode === 'quizmaster') {
+                        if (destination == 'note' || chatMode === 'quizmaster') {
                             return;
                         }
                         const chunk = xhr.responseText.substring(receivedLength);
