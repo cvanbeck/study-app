@@ -24,7 +24,7 @@ const connectionString = join(__dirname, '../sqllite-database/Chinook.db');
 
 // Define paths for the database, setup SQL, and marker file (SQLLIT ONLY)
 const setupSqlFile = join(__dirname, '../sqllite-database/setup-database.sql');
-const markerFile = join(__dirname, '../sqllite-database/db_initialized.txt'); // DO NOT CHANGE, THIS FILE IS GITIGNORED
+const markerFile = join(__dirname, './database/db_initialized.txt'); // DO NOT CHANGE, THIS FILE IS GITIGNORED
 
 // Run the database initialization before starting the server. (SQLLITE ONLY)
 await initializeDatabase(connectionString, setupSqlFile, markerFile);
