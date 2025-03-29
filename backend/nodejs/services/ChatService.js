@@ -149,6 +149,8 @@ export default class ChatService {
                 this.currentQuestion = questionMatch[1].trim();
                 this.correctAnswer = answerMatch[1].trim();
                 this.lastAnsweredBy = null;
+                window.quizCorrectAnswer = this.correctAnswer;
+                window.lastQuizQuestion = this.currentQuestion;
             }
         }
     }
