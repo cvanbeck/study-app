@@ -77,7 +77,7 @@
 
                                         const parsedData = JSON.parse(sanitizedJsonPart);
                                         if (parsedData.fullContent) {
-                                            lastFullContent = parsedData.fullContent;
+                                            lastFullContent += parsedData.fullContent;
 
                                             let displayContent = lastFullContent
                                             if (destination === 'chat'){
@@ -94,7 +94,7 @@
                     });
                     xhr.addEventListener('loadend', function () {
                         if (finalUpdateDone) return;
-                        if(!this.responseText.trim()){
+                        if(!this.responseText||!this.responseText.trim()){
                             console.log("Empty response");
                             return;
                         }
