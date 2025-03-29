@@ -78,11 +78,6 @@
                                         const parsedData = JSON.parse(sanitizedJsonPart);
                                         if (parsedData.fullContent) {
                                             lastFullContent += parsedData.fullContent;
-
-                                            let displayContent = lastFullContent
-                                            if (destination === 'chat'){
-                                                renderFullResponse(displayContent, container, false);
-                                                updateScroll();
                                             } 
                                         }
                                     } catch (e) {
