@@ -83,9 +83,7 @@
                                             if (destination === 'chat'){
                                                 renderFullResponse(displayContent, container, false);
                                                 updateScroll();
-                                            } else if (destination === 'note') {
-                                                break;
-                                            }
+                                            } 
                                         }
                                     } catch (e) {
                                         console.error("Error parsing streamed data:", e, jsonPart);
