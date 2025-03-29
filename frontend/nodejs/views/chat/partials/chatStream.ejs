@@ -109,10 +109,6 @@
                             if (match && match[1]){
                                 displayContent = match[1].trim();
                             }
-                            chatServiceInstance.processQuizResponse(lastFullContent);
-                            if(chatServiceInstance.currentQuestion){
-                                displayContent = chatServiceInstance.currentQuestion;
-                            }
                         }
                         if (!displayContent){
                             console.log("Empty");
