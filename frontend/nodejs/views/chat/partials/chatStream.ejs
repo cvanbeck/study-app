@@ -78,6 +78,10 @@
                                         const parsedData = JSON.parse(sanitizedJsonPart);
                                         if (parsedData.fullContent) {
                                             lastFullContent = parsedData.fullContent;
+                                            if(destination ==='chat'){
+                                                renderFullResponse(lastFullContent, container, false);
+                                                updateScroll();
+                                            }
                                         }
                                     } catch (e) {
                                         console.error("Error parsing streamed data:", e, jsonPart);
@@ -104,6 +108,10 @@
                             const match = displayContent.match(/Quiz Question:\s*(.*?)(?:\s*Correct Answer:|$)/i);
                             if (match && match[1]){
                                 displayContent = match[1].trim();
+                            }
+                            chatServiceInstance.processQuizResponse(lastFullContent);
+                            if(chatServiceInstance.currentQuestion){
+                                displayContent = chatServiceInstance.currentQuestion;
                             }
                         }
                         if (!displayContent){
