@@ -77,7 +77,7 @@
 
                                         const parsedData = JSON.parse(sanitizedJsonPart);
                                         if (parsedData.fullContent) {
-                                            lastFullContent += parsedData.fullContent;
+                                            lastFullContent = parsedData.fullContent;
                                         }
                                     } catch (e) {
                                         console.error("Error parsing streamed data:", e, jsonPart);
