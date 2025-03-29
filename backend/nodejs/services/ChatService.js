@@ -112,7 +112,6 @@ export default class ChatService {
                     const parsedData = JSON.parse(textData);
                     if (parsedData.fullContent) {
                         assistantMessage = parsedData.fullContent;
-                        lastFullContent += parsedData.fullContent;
                         if (mode == "quizmaster" && this.quizInProgress) {
                             this.processQuizResponse(assistantMessage);
                         }
