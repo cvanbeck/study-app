@@ -100,11 +100,15 @@
                         if (chatMode === 'quizmaster' && !lastFullContent) {
                             lastFullContent = this.responseText;
                         }
+                        console.log("Raw response: ", this.responseText);
                         const processed = processAIContent(lastFullContent);
                         let displayContent = processed.visible.trim();
                         displayContent = displayContent.replace(/\\+"$/, "").trim();
-                        if (chatMode === 'quizmaster' && displayContent.includes('QUIZ QUESTION:') && displayContent.includes('CORRECT ANSWER:')){
-                            displayContent = displayContent.split('QUIZ QUESTION:')[1].split('CORRECT ANSWER:')[0].trim();
+                        if (chatMode === 'quizmaster'){
+                            const match = displayContent.match(/Quiz Question:\s*(.*?)(?:\s*Correct Answer:|$)/i);
+                            if (match && match[1]){
+                                discplayContent = match[1].trim();
+                            }
                         }
                         if (destination === 'chat'){
                             renderFullResponse(displayContent, container, true);
