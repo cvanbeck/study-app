@@ -52,26 +52,32 @@
                     }
                 }
             }
-            if(chatMode === "quizmaster" && window.quizCorrectAnswer !== null){
-                let username = ""
-                let userAnswer = prompt;
-                const colonIndex = prompt.indexOf(':');
-                if(colonIndex>0){
-                    username=prompt.substring(0, colonIndex).trim();
-                    userAnswer=prompt.substring(colonIndex+1).trim();
-                }
-                if(isAnswerCorrect(userAnswer, window.quizCorrectAnswer)){
-                    let msg = "";
-                    if(window.lastQuizAnsweredBy){
-                        msg = `That's correct, ${username}! But ${window.lastQuizAnsweredBy} already answered this question correctly. The answer is ${window.quizCorrectAnswer}. Type "next question" for another question.`;
-                    } else {
-                        msg = `Correct, ${username} gets 1 exp! The answer was ${window.quizCorrectAnswer}. Type "next question" for another question.`;
-                        window.lastQuizAnsweredBy = username;
+            if(destination === 'note' && chatMode === "quizmaster" && window.quizCorrectAnswer !== null){
+                const editor = Quill.find(document.querySelector('#editor'));
+                if (editor) {
+                    const noteText = editor.getText().trim();
+                    const lines = noteText.split('\n');
+                    const lastLine = lines[lines.length - 1];
+                    let username = ""
+                    let userAnswer = prompt;
+                    const colonIndex = prompt.indexOf(':');
+                    if(colonIndex>0){
+                        username=prompt.substring(0, colonIndex).trim();
+                        userAnswer=prompt.substring(colonIndex+1).trim();
+                    }       
+                    if(isAnswerCorrect(userAnswer, window.quizCorrectAnswer)){
+                        let msg = "";
+                        if(window.lastQuizAnsweredBy){
+                            msg = `That's correct, ${username}! But ${window.lastQuizAnsweredBy} already answered this question correctly. The answer is ${window.quizCorrectAnswer}. Type "next question" for another question.`;
+                        } else {
+                            msg = `Correct, ${username} gets 1 exp! The answer was ${window.quizCorrectAnswer}. Type "next question" for another question.`;
+                            window.lastQuizAnsweredBy = username;
+                        }
+                        appendSystemMessage(msg, container);
+                    }else{
+                        let msg = `Sorry ${username}, that's not correct. Try again!`;
+                        appendSystemMessage(msg, container);
                     }
-                    appendSystemMessage(msg, container);
-                }else{
-                    let msg = `Sorry ${username}, that's not correct. Try again!`;
-                    appendSystemMessage(msg, container);
                 }
                 return;
             }
@@ -138,11 +144,11 @@
                             if (match && match[1]){
                                 displayContent = match[1].trim();
                             }
-                            const answerMatch = displayContent.match(/Correct Answer:\s*(.*?)(?:$)/i);
+                            window.lastQuizQuestion = displayContent;
+                            const answerMatch = lastFullContent.match(/Correct Answer:\s*(.*?)(?:$)/i);
                             if(answerMatch && answerMatch[1]){
                                 window.quizCorrectAnswer = answerMatch[1].trim();
                             }
-                            window.lastQuizQuestion = displayContent;
                         }
                         if (!displayContent){
                             console.log("Empty");
