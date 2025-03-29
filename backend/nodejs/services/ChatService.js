@@ -81,10 +81,8 @@ export default class ChatService {
                 formattedPrompt = prompt;
         }
         
-        if(!isQuizAnswer) {
-            // Add user input to conversation history
-            this.conversationHistory.push({ role: "user", content: formattedPrompt });
-        }
+        this.conversationHistory.push({ role: "user", content: formattedPrompt });
+        
         try {
             const response = await axios.post(
                 "http://localhost:11434/v1/chat/completions",
