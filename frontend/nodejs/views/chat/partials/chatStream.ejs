@@ -1,6 +1,7 @@
 <script type="module">
     window.quizCorrectAnswer = null;
     window.lastQuizQuestion = null;
+    window.lastQuizAnsweredBy = null;
 </script>
 
 <script>
@@ -51,7 +52,7 @@
                     }
                 }
             }
-            if(chatMode === "quizmaster" && window.quizCorrectAnswer = null){
+            if(chatMode === "quizmaster" && window.quizCorrectAnswer !== null){
                 let username = ""
                 let userAnswer = prompt;
                 const colonIndex = prompt.indexOf(':');
@@ -138,6 +139,10 @@
                                 displayContent = match[1].trim();
                             }
                             const answerMatch = displayContent.match(/Correct Answer:\s*(.*?)(?:$)/i);
+                            if(answerMatch && answerMatch[1]){
+                                window.quizCorrectAnswer = answerMatch[1].trim();
+                            }
+                            window.lastQuizQuestion = displayContent;
                         }
                         if (!displayContent){
                             console.log("Empty");
@@ -212,6 +217,10 @@
                 
             }
         }
+        function isAnswerCorrect(userAnswer, correctAnswer){
+            if(!userAnswer||!correctAnswer) return false
+            return userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
+        }
 
         // Adjust textarea height on keydown and input events
         $('#prompt').on('keydown', function (e) {
@@ -225,9 +234,5 @@
             adjustTextareaHeight(this);
         });
         adjustTextareaHeight($('#prompt')[0]);
-        function isAnswerCorrect(userAnswer, correctAnswer){
-            if(!userAnswer||!correctAnswer) return false
-            return userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
-        }
     });
 </script>
