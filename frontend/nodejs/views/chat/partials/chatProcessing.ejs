@@ -60,7 +60,8 @@
         if (processedContent.visible) {
             const visibleContentDiv = document.createElement('div');
             visibleContentDiv.className = 'markdown-content';
-            visibleContentDiv.innerHTML = processMathContent(processedContent.visible);
+            let htmlWithLineBreaks = processedContent.visible.replace(/\n/g, '<br>');
+            visibleContentDiv.innerHTML = processMathContent(htmlWithLineBreaks);;
             container.appendChild(visibleContentDiv);
         }
 
