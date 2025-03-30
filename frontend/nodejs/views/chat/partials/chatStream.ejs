@@ -105,7 +105,7 @@
                         console.log("Raw response: ", this.responseText);
 
                         const processed = processAIContent(lastFullContent);
-                        let displayContent = processed.visible.trim();
+                        let displayContent = processed.question.trim();
                         displayContent = displayContent.replace(/\\+"$/, "").trim();
                         if (chatMode === 'quizmaster'){
                             const questionMatch = displayContent.match(/QUIZ QUESTION:\s*("?)([^\r\n]*?)\1\s*CORRECT ANSWER:/i);
