@@ -14,7 +14,7 @@
             e.preventDefault();
             const prompt = $('#prompt').val().trim();
             if(!prompt) return;
-            const chatMode = $('input[name="mode"]:checked').val();
+            const mode = $('input[name="mode"]:checked').val();
             const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
             const destination = $('input[name="destination"]:checked').val() || 'chat';
 
@@ -61,13 +61,13 @@
                 url: '/chat/getChatResponse',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ prompt: prompt, mode: chatMode, destination: destination
+                data: JSON.stringify({ prompt: prompt, mode: mode, destination: destination
                 }),
                 xhr: function () {
                     var xhr = new window.XMLHttpRequest();
                     xhr.responseType = 'text';
                     xhr.addEventListener('progress', function () {
-                        if (destination == 'note' || chatMode === 'quizmaster') {
+                        if (destination == 'note' || mode === 'quizmaster') {
                             return;
                         }
                         const chunk = xhr.responseText.substring(receivedLength);
@@ -105,7 +105,7 @@
                         console.log("Raw response: ", this.responseText);
                         const processed = processAIContent(lastFullContent);
                         
-                        if(chatMode==='quizmaster'){
+                        if(mode==='quizmaster'){
                             window.lastQuizQuestion = processed.question;
                             window.quizCorrectAnswer = processed.answer;
                             if(processed.question){
@@ -121,7 +121,7 @@
                         if (destination === 'chat'){
                             renderFullResponse(displayContent, container, true);
                         } else if (destination === 'note') {
-                            updateNoteWithAIResponse(displayContent, true, chatMode);
+                            updateNoteWithAIResponse(displayContent, true, mode);
                         }
                         console.log("final displaycontent:", displayContent);
                     });
@@ -155,7 +155,7 @@
             container.innerText = fullContent;
             updateScroll();
         }
-        function updateNoteWithAIResponse(content, isFinal=false, chatMode) {
+        function updateNoteWithAIResponse(content, isFinal=false, mode) {
             console.log("rawAI: ", content);
             const processedContent = processAIContent(content);
             console.log("procAI: ", processedContent);
