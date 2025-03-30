@@ -1,0 +1,12 @@
+
+     <div class="indexBox">
+        <p>Example content in the about page</p>
+    </div>
+
+    <%- include('../research/partials/pdf.ejs') %>
+    <canvas id="the-canvas" style="border: 1px solid black; direction: ltr;"></canvas>
+
+    <%- contentFor('scripts') %>
+    <script>
+        appendToHeading('Research');
+    </script>
