@@ -52,6 +52,10 @@
         if(typeof UI !=='undefined' && typeof UI.init === 'function'){
             UI.init();
         }
+        if (!Editor || !Editor.quill) {
+            setTimeout(notesAIInit, 300);
+            return;
+        }
         Editor.quill.on('text-change', function(delta, oldDelta, source){
             if(source!== 'user') return;
             delta.ops.forEach(op => {
