@@ -8,7 +8,7 @@
         let question = '';
         let answer = '';
 
-        const quizMatch = visibleContent.match(/QUIZ QUESTION:\s*([\s\S]*?)\*\*?CORRECT ANSWER:\s*(.*?)\*\*?$/i);
+        const quizMatch = visibleContent.match(/["']?\s*quiz question:\s*([\s\S]*?)\s*["']?\s*correct answer:\s*([\s\S]*?)$/i);
         if (quizMatch) {
             question = quizMatch[1].trim();
             answer = quizMatch[2].trim();
