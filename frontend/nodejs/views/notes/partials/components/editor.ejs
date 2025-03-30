@@ -23,6 +23,25 @@
             // Listen for text changes and broadcast updates
             this.quill.on('text-change', (delta, oldDelta, source) => {
                 if (source === 'user') {
+                    const text = this.quill.getText().trim();
+                    const lines = text.split('\n');
+                    const lastLine = lines[lines.length - 1];
+
+                    const match = lastLine.match(/^(.+?):\s*(.+)$/);
+                    if (match && window.quizCorrectAnswer) {
+                        const username = match[1].trim();
+                        const userAnswer = match[2].trim();
+
+                        if (isCorrectAnswer(userAnswer, window.quizCorrectAnswer)) {
+                            const message = `Correct, ${username}!`;
+                            this.quill.insertText(this.quill.getLength(), `\n${message}\n`);
+                            window.lastQuizAnsweredBy = username;
+                            window.quizCorrectAnswer = null;
+                        } else {
+                            const message = `Sorry, ${username}, try again.`;
+                            this.quill.insertText(this.quill.getLength(), `\n${message}\n`);
+                        }
+                    }
                     State.changes.push(delta);
                     // Send user inactivity signal after 10s
                     Utils.timer('inactivity', WebSocketManager.sendInactivitySignal, 10000);
@@ -108,4 +127,10 @@
             this.cursors.update();
         }
     };
+    function isCorrectAnswer(userAnswer, correctAnswer) {
+        if (!userAnswer || !correctAnswer) return false;
+        const normUser = userAnswer.toLowerCase().trim();
+        const normCorrect = correctAnswer.toLowerCase().trim();
+        return normUser === normCorrect || normUser.includes(normCorrect) || normCorrect.includes(normUser);
+    }
 </script>
