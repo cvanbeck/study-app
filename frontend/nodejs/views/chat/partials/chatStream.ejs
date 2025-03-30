@@ -112,8 +112,10 @@
                                 processed.visible = `${processed.question}\n\nYourName: YourAnswer`;
                             }
                         }
-
-                        let displayContent = processed.question.trim();
+                        console.log("processed.question:", processed.question);
+                        console.log("processed.answer:", processed.answer);
+                        console.log("processed.visible:", processed.visible);
+                        let displayContent = processed.visible.trim();
                         if (!displayContent){
                             console.log("Empty");
                             return;
