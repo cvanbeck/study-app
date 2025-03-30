@@ -73,7 +73,7 @@ export default class ChatService {
             return immediateLocalResponse;
         }
         try {
-            if(mode==="quizmaster" && this.quizInProgress){
+            if(chatMode==='quizmaster' && this.quizInProgress){
                 const res = await axios.post(
                     "http://bappity.net:11434/v1/chat/completions",
                     {
