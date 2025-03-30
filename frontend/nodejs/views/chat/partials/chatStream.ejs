@@ -123,7 +123,7 @@
                         if (destination === 'chat'){
                             renderFullResponse(displayContent, container, true);
                         } else if (destination === 'note') {
-                            updateNoteWithAIResponse(displayContent, true, mode);
+                            updateNoteWithAIResponse(processed, true, mode);
                         }
                         console.log("final displaycontent:", displayContent);
                     });
@@ -157,9 +157,11 @@
             container.innerText = fullContent;
             updateScroll();
         }
-        function updateNoteWithAIResponse(content, isFinal=false, mode) {
-            console.log("rawAI: ", content);
-            const processedContent = processAIContent(content);
+        function updateNoteWithAIResponse(processedContent, isFinal=false, mode) {
+            if (mode === 'quizmaster') {
+                window.lastQuizQuestion = processedContent.question;
+                window.quizCorrectAnswer = processedContent.answer;
+            }
             console.log("procAI: ", processedContent);
 
             let visibleContent = processedContent.visible.trim();
