@@ -23,6 +23,8 @@
             // Listen for text changes and broadcast updates
             this.quill.on('text-change', (delta, oldDelta, source) => {
                 if (source === 'user') {
+                    const enteredNewline = delta.ops.some(op => typeof op.insert === 'string' && op.insert.includes('\n'));
+                    if (!enteredNewline) return;
                     const text = this.quill.getText().trim();
                     const lines = text.split('\n');
                     const lastLine = lines[lines.length - 1];
