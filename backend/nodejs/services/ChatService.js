@@ -181,19 +181,6 @@ export default class ChatService {
             return `Sorry ${username}, that's not correct. Try again!`;
         }
     }
-    processQuizResponse(response){
-        if(response.includes("QUIZ QUESTION:") && response.includes("CORRECT ANSWER:")){
-            const qMatch = response.match(/QUIZ QUESTION:\s*("?)([^\r\n]*?)\1\s*CORRECT ANSWER:/i);
-            const aMatch = response.match(/CORRECT ANSWER:\s*("?)([^\r\n]*?)\1\s*$/i);
-
-            if (qMatch && qMatch[1] && aMatch && aMatch[1]){
-                this.currentQuestion = qMatch[1].trim();
-                this.correctAnswer = aMatch[1].trim();
-                this.lastAnsweredBy = null;
-            }
-        }
-    }
-
     isCorrectAnswer(userAnswer, correctAnswer){
         if (!userAnswer || !correctAnswer) return false
 
