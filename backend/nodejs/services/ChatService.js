@@ -163,8 +163,8 @@ export default class ChatService {
     }
     processQuizResponse(response){
         if(response.includes("QUIZ QUESTION:") && response.includes("CORRECT ANSWER:")){
-            const qMatch = response.match(/QUIZ QUESTION:\s*(.*?)(?=CORRECT ANSWER:|$)/s);
-            const aMatch = response.match(/CORRECT ANSWER:\s*(.*?)(?=$)/s);
+            const qMatch = response.match(/QUIZ QUESTION:\s*("?)([^\r\n]*?)\1\s*CORRECT ANSWER:/i);
+            const aMatch = response.match(/CORRECT ANSWER:\s*("?)([^\r\n]*?)\1\s*$/i);
 
             if (qMatch && qMatch[1] && aMatch && aMatch[1]){
                 this.currentQuestion = qMatch[1].trim();
