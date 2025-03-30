@@ -153,6 +153,10 @@
                 window.lastQuizQuestion = processedContent.question;
                 window.quizCorrectAnswer = processedContent.answer;
             }
+            let visibleContent = processedContent.visible.trim();
+            if (visibleContent.startsWith('"') && visibleContent.endsWith('"')) {
+                visibleContent = visibleContent.substring(1, visibleContent.length -1).trim();
+            }
             const editorElement = document.querySelector('#editor')
             const editor = Quill.find(editorElement);
             if (!editor) return;
