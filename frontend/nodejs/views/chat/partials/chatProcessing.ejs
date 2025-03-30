@@ -4,24 +4,17 @@
         const visibleContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
         const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
         const thoughts = thoughtMatches.map(match=> match.replace(/<\/?think>/g, "").trim()).join("\n");
-        return {
-            thoughts: thoughts,
-            visible: visibleContent
-        };
-    }
-    function processQuizContent(content) {
-        const cleaned = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 
-        const questionMatch = cleaned.match(/QUIZ QUESTION:\s*([\s\S]*?)\s*CORRECT ANSWER:/i);
-        const answerMatch = cleaned.match(/CORRECT ANSWER:\s*([\s\S]*?)$/i);
-
+        const questionMatch = visibleContent.match(/QUIZ QUESTION:\s*([\s\S]*?)\s*CORRECT ANSWER:/i);
+        const answerMatch = visibleContent.match(/CORRECT ANSWER:\s*([\s\S]*?)$/i);
         const question = questionMatch ? questionMatch[1].trim() : '';
         const answer = answerMatch ? answerMatch[1].trim() : '';
 
         return {
-            question: question,
-            answer: answer,
-            full: cleaned
+            thoughts,
+            visible: visibleContent,
+            question,
+            answer
         };
     }
 
