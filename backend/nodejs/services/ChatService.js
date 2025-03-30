@@ -53,7 +53,7 @@ export default class ChatService {
                           }
                         ]
                         Failure to adhere to this format will result in an invalid response. Do not include additional text, formatting, alternative structures, 
-                        variables or placeholders`;
+                        variables, markdown, escapes or placeholders`;
                     this.quizInProgress = true;
                     this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 } else if (this.quizInProgress && prompt.toLowerCase().includes("next question")){
@@ -68,7 +68,7 @@ export default class ChatService {
                           }
                         ]
                         Failure to adhere to this format will result in an invalid response. Do not include additional text, formatting, alternative structures, 
-                        variables or placeholders`;
+                        variables, markdown, escapes or placeholders`;
                     this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 }else if (this.quizInProgress && prompt.toLowerCase().includes("end quiz")){
                     this.quizInProgress = false
