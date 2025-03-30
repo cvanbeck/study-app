@@ -73,59 +73,70 @@ export default class ChatService {
             return immediateLocalResponse;
         }
         try {
-            const response = await axios.post(
-                "http://bappity.net:11434/v1/chat/completions",
-                {
-                    model: "deepseek-r1:1.5b",
-                    messages: this.conversationHistory, // IMPORTANT! the entire history must be pushed here, not just one single message.
-                    stream: true,
-                },
-                {
-                    headers: { "Content-Type": "application/json" },
-                    responseType: "stream",
-                }
-            );
+            if(mode==="quizmaster" && this.quizInProgress){
+                const res = await axios.post(
+                    "http://bappity.net:11434/v1/chat/completions",
+                    {
+                        model: "deepseek-r1:1.5b",
+                        messages: this.conversationHistory, // IMPORTANT! the entire history must be pushed here, not just one single message.
+                    },
+                    { headers: {"Content-Type": "application/json" } }
+                );
+                const fullText = res.data.choices?.[0]?.message?.content || "";
+                this.processQuizResponse(fullText);
+                this.conversationHistory.push({ role:"assistant", content: fullText.trim() });
+                return fullText;
+            }else{
+                const response = await axios.post(
+                    "http://bappity.net:11434/v1/chat/completions",
+                    {
+                        model: "deepseek-r1:1.5b",
+                        messages: this.conversationHistory, // IMPORTANT! the entire history must be pushed here, not just one single message.
+                        stream: true,
+                    },
+                    {
+                        headers: { "Content-Type": "application/json" },
+                        responseType: "stream",
+                    }
+                );
 
-            // Pipe the response stream through the JSONStreamService
-            const jsonStreamService = new JSONStreamService();
-            response.data.pipe(jsonStreamService);
+                // Pipe the response stream through the JSONStreamService
+                const jsonStreamService = new JSONStreamService();
+                response.data.pipe(jsonStreamService);
 
             // Builds and stores the assistant message as it is being streamed in
-            let assistantMessage = "";
-            let previousFullContent = "";
+                let assistantMessage = "";
+                let previousFullContent = "";
             
-            jsonStreamService.on("data", (data) => {
-                try {
-                    const textData = data.toString().trim();
-                    if (textData === "[DONE]") return; // Ignore the [DONE] marker
-                    const parsedData = JSON.parse(textData);
-                    if (parsedData.fullContent) {
-                        const newFull = parsedData.fullContent;
-                        const diff = newFull.substring(previousFullContent.length);
-                        previousFullContent = newFull;
-                        assistantMessage = newFull;
-                        if (mode == "quizmaster") {
-                            this.processQuizResponse(assistantMessage);
+                jsonStreamService.on("data", (data) => {
+                    try {
+                        const textData = data.toString().trim();
+                        if (textData === "[DONE]") return; // Ignore the [DONE] marker
+                        const parsedData = JSON.parse(textData);
+                        if (parsedData.fullContent) {
+                            const newFull = parsedData.fullContent;
+                            const diff = newFull.substring(previousFullContent.length);
+                            previousFullContent = newFull;
+                            assistantMessage = newFull;
+                            if (mode == "quizmaster") {
+                                this.processQuizResponse(assistantMessage);
+                            }
                         }
+                    } catch (e) {
+                        console.error("Error parsing streamed data:", e);
                     }
-                } catch (e) {
-                    console.error("Error parsing streamed data:", e);
-                }
-            });
+                });
 
-            // Stores the full assistant message in the conversation history array when stream ends
-            jsonStreamService.on("end", () => {
-                if (assistantMessage) {
-                    const cleaned = assistantMessage.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-                    this.conversationHistory.push({ role: "assistant", content: cleaned });
-                    
-                    if (mode === "quizmaster"){
-                        this.processQuizResponse(cleaned);
+                // Stores the full assistant message in the conversation history array when stream ends
+                jsonStreamService.on("end", () => {
+                    if (assistantMessage) {
+                        const cleaned = assistantMessage.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+                        this.conversationHistory.push({ role: "assistant", content: cleaned });
                     }
-                }
-            });
+                });
 
-            return jsonStreamService;
+                return jsonStreamService;
+            }
         } catch (error) {
             console.error("Chat API Error:", error);
             throw new Error("Error occurred while fetching response");
