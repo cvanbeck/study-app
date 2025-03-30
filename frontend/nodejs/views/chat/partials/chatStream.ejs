@@ -106,8 +106,7 @@
 
                         const processed = processAIContent(lastFullContent);
                         let displayContent = processed.question.trim();
-                        displayContent = displayContent.replace(/"$/, "").trim();
-                        displayContent += '\n';
+                        displayContent = displayContent.replace(/"$/, "").trim()+ '\n';
                         if (chatMode === 'quizmaster'){
                             const questionMatch = displayContent.match(/QUIZ QUESTION:\s*("?)([^\r\n]*?)\1\s*CORRECT ANSWER:/i);
                             if (questionMatch && questionMatch[1]){
