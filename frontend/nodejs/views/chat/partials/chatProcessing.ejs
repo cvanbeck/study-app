@@ -7,6 +7,12 @@
 
         const questionMatch = visibleContent.match(/QUIZ QUESTION:\s*([\s\S]*?)\s*CORRECT ANSWER:/i);
         const answerMatch = visibleContent.match(/CORRECT ANSWER:\s*([\s\S]*?)$/i);
+        if (!questionMatch) {
+            questionMatch = visibleContent.match(/["']?(.*?[\d+\-= ]+\.\.\.)["']?\s*/);
+        }
+        if (!answerMatch) {
+            answerMatch = visibleContent.match(/["']?Correct Answer:\s*(\d+)["']?/i);
+        }
         const question = questionMatch ? questionMatch[1].trim() : '';
         const answer = answerMatch ? answerMatch[1].trim() : '';
 
