@@ -5,8 +5,8 @@
         const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
         const thoughts = thoughtMatches.map(match=> match.replace(/<\/?think>/g, "").trim()).join("\n");
 
-        const questionMatch = visibleContent.match(/QUIZ QUESTION:\s*([\s\S]*?)\s*CORRECT ANSWER:/i);
-        const answerMatch = visibleContent.match(/CORRECT ANSWER:\s*([\s\S]*?)$/i);
+        let questionMatch = visibleContent.match(/QUIZ QUESTION:\s*([\s\S]*?)\s*CORRECT ANSWER:/i);
+        let answerMatch = visibleContent.match(/CORRECT ANSWER:\s*([\s\S]*?)$/i);
         if (!questionMatch) {
             questionMatch = visibleContent.match(/["']?(.*?[\d+\-= ]+\.\.\.)["']?\s*/);
         }
