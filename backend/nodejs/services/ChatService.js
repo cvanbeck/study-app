@@ -103,7 +103,6 @@ export default class ChatService {
                     { headers: {"Content-Type": "application/json" } }
                 );
                 const fullText = res.data.choices?.[0]?.message?.content || "";
-                this.processQuizResponse(fullText);
                 this.conversationHistory.push({ role:"assistant", content: fullText.trim() });
                 return fullText;
             }else{
