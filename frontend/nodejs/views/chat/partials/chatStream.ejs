@@ -95,7 +95,7 @@
                     xhr.addEventListener('loadend', function () {
                         if (finalUpdateDone) return;
                         finalUpdateDone = true;   
-                        else if (!lastFullContent) {
+                        if (!lastFullContent) {
                             lastFullContent = this.responseText;
                         }   
                         const processed = processAIContent(lastFullContent);
