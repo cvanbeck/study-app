@@ -9,8 +9,8 @@
         let answer = '';
 
         try {
-            const start = visibleContent.indexOf('{');
-            const end = visibleContent.lastIndexOf('}');
+            const start = visibleContent.indexOf('[');
+            const end = visibleContent.lastIndexOf(']');
             if (start !== -1 && end !== -1) {
                 const jsonString = visibleContent.substring(start, end + 1);
                 const parsed = JSON.parse(jsonString);
