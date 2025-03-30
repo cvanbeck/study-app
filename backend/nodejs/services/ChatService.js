@@ -43,12 +43,12 @@ export default class ChatService {
             case "quizmaster":
                 if (prompt.toLowerCase().includes("start quiz")){
                     const topic = prompt.replace(/start quiz/i, "").trim();
-                    formattedPrompt = `Generate a single question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: " followed by a question, followed by "CORRECT ANSWER: " and then the correct answer.`;
+                    formattedPrompt = `Generate a single question about ${topic}. Format your response as a json containing question and answer.`;
                     this.quizInProgress = true;
                     this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 } else if (this.quizInProgress && prompt.toLowerCase().includes("next question")){
                     const topic = prompt.replace(/next question/i, "").trim();
-                    formattedPrompt = `Generate another question about ${topic}. Format your response exactly like this: "QUIZ QUESTION: " followed by a question, followed by "CORRECT ANSWER: " and then the correct answer.`;
+                    formattedPrompt = `Generate another question about ${topic}. Format your response as a json containing question and answer.`;
                     this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 }else if (this.quizInProgress && prompt.toLowerCase().includes("end quiz")){
                     this.quizInProgress = false
