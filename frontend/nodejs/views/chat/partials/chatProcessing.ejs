@@ -8,10 +8,25 @@
         let question = '';
         let answer = '';
 
-        const quizMatch = visibleContent.match(/["']?\s*quiz question:\s*(.+?)\s+cor+rect\s+answer:\s*(.+?)["']?$/i);
-        if (quizMatch) {
-            question = quizMatch[1].trim();
-            answer = quizMatch[2].trim();
+        const jsonMatch = visibleContent.match(/```json\s*([\s\S]*?)```/i);
+        if (jsonMatch) {
+            try {
+                const parsed = JSON.parse(jsonMatch[1].trim());
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    question = parsed[0].question?.trim() || '';
+                    answer = parsed[0].answer?.trim() || '';
+                }
+            } catch (e) {
+                console.warn('Failed to parse AI JSON response:', e);
+            }
+        }
+
+        if (!question || !answer) {
+            const fallbackMatch = visibleContent.match(/["']?\s*quiz question:\s*([\s\S]*?)\s*correct answer:\s*(.+?)["']?$/i);
+            if (fallbackMatch) {
+                question = fallbackMatch[1].trim();
+                answer = fallbackMatch[2].trim();
+            }
         }
 
         return {
