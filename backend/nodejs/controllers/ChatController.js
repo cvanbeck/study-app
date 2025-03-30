@@ -27,16 +27,12 @@ export default class ChatController extends BaseController {
             res.setHeader("Cache-Control", "no-cache");
             res.setHeader("Connection", "keep-alive");
 
-            const responseOrStream = await this.chatService.getChatResponse(prompt, mode);
-            if (typeof responseOrStream ==='string'){
-                return res.end(responseOrStream);
-            }
-            responseOrStream.on("data", (chunk) => {
-                res.write(chunk.toString()+"\n");
+            const stream = await this.chatService.getChatResponse(prompt, mode);
+
+            stream.on("data", (chunk) => {
+                res.write(`data: ${chunk.toString()}\n\n`);
             });
-            
-            responseOrStream.on("end", () => {
-                res.write("[DONE]\n");
+            stream.on("end", () => {
                 res.end();
             });
         } catch (error) {
