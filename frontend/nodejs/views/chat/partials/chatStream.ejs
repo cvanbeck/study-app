@@ -108,11 +108,11 @@
                         let displayContent = processed.visible.trim();
                         displayContent = displayContent.replace(/\\+"$/, "").trim();
                         if (chatMode === 'quizmaster'){
-                            const questionMatch = displayContent.match(/Quiz Question:\s*(.*?)(?:\s*Correct Answer:|$)/i);
+                            const questionMatch = displayContent.match(/QUIZ QUESTION:\s*("?)([^\r\n]*?)\1\s*CORRECT ANSWER:/i);
                             if (questionMatch && questionMatch[1]){
                                 window.lastQuizQuestion = questionMatch[1].trim();
                             }
-                            const answerMatch = lastFullContent.match(/Correct Answer:\s*(.*?)(?:$)/i);
+                            const answerMatch = lastFullContent.match(/CORRECT ANSWER:\s*("?)([^\r\n]*?)\1\s*$/i);
                             if(answerMatch && answerMatch[1]){
                                 window.quizCorrectAnswer = answerMatch[1].trim();
                             }
