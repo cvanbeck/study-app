@@ -94,15 +94,10 @@
                     });
                     xhr.addEventListener('loadend', function () {
                         if (finalUpdateDone) return;
-                        finalUpdateDone = true; 
-                        if(!this.responseText||!this.responseText.trim()){
-                            console.log("Empty response");
-                            return;
-                        }   
+                        finalUpdateDone = true;   
                         else if (!lastFullContent) {
                             lastFullContent = this.responseText;
                         }   
-                        console.log("Raw response: ", this.responseText);
                         const processed = processAIContent(lastFullContent);
                         
                         if(mode==='quizmaster'){
@@ -116,16 +111,12 @@
                         console.log("processed.answer:", processed.answer);
                         console.log("processed.visible:", processed.visible);
                         let displayContent = processed.visible.trim();
-                        if (!displayContent){
-                            console.log("Empty");
-                            return;
-                        }
+                        
                         if (destination === 'chat'){
                             renderFullResponse(displayContent, container, true);
                         } else if (destination === 'note') {
                             updateNoteWithAIResponse(processed, true, mode);
                         }
-                        console.log("final displaycontent:", displayContent);
                     });
                     return xhr;
                 },
@@ -161,12 +152,6 @@
             if (mode === 'quizmaster') {
                 window.lastQuizQuestion = processedContent.question;
                 window.quizCorrectAnswer = processedContent.answer;
-            }
-            console.log("procAI: ", processedContent);
-
-            let visibleContent = processedContent.visible.trim();
-            if (visibleContent.startsWith('"') && visibleContent.endsWith('"')) {
-                visibleContent = visibleContent.substring(1, visibleContent.length -1).trim();
             }
             const editorElement = document.querySelector('#editor')
             const editor = Quill.find(editorElement);
