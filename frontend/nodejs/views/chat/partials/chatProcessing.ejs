@@ -2,8 +2,6 @@
     // Process AI content, separating <think> tags from visible content
     function processAIContent(content) {
         const visibleContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-        const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
-        const thoughts = thoughtMatches.map(match => match.replace(/<\/?think>/g, "").trim()).join("\n");
 
         let question = '';
         let answer = '';
@@ -30,7 +28,6 @@
             console.warn("Failed to parse JSON from AI:", e);
         }
         return{
-            thoughts,
             visible: question ? `${question}\n\nYourName: YourAnswer` : visibleContent,
             question,
             answer
@@ -80,8 +77,7 @@
         if (processedContent.visible) {
             const visibleContentDiv = document.createElement('div');
             visibleContentDiv.className = 'markdown-content';
-            let htmlWithLineBreaks = processedContent.visible.replace(/\n/g, '<br>');
-            visibleContentDiv.innerHTML = processMathContent(htmlWithLineBreaks);
+            visibleContentDiv.innerHTML = processMathContent(processedContent.visible);
             container.appendChild(visibleContentDiv);
         }
 
