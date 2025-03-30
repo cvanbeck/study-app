@@ -8,28 +8,32 @@
         let question = '';
         let answer = '';
 
-        const jsonMatch = visibleContent.match(/```json\s*([\s\S]*?)```/i);
-        if (jsonMatch) {
-            try {
-                const parsed = JSON.parse(jsonMatch[1].trim());
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    question = parsed[0].question?.trim() || '';
-                    answer = parsed[0].answer?.trim() || '';
+        try {
+            const start = visibleContent.indexOf('{');
+            const end = visibleContent.lastIndexOf('}');
+            if (start !== -1 && end !== -1) {
+                const jsonString = visibleContent.substring(start, end + 1);
+                const parsed = JSON.parse(jsonString);
+
+                if (Array.isArray(parsed)) {
+                    if (parsed.length >= 2) {
+                        question = parsed[0]?.toString().trim() || '';
+                        answer = parsed[1]?.toString().trim() || '';
+                    }
+                }else if{
+                    typeof parsed === 'object' &&
+                    parsed !== null &&
+                    'question' in parsed &&
+                    'answer' in parsed
+                }{
+                    question = parsed.question?.toString().trim() || '';
+                    answer = parsed.answer?.toString().trim() || '';
                 }
-            } catch (e) {
-                console.warn('Failed to parse AI JSON response:', e);
             }
+        }catch (e){
+            console.warn("Failed to parse JSON from AI:", e);
         }
-
-        if (!question || !answer) {
-            const fallbackMatch = visibleContent.match(/["']?\s*quiz question:\s*([\s\S]*?)\s*correct answer:\s*(.+?)["']?$/i);
-            if (fallbackMatch) {
-                question = fallbackMatch[1].trim();
-                answer = fallbackMatch[2].trim();
-            }
-        }
-
-        return {
+        return{
             thoughts,
             visible: question || visibleContent,
             question,
