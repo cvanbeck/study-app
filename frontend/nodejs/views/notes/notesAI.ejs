@@ -48,9 +48,10 @@
     <%- include('../chat/partials/chatProcessing.ejs') %>
     <%- include('../chat/partials/chatStream.ejs') %>
 <script>
-    function init() {
-        Editor.init();
-        UI.init();
+    function notesAIInit() {
+        if(typeof UI !=='undefined' && typeof UI.init === 'function'){
+            UI.init();
+        }
         Editor.quill.on('text-change', function(delta, oldDelta, source){
             if(source!== 'user') return;
             delta.ops.forEach(op => {
@@ -90,5 +91,5 @@
         });
     }
 
-    $(document).ready(init);
+    $(document).ready(notesAIInit);
     </script>
