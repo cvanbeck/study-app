@@ -103,26 +103,17 @@
                             lastFullContent = this.responseText;
                         }   
                         console.log("Raw response: ", this.responseText);
-
                         const processed = processAIContent(lastFullContent);
+                        
+                        if(chatMode==='quizmaster'){
+                            window.lastQuizQuestion = processed.question;
+                            window.quizCorrectAnswer = processed.answer;
+                            if(processed.question){
+                                processed.visible = `${processed.question}\n\nYourName: YourAnswer`;
+                            }
+                        }
+
                         let displayContent = processed.question.trim();
-                        displayContent = displayContent.replace(/^"/, "").replace(/"$/, "").trim();
-                        if (!displayContent.endsWith('\n')) {
-                            displayContent += '\n';
-                        }
-                        if (chatMode === 'quizmaster'){
-                            const questionMatch = displayContent.match(/QUIZ QUESTION:\s*("?)([^\r\n]*?)\1\s*CORRECT ANSWER:/i);
-                            if (questionMatch && questionMatch[1]){
-                                window.lastQuizQuestion = questionMatch[1].trim();
-                            }
-                            const answerMatch = lastFullContent.match(/CORRECT ANSWER:\s*("?)([^\r\n]*?)\1\s*$/i);
-                            if(answerMatch && answerMatch[1]){
-                                window.quizCorrectAnswer = answerMatch[1].trim();
-                            }
-                            if(window.lastQuizQuestion){
-                                displayContent = window.lastQuizQuestion;
-                            }
-                        }
                         if (!displayContent){
                             console.log("Empty");
                             return;
