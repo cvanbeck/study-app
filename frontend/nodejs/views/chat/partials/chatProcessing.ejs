@@ -9,6 +9,21 @@
             visible: visibleContent
         };
     }
+    function processQuizContent(content) {
+        const cleaned = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+        const questionMatch = cleaned.match(/QUIZ QUESTION:\s*([\s\S]*?)\s*CORRECT ANSWER:/i);
+        const answerMatch = cleaned.match(/CORRECT ANSWER:\s*([\s\S]*?)$/i);
+
+        const question = questionMatch ? questionMatch[1].trim() : '';
+        const answer = answerMatch ? answerMatch[1].trim() : '';
+
+        return {
+            question,
+            answer,
+            full: cleaned
+        };
+    }
 
     // Render the full AI response into the container
     function renderFullResponse(fullRawContent, container, isFinal = false) {
