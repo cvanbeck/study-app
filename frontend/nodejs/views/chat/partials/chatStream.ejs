@@ -12,7 +12,8 @@
         // Handle the form submission and stream the AI response
         $('#chat-form').on('submit', function (e) {
             e.preventDefault();
-            const prompt = $('#prompt').val();
+            const prompt = $('#prompt').val().trim();
+            if(!prompt) return;
             const chatMode = $('input[name="mode"]:checked').val();
             const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
             const destination = $('input[name="destination"]:checked').val() || 'chat';
@@ -52,35 +53,6 @@
                     }
                 }
             }
-            if(destination === 'note' && chatMode === "quizmaster" && window.quizCorrectAnswer !== null){
-                const editor = Quill.find(document.querySelector('#editor'));
-                if (editor) {
-                    const noteText = editor.getText().trim();
-                    const lines = noteText.split('\n');
-                    const lastLine = lines[lines.length - 1];
-                    let username = ""
-                    let userAnswer = prompt;
-                    const colonIndex = prompt.indexOf(':');
-                    if(colonIndex>0){
-                        username=prompt.substring(0, colonIndex).trim();
-                        userAnswer=prompt.substring(colonIndex+1).trim();
-                    }       
-                    if(isAnswerCorrect(userAnswer, window.quizCorrectAnswer)){
-                        let msg = "";
-                        if(window.lastQuizAnsweredBy){
-                            msg = `That's correct, ${username}! But ${window.lastQuizAnsweredBy} already answered this question correctly. The answer is ${window.quizCorrectAnswer}. Type "next question" for another question.`;
-                        } else {
-                            msg = `Correct, ${username} gets 1 exp! The answer was ${window.quizCorrectAnswer}. Type "next question" for another question.`;
-                            window.lastQuizAnsweredBy = username;
-                        }
-                        appendSystemMessage(msg, container);
-                    }else{
-                        let msg = `Sorry ${username}, that's not correct. Try again!`;
-                        appendSystemMessage(msg, container);
-                    }
-                }
-                return;
-            }
             var lastFullContent = '';
             var receivedLength = 0;
             var finalUpdateDone = false;
@@ -103,51 +75,49 @@
                         const lines = chunk.split('\n');
                         lines.forEach(function (line) {
                             if (line.indexOf("data: ") === 0) {
-                                const jsonPart = line.substring(6);
+                                const jsonPart = line.substring(6).trim();
                                 if (jsonPart === "[DONE]") return;
-                                if (jsonPart.trim().endsWith('"}')) {
-                                    try {
-                                        // Ensure the JSON is properly formatted by replacing unescaped newlines
-                                        const sanitizedJsonPart = jsonPart.replace(/\n/g, "\\n").replace(/\r/g, "\\r");
-
-                                        const parsedData = JSON.parse(sanitizedJsonPart);
-                                        if (parsedData.fullContent) {
-                                            lastFullContent = parsedData.fullContent;
-                                            if(destination ==='chat'){
-                                                renderFullResponse(lastFullContent, container, false);
-                                                updateScroll();
-                                            }
+                                try {
+                                    const parsedData = JSON.parse(jsonPart);
+                                    if (parsedData.fullContent) {
+                                        lastFullContent = parsedData.fullContent;
+                                        if(destination ==='chat'){
+                                            renderFullResponse(lastFullContent, container, false);
+                                            updateScroll();
                                         }
-                                    } catch (e) {
-                                        console.error("Error parsing streamed data:", e, jsonPart);
                                     }
+                                } catch (e) {
+                                    console.error("Error parsing streamed data:", e, jsonPart);
                                 }
                             }
                         });
                     });
                     xhr.addEventListener('loadend', function () {
                         if (finalUpdateDone) return;
+                        finalUpdateDone = true; 
                         if(!this.responseText||!this.responseText.trim()){
                             console.log("Empty response");
                             return;
-                        }
-                        finalUpdateDone = true;    
-                        if (chatMode === 'quizmaster' && !lastFullContent) {
+                        }   
+                        else if (!lastFullContent) {
                             lastFullContent = this.responseText;
-                        }
+                        }   
                         console.log("Raw response: ", this.responseText);
+
                         const processed = processAIContent(lastFullContent);
                         let displayContent = processed.visible.trim();
                         displayContent = displayContent.replace(/\\+"$/, "").trim();
                         if (chatMode === 'quizmaster'){
-                            const match = displayContent.match(/Quiz Question:\s*(.*?)(?:\s*Correct Answer:|$)/i);
-                            if (match && match[1]){
-                                displayContent = match[1].trim();
+                            const questionMatch = displayContent.match(/Quiz Question:\s*(.*?)(?:\s*Correct Answer:|$)/i);
+                            if (questionMatch && questionMatch[1]){
+                                window.lastQuizQuestion = questionMatch[1].trim();
                             }
-                            window.lastQuizQuestion = displayContent;
                             const answerMatch = lastFullContent.match(/Correct Answer:\s*(.*?)(?:$)/i);
                             if(answerMatch && answerMatch[1]){
                                 window.quizCorrectAnswer = answerMatch[1].trim();
+                            }
+                            if(window.LastQuizQuestion){
+                                displayContent = window.lastQuizQuestion;
                             }
                         }
                         if (!displayContent){
@@ -186,13 +156,9 @@
                 }
             });
         });
-        function appendSystemMessage(message, container){
-            if (!container) return;
-            const div = document.createElement("div");
-            div.className = "chat-message system-message";
-            div.innerText= message;
-            container.innerHTML = "";
-            container.appendChild(div);
+        function renderFullResponse(fullContent, container, isFinal=false){
+            if(!container) return;
+            container.innerText = fullContent;
             updateScroll();
         }
         function updateNoteWithAIResponse(content, isFinal=false, chatMode) {
@@ -223,11 +189,6 @@
                 
             }
         }
-        function isAnswerCorrect(userAnswer, correctAnswer){
-            if(!userAnswer||!correctAnswer) return false
-            return userAnswer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
-        }
-
         // Adjust textarea height on keydown and input events
         $('#prompt').on('keydown', function (e) {
             adjustTextareaHeight(this);
