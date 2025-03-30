@@ -163,7 +163,11 @@
         }
         function updateNoteWithAIResponse(content, isFinal=false, chatMode) {
             console.log("rawAI: ", content);
-            const processedContent = processAIContent(content);
+            if (selectedMode==="quizmaster"){
+                const processedContent = processQuizContent(content);
+            }else{
+                const processedContent = processAIContent(content);
+            };
             console.log("procAI: ", processedContent);
 
             let visibleContent = processedContent.visible.trim();
