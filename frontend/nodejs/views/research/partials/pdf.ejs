@@ -1,7 +1,7 @@
 <script type="module">
-    import * as pdfjsDist from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.0.375/+esm';
+    import * as pdfjsDist from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.1.91/+esm';
 
-    pdfjsDist.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.0.375/build/pdf.worker.min.mjs';
+    pdfjsDist.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.1.91/build/pdf.worker.min.mjs';
 
     const url = 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf';
 
@@ -34,5 +34,4 @@
         viewport,
     };
     page.render(renderContext);
-
 </script>
