@@ -131,7 +131,7 @@ dist
 .pnp.*
 
 # sqllite database files
-*.db
+Chinook.db
 
 # identifies whether the db first run script has occurred.
 db_initialized.txt
