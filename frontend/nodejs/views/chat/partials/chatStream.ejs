@@ -53,9 +53,10 @@
                     }
                 }
             }
-            var lastFullContent = '';
-            var receivedLength = 0;
-            var finalUpdateDone = false;
+            let lastFullContent = '';
+            let receivedLength = 0;
+            let finalUpdateDone = false;
+            let partialTextArrived = false;
 
             $.ajax({
                 url: '/chat/getChatResponse',
@@ -78,6 +79,7 @@
                                 try {
                                     const parsedData = JSON.parse(jsonPart);
                                     if (parsedData.fullContent) {
+                                        partialTextArrived = true;
                                         container.textContent = parsedData.fullContent;
                                         updateScroll();
                                     }
@@ -89,7 +91,13 @@
                     });
                     xhr.addEventListener('loadend', function () {
                         if (finalUpdateDone) return;
-                        finalUpdateDone = true;   
+                        finalUpdateDone = true;
+                        if (!partialTextArrived) {
+                            const fallbackText = this.responseText.trim();
+                            if (fallbackText && container) {
+                                container.textContent = fallbackText;
+                            }
+                        }
                         if (!lastFullContent) {
                             lastFullContent = this.responseText;
                         }   
@@ -107,9 +115,7 @@
                         console.log("processed.visible:", processed.visible);
                         const displayContent = processed.visible.trim();
                         
-                        if (destination === 'chat'){
-                            appendPartialDiff(displayContent, container);
-                        } else if (destination === 'note') {
+                        if (destination === 'note') {
                             updateNoteWithAIResponse(processed, true, mode);
                         }
                     });
