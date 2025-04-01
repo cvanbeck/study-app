@@ -26,7 +26,7 @@
                     const enteredNewline = delta.ops.some(op => typeof op.insert === 'string' && op.insert.includes('\n'));
                     if (!enteredNewline) return;
                     const text = this.quill.getText().trim();
-                    const lines = text.split('\n');
+                    const lines = text.split('\n').filter(line => line.trim() !== '');
                     const lastLine = lines[lines.length - 1];
 
                     const match = lastLine.match(/^(.+?):\s*(.+)$/);
