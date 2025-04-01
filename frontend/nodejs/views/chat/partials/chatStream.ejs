@@ -46,6 +46,7 @@
                     editor.insertText(endIndex, `You: ${prompt}\n`);
                     const aiIndex = editor.getLength();
                     editor.insertText(aiIndex, `AI: \n`);
+                    $('#prompt').val('');
                     window.aiResponseIndex = aiIndex;
                     if (window.socket && typeof window.socket.emit === 'function'){
                         const delta = editor.getContents();
