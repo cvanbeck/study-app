@@ -56,43 +56,6 @@
             setTimeout(notesAIInit, 300);
             return;
         }
-        Editor.quill.on('text-change', function(delta, oldDelta, source){
-            if(source!== 'user') return;
-            delta.ops.forEach(op => {
-                if (op.insert && typeof op.insert === 'string' && op.insert.includes('\n')){
-                    const noteText = Editor.quill.getText().trim();
-                    const lines = noteText.split('\n');
-                    const lastLine = lines[lines.length -1];
-                    const match = lastLine.match(/^([\w\s]+):\s*(.*)$/);
-                    if(match){
-                        const username=match[1].trim();
-                        const userAnswer=match[2].trim();
-
-                        $.ajax({
-                            url:'/chat/getChatResponse',
-                            method: 'POST',
-                            contentType: 'application/json',
-                            data: JSON.stringify({
-                                prompt: lastLine,
-                                mode: 'quizmaster',
-                                destination: 'note'
-                            }),
-                            success: function(res) {
-                                const currentLength = Editor.quill.getLength();
-                                Editor.quill.insertText(currentLength, `AI: ${res}\n`);
-                                if (window.socket && typeof window.socket.emit === 'function') {
-                                    const delta = Editor.quill.getContents();
-                                    window.socket.emit('text-change', delta);
-                                }
-                            },
-                            error: function(err) {
-                                console.error("Quiz answer validation failed:", err);
-                            }
-                        });
-                    }
-                }
-            });
-        });
     }
 
     $(document).ready(notesAIInit);
