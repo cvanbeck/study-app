@@ -71,31 +71,40 @@
                         if (destination == 'note' || mode === 'quizmaster') return;
                         const chunk = xhr.responseText.substring(receivedLength);
                         receivedLength = xhr.responseText.length;
-                        const lines = chunk.split('\n');
-                        lines.forEach(function (line) {
-                            if (line.indexOf("data: ") === 0) {
-                                const jsonPart = line.substring(6).trim();
-                                if (jsonPart === "[DONE]") return;
-                                try {
-                                    const parsedData = JSON.parse(jsonPart);
-                                    if (parsedData.fullContent) {
-                                        lastFullContent = parsedData.fullContent;
-                                        partialTextArrived = true;
-                                        const processed = processAIContent(lastFullContent);
-                                        if (container) {
-                                            container.innerHTML = '';
-                                            const visibleContentDiv = document.createElement('div');
-                                            visibleContentDiv.className = 'markdown-content';
-                                            visibleContentDiv.innerHTML = processed.visible;
-                                            container.appendChild(visibleContentDiv);
+    
+                        try {
+                            if (container) {
+                                const responseLines = xhr.responseText.split('\n');
+                                let latestContent = "";
+            
+                                for (let i = responseLines.length - 1; i >= 0; i--) {
+                                    const line = responseLines[i].trim();
+                                    if (line && line !== "[DONE]") {
+                                        try {
+                                            const parsed = JSON.parse(line);
+                                            if (parsed.fullContent) {
+                                                latestContent = parsed.fullContent;
+                                                break;
+                                            }
+                                        } catch (e) {
+                                            console.error("Error handling response chunk:", e);
                                         }
-                                        updateScroll();
                                     }
-                                } catch (e) {
-                                    console.error("Error parsing streamed data:", e, jsonPart);
+                                }
+            
+                                if (latestContent) {
+                                    const processed = processAIContent(latestContent);
+                                    container.innerHTML = ''; 
+                                    const visibleContentDiv = document.createElement('div');
+                                    visibleContentDiv.className = 'markdown-content';
+                                    visibleContentDiv.innerHTML = processed.visible;
+                                    container.appendChild(visibleContentDiv);
+                                    updateScroll();
                                 }
                             }
-                        });
+                        } catch (e) {
+                            console.error("Error handling response chunk:", e);
+                        }
                     });
                     xhr.addEventListener('loadend', function () {
                         if (finalUpdateDone) return;
@@ -152,15 +161,6 @@
                 }
             });
         });
-        function appendPartialDiff(diff, container) {
-            if(!container) return;
-            let cleanedDiff = diff.replace(/^\{"fullContent":"/, "")
-                                  .replace(/"}$/, "")
-                                  .replace(/\\"/g, '"');
-
-            container.textContent += cleanedDiff;
-            updateScroll();
-        }
         function updateNoteWithAIResponse(processedContent, isFinal=false, mode) {
             if (mode === 'quizmaster') {
                 window.lastQuizQuestion = processedContent.question;
