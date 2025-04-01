@@ -71,90 +71,125 @@
                         if (destination == 'note' || mode === 'quizmaster') return;
                         const chunk = xhr.responseText.substring(receivedLength);
                         receivedLength = xhr.responseText.length;
-    
                         try {
-                            if (container) {
-                                const responseLines = xhr.responseText.split('\n');
-                                let latestContent = "";
-            
-                                for (let i = responseLines.length - 1; i >= 0; i--) {
-                                    const line = responseLines[i].trim();
-                                    if (line && line !== "[DONE]") {
-                                        try {
-                                            const parsed = JSON.parse(line);
-                                            if (parsed.fullContent) {
-                                                latestContent = parsed.fullContent;
-                                                break;
-                                            }
-                                        } catch (e) {
-                                            console.error("Error handling response chunk:", e);
+                            const lines = xhr.responseText.split('\n');
+                            let latestFullContent = "";
+                        
+                            for (let i = lines.length - 1; i >= 0; i--) {
+                                const line = lines[i].trim();
+                                if (!line || line === "[DONE]") continue;
+                            
+                                try {
+                                    const parsed = JSON.parse(line);
+                                    if (parsed && parsed.fullContent !== undefined) {
+                                        latestFullContent = parsed.fullContent;
+                                        break;
+                                    }
+                                } catch (e) {
+                                    continue;
+                                }
+                            }
+                        
+                            if (latestFullContent && container) {
+                                const processed = {
+                                    thoughts: "",
+                                    visible: latestFullContent.replace(/<think>[\s\S]*?<\/think>/g, "").trim(),
+                                    question: "",
+                                    answer: ""
+                                };
+                                container.innerHTML = '';
+                                const visibleContentDiv = document.createElement('div');
+                                visibleContentDiv.className = 'markdown-content';
+                                visibleContentDiv.innerHTML = processed.visible;
+                                container.appendChild(visibleContentDiv);
+                                updateScroll();
+                            
+                                lastFullContent = latestFullContent;
+                                partialTextArrived = true;
+                            }
+                        } catch (e) {
+                            console.error("Error handling streaming response:", e);
+                        }
+                    });
+                
+                    xhr.addEventListener('loadend', function () {
+                        if (finalUpdateDone) return;
+                        finalUpdateDone = true;
+                        let finalContent = lastFullContent;
+                        if (!finalContent) {
+                            try {
+                                const lines = this.responseText.split('\n');
+                                for (let i = 0; i < lines.length; i++) {
+                                    const line = lines[i].trim();
+                                    if (!line || line === "[DONE]") continue;
+                                
+                                    try {
+                                        const parsed = JSON.parse(line);
+                                        if (parsed && parsed.fullContent) {
+                                            finalContent = parsed.fullContent;
                                         }
+                                    } catch (e) {
+                                        continue;
                                     }
                                 }
-            
-                                if (latestContent) {
-                                    const processed = processAIContent(latestContent);
-                                    container.innerHTML = ''; 
+                            } catch (e) {
+                                console.error("Error extracting final content:", e);
+                            }
+                        }
+                        if (finalContent && container) {
+                            const processed = {
+                                thoughts: "",
+                                visible: finalContent.replace(/<think>[\s\S]*?<\/think>/g, "").trim(),
+                                question: "",
+                                answer: ""
+                            };   
+                            if (processed.visible) {
+                                try {
+                                    if (mode === 'quizmaster') {
+                                        const fullProcessed = processAIContent(finalContent);
+                                        window.lastQuizQuestion = fullProcessed.question;
+                                        window.quizCorrectAnswer = fullProcessed.answer;
+                                        if (fullProcessed.question) {
+                                            processed.visible = `${fullProcessed.question}\n\nYourName: YourAnswer`;
+                                        }
+                                    }
+                                
+                                    container.innerHTML = '';
                                     const visibleContentDiv = document.createElement('div');
                                     visibleContentDiv.className = 'markdown-content';
                                     visibleContentDiv.innerHTML = processed.visible;
                                     container.appendChild(visibleContentDiv);
                                     updateScroll();
+                                
+                                    console.log("Final visible content:", processed.visible);
+                                } catch (e) {
+                                    console.error("Error in final processing:", e);
                                 }
                             }
-                        } catch (e) {
-                            console.error("Error handling response chunk:", e);
-                        }
-                    });
-                    xhr.addEventListener('loadend', function () {
-                        if (finalUpdateDone) return;
-                        finalUpdateDone = true;
-                        if (!partialTextArrived) {
-                            const fallbackText = this.responseText.trim();
-                            if (fallbackText && container) {
-                                container.textContent = fallbackText;
-                            }
-                        }
-                        if (!lastFullContent) {
-                            lastFullContent = this.responseText;
-                        }   
-                        const processed = processAIContent(lastFullContent);
-                        
-                        if(mode==='quizmaster'){
-                            window.lastQuizQuestion = processed.question;
-                            window.quizCorrectAnswer = processed.answer;
-                            if(processed.question){
-                                processed.visible = `${processed.question}\n\nYourName: YourAnswer`;
-                            }
-                        }
-                        console.log("processed.question:", processed.question);
-                        console.log("processed.answer:", processed.answer);
-                        console.log("processed.visible:", processed.visible);
-                        const displayContent = processed.visible.trim();
-                        
-                        if (destination === 'note') {
+                            if (destination === 'note') {
                             updateNoteWithAIResponse(processed, true, mode);
                         }
-                    });
-                    return xhr;
-                },
-                error: function (err) {
-                    alert('An error occurred while streaming the response.');
-                    console.error(err);
+                    }
+                });
+                
+                return xhr;
+            },
+            error: function (err) {
+                alert('An error occurred while streaming the response.');
+                console.error(err);
 
-                    if (destination === 'note') {
-                        const editor = Quill.find(document.querySelector('#editor'));
-                        if (editor) {
-                            const text = editor.getText();
-                            const typingIndex = text.lastIndexOf('AI is typing...');
-                            if (typingIndex !== -1) {
-                                editor.deleteText(typingIndex, 'AI is typing...'.length);
-                                editor.insertText(typingIndex, 'AI: Error occurred while fetching response');
+                if (destination === 'note') {
+                    const editor = Quill.find(document.querySelector('#editor'));
+                    if (editor) {
+                        const text = editor.getText();
+                        const typingIndex = text.lastIndexOf('AI is typing...');
+                        if (typingIndex !== -1) {
+                            editor.deleteText(typingIndex, 'AI is typing...'.length);
+                            editor.insertText(typingIndex, 'AI: Error occurred while fetching response');
 
-                                if (window.socket && typeof window.socket.emit === 'function') {
-                                    const delta = editor.getContents();
-                                    window.socket.emit('text-change', delta);
-                                }
+                            if (window.socket && typeof window.socket.emit === 'function') {
+                                const delta = editor.getContents();
+                                window.socket.emit('text-change', delta);
                             }
                         }
                     }
