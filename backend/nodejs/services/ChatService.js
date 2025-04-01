@@ -82,6 +82,7 @@ export default class ChatService {
                 }else if (this.quizInProgress){
                     immediateLocalResponse = `I'm in quiz mode right now. Type "start quiz [topic]" to start a new quiz, "next question" for another question, or "end quiz" to finish.`;
                 } else {
+                    formattedPrompt = prompt;
                     this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 }
                 break
@@ -138,9 +139,6 @@ export default class ChatService {
                             const diff = newFull.substring(previousFullContent.length);
                             previousFullContent = newFull;
                             assistantMessage = newFull;
-                            if (mode == "quizmaster") {
-                                this.processQuizResponse(assistantMessage);
-                            }
                         }
                     } catch (e) {
                         console.error("Error parsing streamed data:", e);
