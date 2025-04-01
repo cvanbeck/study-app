@@ -112,7 +112,7 @@
                         console.log("processed.question:", processed.question);
                         console.log("processed.answer:", processed.answer);
                         console.log("processed.visible:", processed.visible);
-                        let displayContent = processed.visible.trim();
+                        const displayContent = processed.visible.trim();
                         
                         if (destination === 'chat'){
                             appendPartialDiff(displayContent, container);
@@ -148,11 +148,6 @@
         function appendPartialDiff(diffText, container) {
             if(!container) return;
             container.textContent += diffText;
-        }
-        function renderFullResponse(fullContent, container, isFinal=false){
-            if(!container) return;
-            container.innerText = fullContent;
-            updateScroll();
         }
         function updateNoteWithAIResponse(processedContent, isFinal=false, mode) {
             if (mode === 'quizmaster') {
