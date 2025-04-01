@@ -113,23 +113,31 @@
                     });
                 
                     xhr.addEventListener('loadend', function () {
+                        console.log("Raw responseText:", this.responseText);
                         if (finalUpdateDone) return;
                         finalUpdateDone = true;
                         let finalContent = lastFullContent;
                         if (!finalContent) {
                             try {
                                 const lines = this.responseText.split('\n');
+                                console.log("Parsed lines:", lines);
                                 for (let i = 0; i < lines.length; i++) {
-                                    const line = lines[i].trim();
-                                    if (!line || line === "[DONE]") continue;
-                                
-                                    try {
-                                        const parsed = JSON.parse(line);
-                                        if (parsed && parsed.fullContent) {
-                                            finalContent = parsed.fullContent;
+                                    for (let i = 0; i < lines.length; i++) {
+                                        const line = lines[i].trim();
+                                        if (!line || line === "data: [DONE]") continue;
+                                        let jsonPart = line;
+                                        if (line.startsWith("data: ")) {
+                                            jsonPart = line.substring(6);
                                         }
-                                    } catch (e) {
-                                        continue;
+                                        try {
+                                            const parsed = JSON.parse(jsonPart);
+                                            if (parsed && parsed.fullContent) {
+                                                finalContent = parsed.fullContent;
+                                                break;
+                                            }
+                                        } catch (e) {
+                                            console.error("Failed to parse line:", line, e);
+                                        }
                                     }
                                 }
                             } catch (e) {
