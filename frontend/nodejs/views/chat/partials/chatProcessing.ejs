@@ -9,25 +9,30 @@
         let answer = '';
 
         try {
-            const start = visibleContent.indexOf('[');
-            const end = visibleContent.lastIndexOf(']');
-            if (start !== -1 && end !== -1) {
-                const jsonString = visibleContent.substring(start, end + 1);
+            const jsonBlockMatch = visibleContent.match(/```json\s*([\s\S]*?)```/);
+            if (jsonBlockMatch && jsonBlockMatch[1]) {
+                const jsonString = jsonBlockMatch[1].trim();
                 const parsed = JSON.parse(jsonString);
-
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     const first = parsed[0];
-                    const keys = Object.keys(first).reduce((acc, key) => {
-                        acc[key.toLowerCase()] = first[key];
-                        return acc;
-                    }, {});
-
-                    question = keys["question"]?.toString().trim() || '';
-                    answer = keys["answer"]?.toString().trim() || '';
+                    question = first.Question?.toString().trim() || '';
+                    answer = first.Answer?.toString().trim() || '';
+                }
+            } else {
+                const start = visibleContent.indexOf('[');
+                const end = visibleContent.lastIndexOf(']');
+                if (start !== -1 && end !== -1) {
+                    const jsonString = visibleContent.substring(start, end + 1);
+                    const parsed = JSON.parse(jsonString);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        const first = parsed[0];
+                        question = first.Question?.toString().trim() || '';
+                        answer = first.Answer?.toString().trim() || '';
+                    }
                 }
             }
-        }catch (e){
-            console.warn("Failed to parse JSON from AI:", e);
+        } catch (e) {
+        console.warn("Failed to parse JSON from AI:", e);
         }
         return{
             thoughts,
