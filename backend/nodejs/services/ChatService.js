@@ -86,6 +86,7 @@ export default class ChatService {
                 }
                 break
             default:
+                formattedPrompt = prompt;
                 this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 break
         }
