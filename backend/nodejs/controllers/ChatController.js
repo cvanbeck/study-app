@@ -40,7 +40,8 @@ export default class ChatController extends BaseController {
             });
         } catch (error) {
             console.error("Chat API Error:", error);
-            res.write("data: Error occurred while fetching response\n\n");
+            res.write(`data: {"fullContent":"ERROR: ${error.message}"}\n\n`);
+            res.write("data: [DONE]\n\n");
             res.end();
         }
     }
