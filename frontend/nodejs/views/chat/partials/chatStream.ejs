@@ -171,70 +171,69 @@
                             }
                         }
                     });
-                });
-                return xhr;
-            },
-            error: function (err) {
-                alert('An error occurred while streaming the response.');
-                console.error(err);
+                    return xhr;
+                },
+                error: function (err) {
+                    alert('An error occurred while streaming the response.');
+                    console.error(err);
 
-                if (destination === 'note') {
-                    const editor = Quill.find(document.querySelector('#editor'));
-                    if (editor) {
-                        const text = editor.getText();
-                        const typingIndex = text.lastIndexOf('AI is typing...');
-                        if (typingIndex !== -1) {
-                            editor.deleteText(typingIndex, 'AI is typing...'.length);
-                            editor.insertText(typingIndex, 'AI: Error occurred while fetching response');
+                    if (destination === 'note') {
+                        const editor = Quill.find(document.querySelector('#editor'));
+                        if (editor) {
+                            const text = editor.getText();
+                            const typingIndex = text.lastIndexOf('AI is typing...');
+                            if (typingIndex !== -1) {
+                                editor.deleteText(typingIndex, 'AI is typing...'.length);
+                                editor.insertText(typingIndex, 'AI: Error occurred while fetching response');
 
-                            if (window.socket && typeof window.socket.emit === 'function') {
-                                const delta = editor.getContents();
-                                window.socket.emit('text-change', delta);
+                                if (window.socket && typeof window.socket.emit === 'function') {
+                                    const delta = editor.getContents();
+                                    window.socket.emit('text-change', delta);
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
-        function updateNoteWithAIResponse(processedContent, isFinal=false, mode) {
-            if (mode === 'quizmaster') {
-                window.lastQuizQuestion = processedContent.question;
-                window.quizCorrectAnswer = processedContent.answer;
-            }
-            let visibleContent = processedContent.visible.trim();
-            if (visibleContent.startsWith('"') && visibleContent.endsWith('"')) {
-                visibleContent = visibleContent.substring(1, visibleContent.length -1).trim();
-            }
-            const editorElement = document.querySelector('#editor')
-            const editor = Quill.find(editorElement);
-            if (!editor) return;
+            });
+            function updateNoteWithAIResponse(processedContent, isFinal=false, mode) {
+                if (mode === 'quizmaster') {
+                    window.lastQuizQuestion = processedContent.question;
+                    window.quizCorrectAnswer = processedContent.answer;
+                }
+                let visibleContent = processedContent.visible.trim();
+                if (visibleContent.startsWith('"') && visibleContent.endsWith('"')) {
+                    visibleContent = visibleContent.substring(1, visibleContent.length -1).trim();
+                }
+                const editorElement = document.querySelector('#editor')
+                const editor = Quill.find(editorElement);
+                if (!editor) return;
 
-            if (typeof window.aiResponseIndex !== 'undefined'){
-                const aiIndex = window.aiResponseIndex;
-                const currentLength = editor.getLength();
-                editor.deleteText(aiIndex, currentLength - aiIndex);
-                editor.insertText(aiIndex, `AI: ${visibleContent}\n`);
-            } else {
-                const currentLength = editor.getLength();
-                editor.insertText(currentLength, `AI: ${visibleContent}\n`);
-            }
-            if (window.socket && typeof window.socket.emit === 'function') {
-                const delta = editor.getContents();
-                window.socket.emit('text-change', delta);
+                if (typeof window.aiResponseIndex !== 'undefined'){
+                    const aiIndex = window.aiResponseIndex;
+                    const currentLength = editor.getLength();
+                    editor.deleteText(aiIndex, currentLength - aiIndex);
+                    editor.insertText(aiIndex, `AI: ${visibleContent}\n`);
+                } else {
+                    const currentLength = editor.getLength();
+                    editor.insertText(currentLength, `AI: ${visibleContent}\n`);
+                }
+                if (window.socket && typeof window.socket.emit === 'function') {
+                    const delta = editor.getContents();
+                    window.socket.emit('text-change', delta);
                 
+                }
             }
-        }
-        // Adjust textarea height on keydown and input events
-        $('#prompt').on('keydown', function (e) {
-            adjustTextareaHeight(this);
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                $('#chat-form').submit();
-            }
+            // Adjust textarea height on keydown and input events
+            $('#prompt').on('keydown', function (e) {
+                adjustTextareaHeight(this);
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    $('#chat-form').submit();
+                }
+            });
+            $('#prompt').on('input', function () {
+                adjustTextareaHeight(this);
+            });
+            adjustTextareaHeight($('#prompt')[0]);
         });
-        $('#prompt').on('input', function () {
-            adjustTextareaHeight(this);
-        });
-        adjustTextareaHeight($('#prompt')[0]);
-    });
 </script>
