@@ -145,16 +145,6 @@
         });
         function appendPartialDiff(diffText, container) {
             if(!container) return;
-            if (diffText.trim().startsWith('{"fullContent"')) {
-                try {
-                    const secondParsed = JSON.parse(diffText);
-                    if (secondParsed.fullContent) {
-                        diffText = secondParsed.fullContent;
-                    }
-                } catch (err) {
-                    console.warn("Second parse of partial chunk failed:", err);
-                }
-            }
             container.textContent += diffText;
             updateScroll();
         }
