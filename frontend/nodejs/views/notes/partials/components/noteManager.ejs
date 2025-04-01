@@ -27,7 +27,7 @@
         },
 
         promptLoadExistingNote() {
-            UI.promptForID('Enter Note ID', async (result) => {
+            UI.promptForID('Please enter a note ID', '', async (result) => {
                 const note = await API.getExistingNote(result);
                 window.history.pushState("", "", window.location.pathname + `?id=${note.id}`);
                 Editor.setContent(note);
