@@ -31,7 +31,7 @@ export default class JSONStreamService extends Transform {
                 .map((c) => c.content)
                 .join("");
             // Emit the updated aggregated content as a JSON string.
-            this.push(JSON.stringify({ fullContent: aggregated }));
+            this.push(JSON.stringify({ fullContent: deltaContent }));
         }
         callback();
     }
