@@ -28,8 +28,10 @@ export default class ChatController extends BaseController {
             res.setHeader("Connection", "keep-alive");
 
             const responseOrStream = await this.chatService.getChatResponse(prompt, mode);
-            if (typeof responseOrStream ==='string'){
-                return res.end(responseOrStream);
+            if (typeof responseOrStream === 'string') {
+                res.write(`data: ${JSON.stringify({ fullContent: responseOrStream })}\n\n`);
+                res.write("data: [DONE]\n\n");
+                return res.end();
             }
              responseOrStream.on("data", (chunk) => {
                 res.write(chunk.toString()+"\n");
