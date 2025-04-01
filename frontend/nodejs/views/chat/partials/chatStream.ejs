@@ -143,9 +143,13 @@
                 }
             });
         });
-        function appendPartialDiff(diffText, container) {
+        function appendPartialDiff(diff, container) {
             if(!container) return;
-            container.textContent += diffText;
+            let cleanedDiff = diff.replace(/^\{"fullContent":"/, "")
+                                  .replace(/"}$/, "")
+                                  .replace(/\\"/g, '"');
+
+            container.textContent += cleanedDiff;
             updateScroll();
         }
         function updateNoteWithAIResponse(processedContent, isFinal=false, mode) {
