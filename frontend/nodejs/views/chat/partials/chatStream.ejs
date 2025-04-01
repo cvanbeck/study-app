@@ -80,13 +80,11 @@
                                 try {
                                     const parsedData = JSON.parse(jsonPart);
                                     if (parsedData.fullContent) {
-                                        const newFull = parsedData.fullContent;
+                                        let newFull = parsedData.fullContent;
                                         const diff = newFull.substring(lastFullContent.length);
                                         lastFullContent = newFull;
-                                        if(destination ==='chat'){
-                                            appendPartialDiff(diff, container);
-                                            updateScroll();
-                                        }
+                                        appendPartialDiff(diff, container);
+                                        updateScroll();
                                     }
                                 } catch (e) {
                                     console.error("Error parsing streamed data:", e, jsonPart);
@@ -147,7 +145,18 @@
         });
         function appendPartialDiff(diffText, container) {
             if(!container) return;
+            if (diffText.trim().startsWith('{"fullContent"')) {
+                try {
+                    const secondParsed = JSON.parse(diffText);
+                    if (secondParsed.fullContent) {
+                        diffText = secondParsed.fullContent;
+                    }
+                } catch (err) {
+                    console.warn("Second parse of partial chunk failed:", err);
+                }
+            }
             container.textContent += diffText;
+            updateScroll();
         }
         function updateNoteWithAIResponse(processedContent, isFinal=false, mode) {
             if (mode === 'quizmaster') {
