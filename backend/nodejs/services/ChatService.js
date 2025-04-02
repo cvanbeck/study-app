@@ -43,32 +43,32 @@ export default class ChatService {
             case "quizmaster":
                 if (prompt.toLowerCase().includes("start quiz")){
                     const topic = prompt.replace(/start quiz/i, "").trim();
-                    formattedPrompt = `Generate exactly one question strictly related to '${topic}' without introducing any unrelated details or explanations. 
-                        Ensure the question is clear, relevant, and precise. Additionally, provide a direct and accurate answer to the generated question.
-                        Format your response as valid JSON with no deviations, extra text, or explanations. Use the exact structure below:
+                    formattedPrompt = `Generate exactly one question, with its answer, strictly related to '${topic}' without introducing any unrelated details, 
+                        explanations, extra text, or deviations. Respond ONLY with this JSON structure:
                         [
                           {
                             "Question": "[the generated question]",
                             "Answer": "[the generated answer]"
                           }
                         ]
+                        DO NOT use multiple objects in the array. Combine Question and Answer in the same object. DO NOT add any other keys, explanations, or formatting.
                         Failure to adhere to this format will result in an invalid response. Do not include additional text, formatting, alternative structures, 
                         variables, markdown, escapes, line breaks, or placeholders`;
                     this.quizInProgress = true;
                     this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 } else if (this.quizInProgress && prompt.toLowerCase().includes("next question")){
                     const topic = prompt.replace(/next question/i, "").trim();
-                    formattedPrompt = `Generate exactly one more question strictly related to '${topic}' without introducing any unrelated details or explanations. 
-                        Ensure the question is clear, relevant, and precise. Additionally, provide a direct and accurate answer to the generated question.
-                        Format your response as valid JSON with no deviations, extra text, or explanations. Use the exact structure below:
+                    formattedPrompt = `Generate exactly one more question, with its answer, strictly related to '${topic}' without introducing any unrelated details, 
+                        explanations, extra text, or deviations. Respond ONLY with this JSON structure:
                         [
                           {
                             "Question": "[the generated question]",
                             "Answer": "[the generated answer]"
                           }
                         ]
+                        DO NOT use multiple objects in the array. Combine Question and Answer in the same object. DO NOT add any other keys, explanations, or formatting.
                         Failure to adhere to this format will result in an invalid response. Do not include additional text, formatting, alternative structures, 
-                        variables, markdown, escapes, line breaks or placeholders`;
+                        variables, markdown, escapes, line breaks, or placeholders`;
                     this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 }else if (this.quizInProgress && prompt.toLowerCase().includes("end quiz")){
                     this.quizInProgress = false
