@@ -44,6 +44,7 @@
 </div>
 
 <script>
+    window.chatMode = 'default';
     // Toggle dropdown settings menu
     $('#settings-toggle').on('click', function (e) {
         e.stopPropagation();
@@ -70,6 +71,7 @@
     $('#settings-dropdown input[type="radio"][name="mode"]').on('change', function () {
         const selectedMode = $(this).val();
         $('#response-mode').val(selectedMode);
+        window.chatMode = selectedMode;
 
         $("#prompt").attr("placeholder", `Message the AI (${$('input[name="mode"]:checked').closest("label").text().trim()})`);
         if (selectedMode === "quizmaster") {
