@@ -2,6 +2,7 @@
     window.quizCorrectAnswer = null;
     window.lastQuizQuestion = null;
     window.lastQuizAnsweredBy = null;
+    window.chatMode = null;
 </script>
 
 <script>
@@ -15,6 +16,7 @@
             const prompt = $('#prompt').val().trim();
             if(!prompt) return;
             const mode = $('input[name="mode"]:checked').val();
+            window.chatMode = mode;
             const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
             const destination = $('input[name="destination"]:checked').val() || 'chat';
 
