@@ -1,6 +1,7 @@
 <script>
     // Process AI content, separating <think> tags from visible content
     function processAIContent(content) {
+        console.log("[parser] Raw content:", content);
         const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
         const thoughts = thoughtMatches.map(match => match.replace(/<\/?think>/g, "").trim()).join("\n");
         const strippedContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
@@ -36,6 +37,9 @@
             } catch (e) {
                 console.warn("Failed to parse JSON from AI:", e);
             }
+            if (answer) {
+            window.quizCorrectAnswer = answer;
+            }
         }
         const visible = (isQuizMode && question)
             ? `${question}\n\nYourName: YourAnswer`
@@ -46,6 +50,8 @@
             question,
             answer
         };
+        console.log("[parser] Stripped content:", strippedContent);
+        console.log("[parser] Returning visible:", visible);
     }
 
 
