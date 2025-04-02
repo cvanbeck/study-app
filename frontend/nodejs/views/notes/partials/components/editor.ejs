@@ -23,14 +23,19 @@
             // Listen for text changes and broadcast updates
             this.quill.on('text-change', (delta, oldDelta, source) => {
                 if (source !== 'user') return;
+                console.log("[editor] text-change fired");
                 const enteredNewline = delta.ops.some(op => typeof op.insert === 'string' && op.insert.includes('\n'));
                 if (!enteredNewline) return;
                 setTimeout(() => {
+                    console.log("[editor] Checking last line after Enter");
                     const text = this.quill.getText().trim();
                     const lines = text.split('\n').filter(line => line.trim() !== '');
                     const lastLine = lines[lines.length - 1];
+                    console.log("[editor] Last line:", lastLine);
+                    console.log("[editor] Current correct answer:", window.quizCorrectAnswer);
 
                     const match = lastLine.match(/^(.+?):\s*(.+)$/);
+                    console.log("[editor] Regex match result:", match);
                     if (match && window.quizCorrectAnswer) {
                         const username = match[1].trim();
                         const userAnswer = match[2].trim();
