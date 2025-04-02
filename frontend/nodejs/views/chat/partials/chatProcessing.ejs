@@ -3,33 +3,35 @@
     function processAIContent(content) {
         const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
         const thoughts = thoughtMatches.map(match => match.replace(/<\/?think>/g, "").trim()).join("\n");
-        let visibleContent = content;
-        if (thoughtMatches.length >0){
-            visibleContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-        }
+        let visibleContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        
         let question = '';
         let answer = '';
 
+        const isQuizMode = window.chatMode === 'quizmaster';
+
         try {
-            const jsonBlockMatch = visibleContent.match(/```json\s*([\s\S]*?)```/);
-            if (jsonBlockMatch && jsonBlockMatch[1]) {
-                const jsonString = jsonBlockMatch[1].trim();
-                const parsed = JSON.parse(jsonString);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    const first = parsed[0];
-                    question = first.Question?.toString().trim() || '';
-                    answer = first.Answer?.toString().trim() || '';
-                }
-            } else {
-                const start = visibleContent.indexOf('[');
-                const end = visibleContent.lastIndexOf(']');
-                if (start !== -1 && end !== -1) {
-                    const jsonString = visibleContent.substring(start, end + 1);
+            if(isQuizMode){
+                const jsonBlockMatch = visibleContent.match(/```json\s*([\s\S]*?)```/);
+                if (jsonBlockMatch && jsonBlockMatch[1]) {
+                    const jsonString = jsonBlockMatch[1].trim();
                     const parsed = JSON.parse(jsonString);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         const first = parsed[0];
                         question = first.Question?.toString().trim() || '';
                         answer = first.Answer?.toString().trim() || '';
+                    }
+                } else {
+                    const start = visibleContent.indexOf('[');
+                    const end = visibleContent.lastIndexOf(']');
+                    if (start !== -1 && end !== -1) {
+                        const jsonString = visibleContent.substring(start, end + 1);
+                        const parsed = JSON.parse(jsonString);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            const first = parsed[0];
+                            question = first.Question?.toString().trim() || '';
+                            answer = first.Answer?.toString().trim() || '';
+                        }
                     }
                 }
             }
@@ -38,7 +40,7 @@
         }
         return{
             thoughts,
-            visible: (question && window.quizCorrectAnswer === 'quizmaster')
+            visible: (question && isQuizMode)
                 ? `${question}\n\nYourName: YourAnswer`
                 : visibleContent,
             question,
