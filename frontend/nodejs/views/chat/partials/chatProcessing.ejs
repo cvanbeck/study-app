@@ -36,7 +36,7 @@
         }
         return{
             thoughts,
-            visible: (question && window.quizCorrectAnswer !== null)
+            visible: (question && window.quizCorrectAnswer === 'quizmaster')
                 ? `${question}\n\nYourName: YourAnswer`
                 : visibleContent,
             question,
