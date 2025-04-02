@@ -36,7 +36,9 @@
         }
         return{
             thoughts,
-            visible: question ? `${question}\n\nYourName: YourAnswer` : visibleContent,
+            visible: (question && window.quizCorrectAnswer !== null)
+                ? `${question}\n\nYourName: YourAnswer`
+                : visibleContent,
             question,
             answer
         };
