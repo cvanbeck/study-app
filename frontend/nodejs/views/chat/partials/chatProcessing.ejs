@@ -11,7 +11,7 @@
         const isQuizMode = (window.chatMode === 'quizmaster');
         if(isQuizMode){
             try {
-                const jsonBlockMatch = visibleContent.match(/```json\s*([\s\S]*?)```/);
+                const jsonBlockMatch = strippedContent.match(/```json\s*([\s\S]*?)```/);
                 if (jsonBlockMatch && jsonBlockMatch[1]) {
                     const jsonString = jsonBlockMatch[1].trim();
                     const parsed = JSON.parse(jsonString);
@@ -21,10 +21,10 @@
                         answer = first.Answer?.toString().trim() || '';
                     }
                 } else {
-                    const start = visibleContent.indexOf('[');
-                    const end = visibleContent.lastIndexOf(']');
+                    const start = strippedContent.indexOf('[');
+                    const end = strippedContent.lastIndexOf(']');
                     if (start !== -1 && end !== -1) {
-                        const jsonString = visibleContent.substring(start, end + 1);
+                        const jsonString = strippedContent.substring(start, end + 1);
                         const parsed = JSON.parse(jsonString);
                         if (Array.isArray(parsed) && parsed.length > 0) {
                             const first = parsed[0];
@@ -39,7 +39,7 @@
         }
         const visible = (isQuizMode && question)
             ? `${question}\n\nYourName: YourAnswer`
-            : strippedContent,
+            : strippedContent;
         return{
             thoughts,
             visible,
