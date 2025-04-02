@@ -3,15 +3,14 @@
     function processAIContent(content) {
         const thoughtMatches = content.match(/<think>[\s\S]*?<\/think>/g) || [];
         const thoughts = thoughtMatches.map(match => match.replace(/<\/?think>/g, "").trim()).join("\n");
-        let visibleContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        const strippedContent = content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
         
         let question = '';
         let answer = '';
 
-        const isQuizMode = window.chatMode === 'quizmaster';
-
-        try {
-            if(isQuizMode){
+        const isQuizMode = (window.chatMode === 'quizmaster');
+        if(isQuizMode){
+            try {
                 const jsonBlockMatch = visibleContent.match(/```json\s*([\s\S]*?)```/);
                 if (jsonBlockMatch && jsonBlockMatch[1]) {
                     const jsonString = jsonBlockMatch[1].trim();
@@ -34,15 +33,16 @@
                         }
                     }
                 }
+            } catch (e) {
+                console.warn("Failed to parse JSON from AI:", e);
             }
-        } catch (e) {
-        console.warn("Failed to parse JSON from AI:", e);
         }
+        const visible = (isQuizMode && question)
+            ? `${question}\n\nYourName: YourAnswer`
+            : strippedContent,
         return{
             thoughts,
-            visible: (question && isQuizMode)
-                ? `${question}\n\nYourName: YourAnswer`
-                : visibleContent,
+            visible,
             question,
             answer
         };
