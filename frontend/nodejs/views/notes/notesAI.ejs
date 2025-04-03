@@ -49,14 +49,22 @@
     <%- include('../chat/partials/chatStream.ejs') %>
 <script>
     function notesAIInit() {
-        if(typeof UI !=='undefined' && typeof UI.init === 'function'){
-            UI.init();
-        }
-        if (!Editor || !Editor.quill) {
+        if (!Editor || !Editor.init || (Editor.quill === null && typeof Editor.init === 'function')) {
             setTimeout(notesAIInit, 300);
             return;
+        }
+
+        if (typeof UI !== 'undefined' && typeof UI.init === 'function') {
+            UI.init();
+        }
+
+        Editor.init();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('session')) {
+            WebSocketManager.connect();
         }
     }
 
     $(document).ready(notesAIInit);
-    </script>
+</script>
