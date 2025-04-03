@@ -133,33 +133,38 @@
                                 const lines = this.responseText.split('\n');
                                 console.log("Parsed lines:", lines);
                                 for (let i = 0; i < lines.length; i++) {
-                                    for (let i = 0; i < lines.length; i++) {
-                                        const line = lines[i].trim();
-                                        if (!line || line === "data: [DONE]") continue;
-                                        let jsonPart = line;
-                                        if (line.startsWith("data: ")) {
-                                            jsonPart = line.substring(6);
+                                    const line = lines[i].trim();
+                                    if (!line || line === "data: [DONE]") continue;
+                                    let jsonPart = line;
+                                    if (line.startsWith("data: ")) {
+                                        jsonPart = line.substring(6);
+                                    }
+                                    try {
+                                        const parsed = JSON.parse(jsonPart);
+                                        if (parsed && parsed.fullContent) {
+                                            finalContent = parsed.fullContent;
+                                            break;
                                         }
-                                        try {
-                                            const parsed = JSON.parse(jsonPart);
-                                            if (parsed && parsed.fullContent) {
-                                                finalContent = parsed.fullContent;
-                                                break;
-                                            }
-                                        } catch (e) {
-                                            console.error("Failed to parse line:", line, e);
-                                        }
+                                    } catch (e) {
+                                        console.error("Failed to parse line:", line, e);
                                     }
                                 }
-                            } catch (e) {
-                                console.error("Error extracting final content:", e);
                             }
+                        } catch (e) {
+                            console.error("Error extracting final content:", e);
                         }
                         console.log("Final content extracted for note mode:", finalContent);
 
                         if (finalContent) {
                             if (finalContent.startsWith("data: ")) {
                                 finalContent = finalContent.slice(6).trim();
+                            }
+                            try {
+                                const maybeWrapped = JSON.parse(finalContent);
+                                if (maybeWrapped && maybeWrapped.fullContent) {
+                                    finalContent = maybeWrapped.fullContent;
+                                }
+                            } catch (e) {
                             }
                             const processed = processAIContent(finalContent);
     
