@@ -44,6 +44,7 @@ export default class ChatService {
                 this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 break;
             case "quizmaster":
+                this.clearHistory();
                 if (prompt.toLowerCase().includes("start quiz")){
                     const topic = prompt.replace(/start quiz/i, "").trim();
                     formattedPrompt = `Generate exactly one question, with its answer, strictly related to '${topic}' without introducing any unrelated details, 
@@ -90,6 +91,7 @@ export default class ChatService {
                 }
                 break
             default:
+                this.clearHistory();
                 formattedPrompt = prompt;
                 this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 break
