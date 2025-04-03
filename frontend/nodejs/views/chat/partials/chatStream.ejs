@@ -16,6 +16,9 @@
             const prompt = $('#prompt').val().trim();
             if(!prompt) return;
             const mode = $('input[name="mode"]:checked').val();
+            if (window.chatMode === "quizmaster" && mode !== "quizmaster") {
+                $.post("/chat/reset-quiz-state");
+            }
             window.chatMode = mode;
             const thoughtsDefault = $('input[name="thoughtsDefault"]:checked').val();
             const destination = $('input[name="destination"]:checked').val() || 'chat';
