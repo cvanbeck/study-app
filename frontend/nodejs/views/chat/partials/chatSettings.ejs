@@ -73,6 +73,10 @@
         $('#response-mode').val(selectedMode);
         window.chatMode = selectedMode;
 
+        if (selectedMode !== "quizmaster") {
+            fetch("/reset-quiz-state", { method: "POST" });
+        }
+
         $("#prompt").attr("placeholder", `Message the AI (${$('input[name="mode"]:checked').closest("label").text().trim()})`);
         if (selectedMode === "quizmaster") {
             $("#quizmaster-help").show();
