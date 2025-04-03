@@ -158,6 +158,9 @@
                         console.log("Final content extracted for note mode:", finalContent);
 
                         if (finalContent) {
+                            if (finalContent.startsWith("data: ")) {
+                                finalContent = finalContent.slice(6).trim();
+                            }
                             const processed = processAIContent(finalContent);
     
                             if (mode === 'quizmaster') {
