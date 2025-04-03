@@ -29,14 +29,17 @@ export default class ChatService {
         
         switch (mode) {
             case "steps":
+                this.clearHistory();
                 formattedPrompt = `Explain in a step by step format: ${prompt}`;
                 this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 break;
             case "example":
+                this.clearHistory();
                 formattedPrompt = `Explain with a real world example: ${prompt}`;
                 this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 break;
             case "flashcards":
+                this.clearHistory();
                 formattedPrompt = `Generate 10 questions and answers on this subject: ${prompt}`;
                 this.conversationHistory.push({ role: "user", content: formattedPrompt });
                 break;
