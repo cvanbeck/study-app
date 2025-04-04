@@ -53,6 +53,16 @@ export default class AccountController extends BaseController {
             return res.status(400).json({ error: 'Password too short' });
         }
 
+        // SQL injection check for all usernames
+        const SQL_INJECTION_PATTERNS = [
+            "'", "--", ";", "/*", "*/", "xp_",
+            "SELECT", "DROP", "INSERT", "DELETE", "UPDATE"
+        ];
+        if (SQL_INJECTION_PATTERNS.some(pattern => 
+            username.toUpperCase().includes(pattern))) {
+            return res.status(400).json({ error: 'Username contains invalid characters' });
+        }
+
         // First check if input looks like an email
         const isEmail = username.includes('@');
         
@@ -71,15 +81,6 @@ export default class AccountController extends BaseController {
             }
             if (!USERNAME_REGEX.test(username)) {
                 return res.status(400).json({ error: 'Username contains invalid characters' });
-            }
-            // SQL injection check only for username format
-            const SQL_INJECTION_PATTERNS = [
-                "'", "--", ";", "/*", "*/", "xp_",
-                "SELECT", "DROP", "INSERT", "DELETE", "UPDATE"
-            ];
-            if (SQL_INJECTION_PATTERNS.some(pattern => 
-                username.toUpperCase().includes(pattern))) {
-                return res.status(400).json({ error: 'Invalid format' });
             }
         }
 
