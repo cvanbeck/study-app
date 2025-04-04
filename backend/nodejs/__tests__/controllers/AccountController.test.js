@@ -620,8 +620,19 @@ describe('AccountController', () => {
             const sqlInjections = [
                 "' OR '1'='1",
                 "admin'--",
-                "'; DROP TABLE Users;--"
+                "'; DROP TABLE Users;--",
+                "admin' UNION SELECT * FROM Users--",
+                "admin'); WAITFOR DELAY '0:0:10'--",
+                "admin' /*",
+                "admin' UNION SELECT @@version--",
+                "admin\u0027 OR \u00271\u0027=\u00271", // Unicode attempts
+                "AdMiN' -- /* comment */",
+                "); DROP TABLE Users; --",
+                "' OR 1=1 LIMIT 1 -- -",
+                "' AND 1=(SELECT COUNT(*) FROM Users); --"
             ];
+            
+            const db = await mockDbContext.dbPromise;
             
             for (const injection of sqlInjections) {
                 mockReq.body = {
@@ -631,11 +642,25 @@ describe('AccountController', () => {
 
                 await controller.loginPost(mockReq, mockRes);
                 
-                // Should handle SQL injection attempts gracefully
+                // Verify response indicates invalid input
                 expect(mockRes.status).toHaveBeenCalledWith(400);
                 expect(mockRes.json).toHaveBeenCalledWith({
                     error: 'Username contains invalid characters'
                 });
+
+                // Verify the raw SQL injection never reaches the database
+                expect(db.get).not.toHaveBeenCalled();
+                
+                // If the query does run, verify it uses parameterized query
+                if (db.get.mock.calls.length > 0) {
+                    const [query, params] = db.get.mock.calls[0];
+                    expect(query).not.toContain(injection);
+                    expect(params).toContain(injection);
+                    expect(query).toContain('?'); // Verify parameterization
+                }
+
+                // Clear mocks for next iteration
+                jest.clearAllMocks();
             }
         });
 
@@ -903,9 +928,6 @@ describe('AccountController', () => {
         /**
          * Test registration with short password
          * Purpose: Document current password validation behavior
-         * 
-         * Note: Currently no minimum password length validation
-         * TODO: Consider adding minimum password length requirement
          */
         test('should currently allow short passwords', async () => {
             // Setup test case with short password
@@ -928,6 +950,178 @@ describe('AccountController', () => {
             expect(mockRes.json).toHaveBeenCalledWith({
                 error: 'Password too short'
             });
+        });
+    });
+
+    /**
+     * Test suite for account password editing functionality
+     */
+    describe('Account Edit', () => {
+        // Set up authenticated user session before each test
+        beforeEach(() => {
+            mockReq.session.user = { Id: 'testUserId' };
+        });
+
+        /**
+         * Test successful password update
+         */
+        test('should successfully update password', async () => {
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({ Id: 'testUserId', PasswordHash: 'oldHash' });
+            db.run.mockResolvedValue({});
+            
+            // Set up request body with valid password data
+            mockReq.body = {
+                password: 'currentPassword',
+                newPassword: 'newPassword123',
+                confirmNewPassword: 'newPassword123'
+            };
+
+            // Mock bcrypt.compare to return true for valid current password
+            jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+            jest.spyOn(bcrypt, 'hash').mockResolvedValue('newHash');
+            
+            await controller.editPost(mockReq, mockRes);
+
+            // Verify successful response and database update
+            expect(mockRes.json).toHaveBeenCalledWith({ success: true });
+            expect(db.run).toHaveBeenCalledWith(
+                "UPDATE Users SET PasswordHash = ? WHERE Id = ?",
+                ['newHash', 'testUserId']
+            );
+        });
+
+        /**
+         * Test unauthorized access scenario
+         */ 
+        test('should fail when user is not authenticated', async () => {
+            mockReq.session.user = null;
+            await controller.editPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockRes.json).toHaveBeenCalledWith({ error: "Unauthorized" });
+        });
+
+        /**
+         * Test failed password update with missing fields
+         */
+        test('should fail when fields are missing', async () => {
+            mockReq.body = {
+                password: 'currentPassword',
+                // missing newPassword and confirmNewPassword
+            };
+
+            await controller.editPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({ error: "All fields are required." });
+        });
+
+        /**
+         * Test failed password update with non-matching new passwords
+         */
+        test('should fail when new passwords do not match', async () => {
+            mockReq.body = {
+                password: 'currentPassword',
+                newPassword: 'newPassword123',
+                confirmNewPassword: 'differentPassword'
+            };
+
+            await controller.editPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({ error: "New passwords do not match" });
+        });
+
+        /**
+         * Test failed password update with incorrect current password
+         */
+        test('should fail when current password is incorrect', async () => {
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue({ Id: 'testUserId', PasswordHash: 'oldHash' });
+            
+            mockReq.body = {
+                password: 'wrongPassword',
+                newPassword: 'newPassword123',
+                confirmNewPassword: 'newPassword123'
+            };
+
+            jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
+
+            await controller.editPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockRes.json).toHaveBeenCalledWith({ error: "Current password is incorrect" });
+        });
+
+        /**
+         * Test failed password update with user not found
+         */ 
+        test('should fail when user is not found', async () => {
+            const db = await mockDbContext.dbPromise;
+            db.get.mockResolvedValue(null);
+            
+            mockReq.body = {
+                password: 'currentPassword',
+                newPassword: 'newPassword123',
+                confirmNewPassword: 'newPassword123'
+            };
+
+            await controller.editPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(404);
+            expect(mockRes.json).toHaveBeenCalledWith({ error: "User not found" });
+        });
+
+        /**
+         * Test failed password update with database error
+         */
+        test('should handle database errors', async () => {
+            const db = await mockDbContext.dbPromise;
+            db.get.mockRejectedValue(new Error('Database error'));
+            
+            mockReq.body = {
+                password: 'currentPassword',
+                newPassword: 'newPassword123',
+                confirmNewPassword: 'newPassword123'
+            };
+
+            await controller.editPost(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+            expect(mockRes.json).toHaveBeenCalledWith({ error: "Server error" });
+        });
+    });
+
+    /**
+     * Test suite for account logout functionality
+     */ 
+    describe('Logout', () => {
+        test('should successfully log out user', async () => {
+            mockReq.session = {
+                destroy: jest.fn((callback) => callback())
+            };
+
+            await controller.logout(mockReq, mockRes);
+
+            expect(mockReq.session.destroy).toHaveBeenCalled();
+            expect(mockRes.redirect).toHaveBeenCalledWith('/account/login');
+        });
+
+        /**
+         * Test failed logout with session destruction error
+         */ 
+        test('should handle session destruction error', async () => {
+            const error = new Error('Session destruction failed');
+            mockReq.session = {
+                destroy: jest.fn((callback) => callback(error))
+            };
+
+            await controller.logout(mockReq, mockRes);
+          
+            expect(mockReq.session.destroy).toHaveBeenCalled();
+            expect(mockRes.status).toHaveBeenCalledWith(500);
+            expect(mockRes.json).toHaveBeenCalledWith({ error: "Could not log out" });
         });
     });
 });
