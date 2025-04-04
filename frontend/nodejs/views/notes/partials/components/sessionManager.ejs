@@ -25,12 +25,12 @@
         },
 
         promptJoinSession() {
-            UI.promptForID('Enter Session Code', async (sessionCode) => {
+            UI.promptForID('Enter a session code', 'This is a unique 7-character combination of letters and numbers shared with you by another user.', async (sessionCode) => {
                 if (typeof sessionCode === 'string' && sessionCode.length === 7) {
                     WebSocketManager.disconnect();
                     await SessionManager.joinSession(sessionCode);
                 } else {
-                    throw 'Invalid Code';
+                    throw 'Invalid code';
                 }
             });
         },

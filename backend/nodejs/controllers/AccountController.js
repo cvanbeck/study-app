@@ -33,12 +33,90 @@ export default class AccountController extends BaseController {
 
     // POST /account/loginPost – handles login requests
     async loginPost(req, res) {
-        const { username, password } = req.body;
-        const returnUrl = req.query.ReturnUrl || '/';
+        const username = req.body.username;
+        const password = req.body.password;
+        let returnUrl = req.query.ReturnUrl || '/';
+
+        // Constants for validation
+        const MAX_USERNAME_LENGTH = 50;
+        const MIN_PASSWORD_LENGTH = 6;
+        const MAX_EMAIL_LENGTH = 254;
+        const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!username || !password) {
+            return res.status(400).json({ error: "Missing credentials" });
+        }
+
+        // Validate password length
+        if (password.length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ error: 'Password too short' });
+        }
+
+        // SQL injection check for all usernames
+        const SQL_INJECTION_PATTERNS = [
+            "'", "--", ";", "/*", "*/", "xp_",
+            "SELECT", "DROP", "INSERT", "DELETE", "UPDATE"
+        ];
+        if (SQL_INJECTION_PATTERNS.some(pattern => 
+            username.toUpperCase().includes(pattern))) {
+            return res.status(400).json({ error: 'Username contains invalid characters' });
+        }
+
+        // First check if input looks like an email
+        const isEmail = username.includes('@');
+        
+        if (isEmail) {
+            // Validate email format and length
+            if (!EMAIL_REGEX.test(username)) {
+                return res.status(400).json({ error: 'Invalid email format' });
+            }
+            if (username.length > MAX_EMAIL_LENGTH) {
+                return res.status(400).json({ error: 'Email too long' });
+            }
+        } else {
+            // Only validate username format if it's not an email
+            if (username.length > MAX_USERNAME_LENGTH) {
+                return res.status(400).json({ error: 'Username too long' });
+            }
+            if (!USERNAME_REGEX.test(username)) {
+                return res.status(400).json({ error: 'Username contains invalid characters' });
+            }
+        }
+
+        // Sanitize return URL
+        try {
+            if (!returnUrl || typeof returnUrl !== 'string') {
+                returnUrl = '/';
+            } else {
+                // Check for protocol handlers or javascript
+                if (returnUrl.toLowerCase().includes('javascript:') || 
+                    returnUrl.includes('://') || 
+                    returnUrl.startsWith('//')) {
+                    returnUrl = '/';
+                } else {
+                    // Remove path traversal attempts
+                    returnUrl = returnUrl.replace(/\.\./g, '');
+                    
+                    // Remove script tags and other potentially dangerous content
+                    returnUrl = returnUrl.replace(/<[^>]*>/g, '');
+                    
+                    // Ensure it starts with a single /
+                    returnUrl = '/' + returnUrl.replace(/^\/+/, '');
+                }
+            }
+        } catch (e) {
+            returnUrl = '/';
+        }
 
         try {
             const db = await this.dbContext.dbPromise;
-            const user = await db.get("SELECT * FROM Users WHERE UserName = ?", [username]);
+            // Check for user by either username or email (case-insensitive)
+            const user = await db.get(
+                "SELECT * FROM Users WHERE LOWER(UserName) = LOWER(?) OR LOWER(Email) = LOWER(?)", 
+                [username, username]
+            );
+            
             if (!user) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
@@ -53,7 +131,7 @@ export default class AccountController extends BaseController {
 
             return res.json({ 
                 success: true, 
-                returnUrl: decodeURIComponent(returnUrl) 
+                returnUrl: returnUrl  
             });
         } catch (err) {
             console.error("Login error:", err);
@@ -63,23 +141,50 @@ export default class AccountController extends BaseController {
 
     // POST /account/registerPost – handles new user registrations
     async registerPost(req, res) {
+        console.log("Registration attempt:", { username: req.body.username, email: req.body.email });
+
         const { username, email, password, confirmPassword } = req.body;
 
-        // Debug logging
-        console.log('Registration attempt:', { username, email });
-
         // Validate required fields
-        if (!username || !password || !confirmPassword) {
-            console.log('Validation failed: Missing fields');
-            return res.status(400).json({ 
-                error: "Username and password are required.",
-                debug: { username, email, passwordProvided: !!password, confirmPasswordProvided: !!confirmPassword }
-            });
+        if (!username || !email || !password || !confirmPassword) {
+            return res.status(400).json({ error: "Missing required fields" });
         }
 
+        // Validate email format
+        const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!EMAIL_REGEX.test(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
+        }
+
+        // Validate email length
+        const MAX_EMAIL_LENGTH = 254;
+        if (email.length > MAX_EMAIL_LENGTH) {
+            return res.status(400).json({ error: "Email too long" });
+        }
+
+        // Constants for validation
+        const MAX_USERNAME_LENGTH = 50;
+        const MIN_PASSWORD_LENGTH = 6;
+        const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+
+        // Validate username
+        if (username.length > MAX_USERNAME_LENGTH) {
+            return res.status(400).json({ error: 'Username too long' });
+        }
+
+        if (!USERNAME_REGEX.test(username)) {
+            return res.status(400).json({ error: 'Username contains invalid characters' });
+        }
+
+        // Validate password
+        if (password.length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ error: 'Password too short' });
+        }
+
+        // Check password match
         if (password !== confirmPassword) {
             console.log('Validation failed: Passwords do not match');
-            return res.status(400).json({ error: "Passwords do not match" });
+            return res.status(400).json({ error: 'Passwords do not match' });
         }
 
         try {

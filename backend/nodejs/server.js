@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 import SQLiteDbContext from './database/SQLiteDbContext.js';
 import { WebSocket, WebSocketServer } from 'ws';
 import cors from 'cors';
-
+import { initializeDatabase } from './database/init-db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const __frontend_dirname = join(__dirname, '../../frontend', 'nodejs');
@@ -20,10 +20,17 @@ const port = 8000;
 // Connection string for the database you want to connect to
 // SQLLite uses a file path as the connection string.
 // Other database types have specific formats, look them up.
-const connectionString = '../sqllite-database/Chinook.db';
+const connectionString = join(__dirname, '../sqllite-database/Chinook.db');
+
+// Define paths for the database, setup SQL, and marker file (SQLLIT ONLY)
+const setupSqlFile = join(__dirname, '../sqllite-database/setup-database.sql');
+const markerFile = join(__dirname, './database/db_initialized.txt'); // DO NOT CHANGE, THIS FILE IS GITIGNORED
+
+// Run the database initialization before starting the server. (SQLLITE ONLY)
+await initializeDatabase(connectionString, setupSqlFile, markerFile);
 
 const appData = {
-    appName: "Study App", 
+    appName: "Study App",
     db: new SQLiteDbContext(connectionString), // Include the db in the appData object
     environment: process.env.NODE_ENV,
     useAuthentication: true,
@@ -44,15 +51,12 @@ app.use(session({ secret: 'transrights', resave: false, saveUninitialized: true 
 
 import("./routes/mapRoutes.js").then(module => module.default(app, appData));
 
-
-
-app.use(cors()); 
+app.use(cors());
 // const server = http.createServer(app); //Only needed for ws to run on the same port. WS can run on another port.
-const wss = new WebSocketServer({ port: 8001 }); 
-
+const wss = new WebSocketServer({ port: 8001 });
 
 //Pings when a new client is connected
-wss.on('connection', (ws, req, client) => {
+wss.on('connection', (ws) => {
     console.log('New Client Connected');
     ws.id = crypto.randomUUID(); // sets client id
     ws.send(JSON.stringify({ type: 'id', data: ws.id })); // sends id back to client (for cursor labels)
@@ -75,7 +79,12 @@ wss.on('connection', (ws, req, client) => {
                 break;
             case "sync": // Sync tape updates clients Quill editor view with current content. Excludes message sender
                 wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session && client.note === ws.note) {
+                    if (
+                        client !== ws &&
+                        client.readyState === WebSocket.OPEN &&
+                        client.session === ws.session &&
+                        client.note === ws.note
+                    ) {
                         client.send(JSON.stringify({ type: 'update', data: data.content }));
                     }
                 });
@@ -83,7 +92,12 @@ wss.on('connection', (ws, req, client) => {
                 break;
             case "cursorSync": // Sends new cursor movements to other clients
                 wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session && client.note === ws.note) {
+                    if (
+                        client !== ws &&
+                        client.readyState === WebSocket.OPEN &&
+                        client.session === ws.session &&
+                        client.note === ws.note
+                    ) {
                         client.send(JSON.stringify({ type: 'cursorUpdate', data: data.data }));
                     }
                 });
@@ -112,11 +126,16 @@ wss.on('connection', (ws, req, client) => {
             case "endSession":
                 console.log(`Session ${ws.session} is ending`);
                 wss.clients.forEach((client) => {
-                    if (client !== ws && client.readyState === WebSocket.OPEN && client.session === ws.session && client.note === ws.note) {
+                    if (
+                        client !== ws &&
+                        client.readyState === WebSocket.OPEN &&
+                        client.session === ws.session &&
+                        client.note === ws.note
+                    ) {
                         client.send(JSON.stringify({ type: 'sessionClosed' }));
                     }
                 });
-
+                break;
         }
     });
 
@@ -135,9 +154,9 @@ wss.on('connection', (ws, req, client) => {
 
 // Filter returning clients that are part of the same notes collab session
 function clientFilter(ws) {
-    return function(client) {
-        return client.note === ws.note && client.session == ws.session;
-    }
+    return function (client) {
+        return client.note === ws.note && client.session === ws.session;
+    };
 }
 
 // Returns true if all clients connected to a session are inactive
