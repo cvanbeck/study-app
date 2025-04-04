@@ -229,18 +229,20 @@
                 
                 }
             }
-            // Adjust textarea height on keydown and input events
-            $('#prompt').on('keydown', function (e) {
-                adjustTextareaHeight(this);
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    $('#chat-form').submit();
-                }
-            });
-            $('#prompt').on('input', function () {
-                adjustTextareaHeight(this);
-            });
             adjustTextareaHeight($('#prompt')[0]);
         });
+
+        // Adjust textarea height on keydown and input events
+        $('#prompt').on('keydown', function (e) {
+            adjustTextareaHeight(this);
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                $('#chat-form').submit();
+            }
+        });
+        $('#prompt').on('input', function () {
+            adjustTextareaHeight(this);
+        });
+        adjustTextareaHeight($('#prompt')[0]);
     });
 </script>
