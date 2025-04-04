@@ -4,6 +4,7 @@ html {
   body {
     height: 100%;
     overflow: auto;
+    background-color: #F7F7F6;
 
     .body-content {
       height: calc(100% - 60px);
@@ -84,6 +85,7 @@ li {
   padding: 10px;
   display: flex;
   flex-direction: column;
+  background-color: #F5F5F4;
 
   p {
     margin: 1px;
@@ -117,6 +119,10 @@ li {
       color: #0056b3;
     }
   }
+}
+
+.card.shadow-sm {
+    background-color: #F5F5F4;
 }
 
 .text-danger {
